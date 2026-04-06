@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: peektime-api
+  jpa:
+    open-in-view: false

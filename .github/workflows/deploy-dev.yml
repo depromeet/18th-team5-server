@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.DEV_SSH_KEY }}
           port: 22
           script: |
-            cd ~/peektime-api
+            cd ~/18th-team5-server
 
             # 최신 코드 pull
             git pull origin develop

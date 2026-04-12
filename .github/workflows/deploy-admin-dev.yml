@@ -18,9 +18,9 @@ jobs:
       - name: Deploy to Dev Server
         uses: appleboy/ssh-action@v1.2.2
         with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USERNAME }}
-          key: ${{ secrets.DEV_SSH_KEY }}
+          host: ${{ secrets.DEV_ADMIN_HOST }}
+          username: ${{ secrets.DEV_ADMIN_USERNAME }}
+          key: ${{ secrets.DEV_ADMIN_SSH_KEY }}
           port: 22
           script: |
             cd ~/peektime/peektime-admin

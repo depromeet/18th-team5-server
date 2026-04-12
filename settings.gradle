@@ -1,4 +1,4 @@
-rootProject.name = 'peektime'
+rootProject.name = 'peektime-server'
 
 include 'peektime-api'
 include 'peektime-admin'

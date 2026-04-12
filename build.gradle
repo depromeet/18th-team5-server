@@ -81,13 +81,13 @@ subprojects {
     }
 }
 
-// H2 TCP 서버 실행
+// H2 서버 실행 (TCP + 웹 콘솔)
 tasks.register('runH2', JavaExec) {
-    description = "Run H2 TCP Server (port: ${h2Port})"
+    description = "Run H2 Server (TCP: ${h2Port}, Web Console: 8082)"
     group = 'servers'
     classpath = buildscript.configurations.classpath
     mainClass = 'org.h2.tools.Server'
-    args = ['-tcp', '-tcpAllowOthers', '-tcpPort', "${h2Port}", '-ifNotExists']
+    args = ['-tcp', '-tcpAllowOthers', '-tcpPort', "${h2Port}", '-web', '-webAllowOthers', '-webPort', '8082', '-ifNotExists']
 }
 
 // peektime-api bootRun 설정

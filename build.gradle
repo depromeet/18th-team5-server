@@ -1,0 +1,60 @@
+// 루트 build.gradle - 전체 프로젝트 공통 설정 및 태스크
+
+// 포트 설정
+ext {
+    apiPort = 8080
+    adminPort = 8081
+}
+
+// peektime-api bootRun 설정
+project(':peektime-api') {
+    afterEvaluate {
+        bootRun {
+            systemProperty 'server.port', rootProject.ext.apiPort
+        }
+    }
+}
+
+// peektime-admin bootRun 설정
+project(':peektime-admin') {
+    afterEvaluate {
+        bootRun {
+            systemProperty 'server.port', rootProject.ext.adminPort
+        }
+    }
+}
+
+// 전체 빌드
+tasks.register('buildAll') {
+    description = 'Build all projects'
+    group = 'build'
+    dependsOn ':peektime-api:build', ':peektime-admin:build'
+}
+
+// 전체 테스트
+tasks.register('testAll') {
+    description = 'Test all projects'
+    group = 'verification'
+    dependsOn ':peektime-api:test', ':peektime-admin:test'
+}
+
+// 전체 클린
+tasks.register('cleanAll') {
+    description = 'Clean all projects'
+    group = 'build'
+    dependsOn ':peektime-api:clean', ':peektime-admin:clean'
+}
+
+// API 서버 실행 (port: 8080)
+tasks.register('runApi') {
+    description = "Run peektime-api server (port: ${apiPort})"
+    group = 'application'
+    dependsOn ':peektime-api:bootRun'
+}
+
+// Admin 서버 실행 (port: 8081)
+tasks.register('runAdmin') {
+    description = "Run peektime-admin server (port: ${adminPort})"
+    group = 'application'
+    dependsOn ':peektime-admin:bootRun'
+}

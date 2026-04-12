@@ -1,5 +1,17 @@
 spring:
   application:
     name: peektime-api
+  datasource:
+    url: jdbc:h2:tcp://localhost:9092/./peektime-api
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   jpa:
     open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true

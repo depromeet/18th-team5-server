@@ -1,0 +1,220 @@
+name: PR Slack Notifications
+
+on:
+  pull_request:
+    types:
+      - opened
+      - review_requested
+      - closed
+  pull_request_review:
+    types:
+      - submitted
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  pr-opened:
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack - PR opened
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "새 PR이 생성되었습니다.",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🆕 PR 생성"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Author:*\n${{ github.event.pull_request.user.login }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Base ← Head:*\n${{ github.event.pull_request.base.ref }} ← ${{ github.event.pull_request.head.ref }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*PR #:*\n#${{ github.event.pull_request.number }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Title:*\n<${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>"
+                  }
+                }
+              ]
+            }
+
+  pr-review-requested:
+    if: github.event_name == 'pull_request' && github.event.action == 'review_requested'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack - Review requested
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "PR에 리뷰 요청이 등록되었습니다.",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "👀 리뷰 요청"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Requester:*\n${{ github.event.pull_request.user.login }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Reviewer:*\n${{ github.event.requested_reviewer.login || github.event.requested_team.name || '지정된 리뷰어 확인 필요' }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*PR #:*\n#${{ github.event.pull_request.number }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Title:*\n<${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>"
+                  }
+                }
+              ]
+            }
+
+  pr-approved:
+    if: github.event_name == 'pull_request_review' && github.event.review.state == 'APPROVED'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack - PR approved
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "PR이 승인되었습니다.",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ PR 승인"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Approver:*\n${{ github.event.review.user.login }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Author:*\n${{ github.event.pull_request.user.login }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*PR #:*\n#${{ github.event.pull_request.number }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Title:*\n<${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>"
+                  }
+                }
+              ]
+            }
+
+  pr-merged:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack - PR merged
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "PR이 머지되었습니다.",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 PR 머지"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Merged by:*\n${{ github.event.pull_request.merged_by.login }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Base Branch:*\n${{ github.event.pull_request.base.ref }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*PR #:*\n#${{ github.event.pull_request.number }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Title:*\n<${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>"
+                  }
+                }
+              ]
+            }

@@ -1,0 +1,7 @@
+// peektime-api 개별 설정
+// 공통 설정은 루트 build.gradle의 subprojects에서 적용됨
+
+dependencies {
+    // H2 웹 콘솔 (API 모듈에서만 사용)
+    implementation 'org.springframework.boot:spring-boot-h2console'
+}

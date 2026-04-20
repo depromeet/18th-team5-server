@@ -11,7 +11,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "solar_term", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_solar_term", columnNames = {"name", "year"})
+        @UniqueConstraint(name = "uk_solar_term", columnNames = {"name", "solar_year"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -33,7 +33,7 @@ public class SolarTerm extends BaseEntity {
     @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
-    @Column(name = "year", nullable = false)
+    @Column(name = "solar_year", nullable = false)
     private Integer year;
 
     @Column(name = "seasonal_foods", columnDefinition = "TEXT")

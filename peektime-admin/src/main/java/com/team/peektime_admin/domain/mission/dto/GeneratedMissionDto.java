@@ -15,4 +15,6 @@ public class GeneratedMissionDto {
     private String intensityType;
     private String companionType;
     private String categoryType;
+    private String enjoyType;
+    private String userType;
 }

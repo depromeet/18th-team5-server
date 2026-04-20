@@ -41,27 +41,42 @@ public class Mission extends BaseEntity {
     private CompanionType companionType = CompanionType.SOLO;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "enjoy_type", nullable = false)
+    private EnjoyType enjoyType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_type")
+    private UserType userType;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private MissionStatus status = MissionStatus.DRAFT;
+    private MissionStatus status = MissionStatus.POOL;
 
     @Builder
     public Mission(String title, String description, SpaceType spaceType,
                    IntensityType intensityType, CategoryType categoryType,
-                   CompanionType companionType, MissionStatus status) {
+                   CompanionType companionType, EnjoyType enjoyType,
+                   UserType userType, MissionStatus status) {
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;
         this.intensityType = intensityType;
         this.categoryType = categoryType;
         this.companionType = companionType != null ? companionType : CompanionType.SOLO;
-        this.status = status != null ? status : MissionStatus.DRAFT;
+        this.enjoyType = enjoyType;
+        this.userType = userType;
+        this.status = status != null ? status : MissionStatus.POOL;
     }
 
-    public void approve() {
-        this.status = MissionStatus.APPROVED;
+    public void moveToPending() {
+        this.status = MissionStatus.PENDING;
     }
 
-    public void archive() {
-        this.status = MissionStatus.ARCHIVED;
+    public void assign() {
+        this.status = MissionStatus.ASSIGNED;
+    }
+
+    public void returnToPool() {
+        this.status = MissionStatus.POOL;
     }
 }

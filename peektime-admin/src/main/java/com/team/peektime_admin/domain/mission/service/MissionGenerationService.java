@@ -3,6 +3,8 @@ package com.team.peektime_admin.domain.mission.service;
 import com.team.peektime_admin.domain.mission.dto.GeneratedMissionDto;
 import com.team.peektime_admin.domain.mission.dto.GeneratedMissionsWrapper;
 import com.team.peektime_admin.domain.mission.prompt.MissionPromptTemplate;
+import com.team.peektime_admin.domain.solarterm.entity.SolarTerm;
+import com.team.peektime_admin.domain.solarterm.repository.SolarTermRepository;
 import com.team.peektime_admin.infra.llm.GeminiClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,7 @@ public class MissionGenerationService {
 
     private final GeminiClient geminiClient;
     private final JsonMapper jsonMapper;
+    private final SolarTermRepository solarTermRepository;
 
     public List<GeneratedMissionDto> generateMissions(int count) {
         String prompt = MissionPromptTemplate.generate(count);
@@ -26,6 +29,14 @@ public class MissionGenerationService {
 
     public List<GeneratedMissionDto> generateMissionsWithTheme(String theme, int count) {
         String prompt = MissionPromptTemplate.generateWithTheme(theme, count);
+        return callGeminiAndParse(prompt);
+    }
+
+    public List<GeneratedMissionDto> generateMissionsWithSolarTerm(Long solarTermId, int count) {
+        SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
+                .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
+
+        String prompt = MissionPromptTemplate.generateWithSolarTerm(solarTerm, count);
         return callGeminiAndParse(prompt);
     }
 

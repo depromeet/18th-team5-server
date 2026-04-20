@@ -26,7 +26,10 @@ public class MissionGenerationController {
 
         List<GeneratedMissionDto> missions;
 
-        if (request.getTheme() != null && !request.getTheme().isBlank()) {
+        if (request.getSolarTermId() != null) {
+            missions = missionGenerationService.generateMissionsWithSolarTerm(
+                    request.getSolarTermId(), request.getCount());
+        } else if (request.getTheme() != null && !request.getTheme().isBlank()) {
             missions = missionGenerationService.generateMissionsWithTheme(
                     request.getTheme(), request.getCount());
         } else {

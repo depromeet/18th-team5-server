@@ -1,5 +1,7 @@
 package com.team.peektime_admin.domain.mission.prompt;
 
+import com.team.peektime_admin.domain.solarterm.entity.SolarTerm;
+
 public class MissionPromptTemplate {
 
     private static final String SYSTEM_PROMPT = """
@@ -65,5 +67,28 @@ public class MissionPromptTemplate {
                 OUTPUT_FORMAT +
                 "\n## 요청\n" +
                 "'" + theme + "' 테마에 맞는 " + count + "개의 미션을 생성해주세요.";
+    }
+
+    public static String generateWithSolarTerm(SolarTerm solarTerm, int count) {
+        String solarTermInfo = buildSolarTermInfo(solarTerm);
+        return SYSTEM_PROMPT +
+                solarTermInfo +
+                ATTRIBUTE_DESCRIPTION +
+                OUTPUT_FORMAT +
+                "\n## 요청\n" +
+                "'" + solarTerm.getName() + "' 절기에 맞는 " + count + "개의 미션을 생성해주세요.";
+    }
+
+    private static String buildSolarTermInfo(SolarTerm solarTerm) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("\n## 현재 절기 정보\n");
+        sb.append("- 절기 이름: ").append(solarTerm.getName()).append("\n");
+
+        if (solarTerm.getDescription() != null && !solarTerm.getDescription().isBlank()) {
+            sb.append("- 설명: ").append(solarTerm.getDescription()).append("\n");
+        }
+
+        sb.append("\n위 절기 정보를 참고하여 해당 시기에 어울리는 미션을 생성해주세요.\n");
+        return sb.toString();
     }
 }

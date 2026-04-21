@@ -8,3 +8,8 @@ spring:
     hibernate:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.H2Dialect
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  model: gemini-2.5-flash
+  endpoint: https://generativelanguage.googleapis.com/v1beta/models

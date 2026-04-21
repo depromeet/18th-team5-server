@@ -91,7 +91,7 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 코드 예시
+### 코드 예시 (기본 구조)
 ```java
 @Service
 @RequiredArgsConstructor
@@ -101,7 +101,7 @@ public class MissionCompletionService {
     private final OutboxEventRepository outboxRepository;
 
     @Transactional  // 하나의 트랜잭션
-    public MissionCompletionResponse completeMission(Long userId, Long missionId, MissionType type) {
+    public MissionCompletionResult completeMission(Long userId, Long missionId, MissionType type) {
 
         // 1. 사용자 미션 완료 기록 저장
         UserMissionCompletion completion = UserMissionCompletion.builder()
@@ -122,12 +122,124 @@ public class MissionCompletionService {
             .build();
         outboxRepository.save(event);
 
-        // 3. 트랜잭션 커밋 후 사용자에게 응답
-        //    (Admin 호출은 스케줄러가 비동기로 처리)
-        return MissionCompletionResponse.of(completion);
+        // 3. 결과 반환 (Admin 호출은 트랜잭션 밖에서)
+        return MissionCompletionResult.of(completion, event);
     }
 }
 ```
+
+---
+
+## 2.2 트랜잭션 커밋 후 Admin 호출 방식 (선택 필요)
+
+Admin API 호출은 **트랜잭션 커밋 후**에 해야 안전합니다. 두 가지 방식 중 선택:
+
+### 옵션 A: `@TransactionalEventListener(AFTER_COMMIT)`
+
+스프링 이벤트 기반으로 트랜잭션 커밋 후 자동 실행
+
+```java
+// 1. 서비스에서 이벤트 발행
+@Service
+@RequiredArgsConstructor
+public class MissionCompletionService {
+
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Transactional
+    public MissionCompletionResponse completeMission(Long userId, Long missionId, MissionType type) {
+        // ... 저장 로직 ...
+
+        completionRepository.save(completion);
+        outboxRepository.save(event);
+
+        // 이벤트 발행 (아직 트랜잭션 안)
+        eventPublisher.publishEvent(new MissionCompletedEvent(event.getId()));
+
+        return MissionCompletionResponse.of(completion);
+    }
+}
+
+// 2. 리스너에서 커밋 후 처리
+@Component
+@RequiredArgsConstructor
+public class MissionCompletedEventListener {
+
+    private final AdminStatsClient adminClient;
+    private final OutboxEventRepository outboxRepository;
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleMissionCompleted(MissionCompletedEvent event) {
+        // 트랜잭션 커밋 후에 실행됨
+        try {
+            adminClient.recordStats(event.getOutboxEventId());
+            // 성공 시 상태 업데이트
+        } catch (Exception e) {
+            // 실패해도 OK, 스케줄러가 재시도
+            log.warn("Admin 즉시 호출 실패, 스케줄러가 재시도 예정", e);
+        }
+    }
+}
+```
+
+### 옵션 B: Facade 패턴
+
+명시적으로 트랜잭션 경계를 분리
+
+```java
+// 1. Facade (트랜잭션 없음)
+@Component
+@RequiredArgsConstructor
+public class MissionCompletionFacade {
+
+    private final MissionCompletionService service;
+    private final AdminStatsClient adminClient;
+
+    public MissionCompletionResponse complete(Long userId, Long missionId, MissionType type) {
+        // Step 1: 트랜잭션 처리 (저장)
+        MissionCompletionResult result = service.completeMission(userId, missionId, type);
+
+        // Step 2: 트랜잭션 커밋 완료 후 Admin 호출
+        try {
+            adminClient.recordStats(result.getOutboxEvent());
+            // 성공 시 Outbox 상태 업데이트
+        } catch (Exception e) {
+            // 실패해도 OK, 스케줄러가 재시도
+            log.warn("Admin 즉시 호출 실패, 스케줄러가 재시도 예정", e);
+        }
+
+        return result.getResponse();
+    }
+}
+
+// 2. 컨트롤러에서 Facade 호출
+@RestController
+@RequiredArgsConstructor
+public class MissionController {
+
+    private final MissionCompletionFacade facade;  // Service 대신 Facade
+
+    @PostMapping("/api/missions/{missionId}/complete")
+    public SuccessResponse<MissionCompletionResponse> complete(...) {
+        return SuccessResponse.ok(facade.complete(userId, missionId, type));
+    }
+}
+```
+
+### 비교
+
+| 항목 | 옵션 A (AFTER_COMMIT) | 옵션 B (Facade) |
+|------|----------------------|-----------------|
+| **코드 흐름** | 암묵적 (이벤트 기반) | 명시적 (순차 호출) |
+| **디버깅** | 이벤트 추적 필요 | 스택트레이스 명확 |
+| **테스트** | 이벤트 발행 모킹 필요 | 단순 메서드 호출 |
+| **레이어** | 기존 구조 유지 | Facade 레이어 추가 |
+| **스프링 의존성** | ApplicationEventPublisher 사용 | 없음 |
+| **확장성** | 여러 리스너 추가 용이 | 명시적으로 추가해야 함 |
+
+### 결정 필요 ⚠️
+- [ ] 옵션 A (AFTER_COMMIT) 선택
+- [ ] 옵션 B (Facade) 선택
 
 ### 왜 이렇게 하는가?
 

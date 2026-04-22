@@ -149,27 +149,6 @@
             background: var(--gray-50);
         }
 
-        .ai-generate-section {
-            background: linear-gradient(135deg, var(--primary-light) 0%, #F0FDF4 100%);
-            border: 1px solid var(--primary);
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-
-        .ai-generate-section h3 {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .ai-generate-section p {
-            color: var(--gray-600);
-            font-size: 14px;
-            margin-bottom: 16px;
-        }
-
         .stats-row {
             display: flex;
             gap: 16px;
@@ -244,13 +223,13 @@
                 </div>
             </div>
 
-            <!-- AI 생성 섹션 -->
-            <div class="ai-generate-section">
-                <h3>🤖 AI 미션 생성</h3>
-                <p>선택한 절기와 사용자 타입에 맞는 추천 미션을 AI가 자동으로 생성합니다.</p>
-                <button class="btn btn-primary">
-                    ✨ AI로 미션 생성하기
-                </button>
+            <!-- 안내 -->
+            <div style="background: #FEF3C7; border: 1px solid #F59E0B; border-radius: 8px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 12px;">
+                <span style="font-size: 20px;">💡</span>
+                <div>
+                    <h4 style="font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px;">미션풀에서 추천미션이 자동 분류됩니다</h4>
+                    <p style="font-size: 13px; color: #B45309;">미션풀 관리에서 "추천미션으로 이동" 버튼을 클릭하면, 미션의 EnjoyType/UserType 태그에 따라 이 페이지에 자동 배치됩니다.</p>
+                </div>
             </div>
 
             <!-- 통계 -->
@@ -303,7 +282,7 @@
                             <div class="mission-item-title">입춘 날 해돋이 보러 가기</div>
                             <div class="mission-item-tags">
                                 <span class="tag tag-gray">자연</span>
-                                <span class="tag tag-gray">실외/적극적</span>
+                                <span class="tag tag-gray">실외/1시간+</span>
                             </div>
                         </div>
                         <div class="mission-actions">
@@ -318,7 +297,7 @@
                             <div class="mission-item-title">봄꽃 피는 산책로 걸어보기</div>
                             <div class="mission-item-tags">
                                 <span class="tag tag-gray">자연</span>
-                                <span class="tag tag-gray">실외/보통</span>
+                                <span class="tag tag-gray">실외/30분이내</span>
                             </div>
                         </div>
                         <div class="mission-actions">
@@ -333,7 +312,7 @@
                             <div class="mission-item-title">근처 공원에서 새소리 듣기</div>
                             <div class="mission-item-tags">
                                 <span class="tag tag-gray">감각</span>
-                                <span class="tag tag-gray">실외/가벼운</span>
+                                <span class="tag tag-gray">실외/5분이내</span>
                             </div>
                         </div>
                         <div class="mission-actions">
@@ -362,7 +341,7 @@
                             <div class="mission-item-title">봄나물 비빔밥 만들어 먹기</div>
                             <div class="mission-item-tags">
                                 <span class="tag tag-gray">음식</span>
-                                <span class="tag tag-gray">실내/적극적</span>
+                                <span class="tag tag-gray">실내/1시간+</span>
                             </div>
                         </div>
                         <div class="mission-actions">
@@ -377,7 +356,7 @@
                             <div class="mission-item-title">딸기 디저트 카페 방문하기</div>
                             <div class="mission-item-tags">
                                 <span class="tag tag-gray">음식</span>
-                                <span class="tag tag-gray">실외/보통</span>
+                                <span class="tag tag-gray">실외/30분이내</span>
                             </div>
                         </div>
                         <div class="mission-actions">
@@ -406,7 +385,7 @@
                             <div class="mission-item-title">봄 관련 시 한 편 읽어보기</div>
                             <div class="mission-item-tags">
                                 <span class="tag tag-gray">기록</span>
-                                <span class="tag tag-gray">실내/가벼운</span>
+                                <span class="tag tag-gray">실내/5분이내</span>
                             </div>
                         </div>
                         <div class="mission-actions">
@@ -421,7 +400,7 @@
                             <div class="mission-item-title">입춘 플레이리스트 만들기</div>
                             <div class="mission-item-tags">
                                 <span class="tag tag-gray">감각</span>
-                                <span class="tag tag-gray">실내/가벼운</span>
+                                <span class="tag tag-gray">실내/5분이내</span>
                             </div>
                         </div>
                         <div class="mission-actions">

@@ -6,6 +6,11 @@
     <title>미션 풀 관리 - PeekTime Admin</title>
     <link rel="stylesheet" href="common.css">
     <style>
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
         .filter-bar {
             display: flex;
             gap: 12px;
@@ -20,6 +25,21 @@
 
         .filter-select {
             min-width: 120px;
+        }
+
+        .bulk-actions {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+
+        .bulk-actions-label {
+            font-size: 13px;
+            color: var(--gray-600);
         }
 
         .table-actions {
@@ -80,6 +100,47 @@
             flex-wrap: wrap;
         }
 
+        .tag-enjoy {
+            background: #DBEAFE;
+            color: #2563EB;
+        }
+
+        .tag-user {
+            background: #F3E8FF;
+            color: #9333EA;
+        }
+
+        /* AI Generate Section */
+        .ai-section {
+            background: linear-gradient(135deg, var(--primary-light) 0%, #F0FDF4 100%);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ai-section-content h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-section-content p {
+            font-size: 13px;
+            color: var(--gray-600);
+        }
+
+        .ai-section-actions {
+            display: flex;
+            gap: 12px;
+        }
+
         /* Modal shown state */
         .modal-overlay.show {
             display: flex;
@@ -127,9 +188,35 @@
                     <h1 class="page-title">전체 미션 관리</h1>
                     <p class="page-description">미션을 등록하고 관리하세요. 총 248개의 미션이 있습니다.</p>
                 </div>
-                <button class="btn btn-primary" onclick="openModal()">
-                    ➕ 새 미션 등록
-                </button>
+                <div class="header-actions">
+                    <button class="btn btn-primary" onclick="openModal()">
+                        ➕ 새 미션 등록
+                    </button>
+                </div>
+            </div>
+
+            <!-- AI 미션 생성 섹션 -->
+            <div class="ai-section">
+                <div class="ai-section-content">
+                    <h3>🤖 AI 미션 생성</h3>
+                    <p>절기와 사용자 타입을 선택하면 AI가 추천미션 태그(EnjoyType, UserType)가 포함된 미션을 자동 생성합니다.</p>
+                </div>
+                <div class="ai-section-actions">
+                    <select class="form-select" style="width: 120px;">
+                        <option>입춘</option>
+                        <option>우수</option>
+                        <option>경칩</option>
+                    </select>
+                    <select class="form-select" style="width: 140px;">
+                        <option>자연 탐험가</option>
+                        <option>동네 산책러</option>
+                        <option>제철 미식가</option>
+                        <option>일상 관찰자</option>
+                    </select>
+                    <button class="btn btn-primary">
+                        ✨ 미션 생성
+                    </button>
+                </div>
             </div>
 
             <div class="card">
@@ -149,9 +236,9 @@
                     </select>
                     <select class="form-select filter-select">
                         <option value="">강도 전체</option>
-                        <option value="LIGHT">가벼운</option>
-                        <option value="MODERATE">보통</option>
-                        <option value="ACTIVE">적극적</option>
+                        <option value="LIGHT">5분이내</option>
+                        <option value="MODERATE">30분이내</option>
+                        <option value="ACTIVE">1시간+</option>
                     </select>
                     <select class="form-select filter-select">
                         <option value="">카테고리 전체</option>
@@ -163,6 +250,14 @@
                     </select>
                 </div>
 
+                <!-- Bulk Actions -->
+                <div class="bulk-actions">
+                    <span class="bulk-actions-label">선택된 미션:</span>
+                    <button class="btn btn-outline btn-sm">📅 오늘의미션 배정대기로</button>
+                    <button class="btn btn-outline btn-sm">⭐ 추천미션으로 이동</button>
+                    <button class="btn btn-outline btn-sm" style="color: #EF4444; border-color: #EF4444;">🗑️ 삭제</button>
+                </div>
+
                 <!-- Table -->
                 <table class="table">
                     <thead>
@@ -171,7 +266,8 @@
                                 <input type="checkbox">
                             </th>
                             <th>미션명</th>
-                            <th>태그</th>
+                            <th>필터링 태그</th>
+                            <th>추천미션 분류</th>
                             <th>상태</th>
                             <th>생성일</th>
                             <th style="width: 100px;">관리</th>
@@ -179,12 +275,16 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td><input type="checkbox"></td>
+                            <td><input type="checkbox" checked></td>
                             <td class="mission-title">봄의 첫 소리 찾기</td>
                             <td class="tags-cell">
                                 <span class="tag tag-gray">감각</span>
                                 <span class="tag tag-gray">실외</span>
-                                <span class="tag tag-gray">가벼운</span>
+                                <span class="tag tag-gray">5분이내</span>
+                            </td>
+                            <td class="tags-cell">
+                                <span class="tag tag-enjoy">자연/야외</span>
+                                <span class="tag tag-user">자연 탐험가</span>
                             </td>
                             <td><span class="tag tag-yellow">PENDING</span></td>
                             <td class="text-gray text-sm">2026-01-15</td>
@@ -201,7 +301,11 @@
                             <td class="tags-cell">
                                 <span class="tag tag-gray">기록</span>
                                 <span class="tag tag-gray">실내</span>
-                                <span class="tag tag-gray">가벼운</span>
+                                <span class="tag tag-gray">5분이내</span>
+                            </td>
+                            <td class="tags-cell">
+                                <span class="tag tag-enjoy">감성콘텐츠</span>
+                                <span class="tag tag-user">일상 관찰자</span>
                             </td>
                             <td><span class="tag tag-yellow">PENDING</span></td>
                             <td class="text-gray text-sm">2026-01-15</td>
@@ -218,7 +322,10 @@
                             <td class="tags-cell">
                                 <span class="tag tag-gray">장소</span>
                                 <span class="tag tag-gray">실내</span>
-                                <span class="tag tag-gray">보통</span>
+                                <span class="tag tag-gray">30분이내</span>
+                            </td>
+                            <td class="tags-cell">
+                                <span class="text-gray text-sm">-</span>
                             </td>
                             <td><span class="tag tag-green">ASSIGNED</span></td>
                             <td class="text-gray text-sm">2026-01-14</td>
@@ -235,7 +342,11 @@
                             <td class="tags-cell">
                                 <span class="tag tag-gray">음식</span>
                                 <span class="tag tag-gray">실내</span>
-                                <span class="tag tag-gray">적극적</span>
+                                <span class="tag tag-gray">1시간+</span>
+                            </td>
+                            <td class="tags-cell">
+                                <span class="tag tag-enjoy">제철음식</span>
+                                <span class="tag tag-user">제철 미식가</span>
                             </td>
                             <td><span class="tag tag-green">ASSIGNED</span></td>
                             <td class="text-gray text-sm">2026-01-14</td>
@@ -252,7 +363,10 @@
                             <td class="tags-cell">
                                 <span class="tag tag-gray">음식</span>
                                 <span class="tag tag-gray">실외</span>
-                                <span class="tag tag-gray">가벼운</span>
+                                <span class="tag tag-gray">30분이내</span>
+                            </td>
+                            <td class="tags-cell">
+                                <span class="text-gray text-sm">-</span>
                             </td>
                             <td><span class="tag tag-gray">POOL</span></td>
                             <td class="text-gray text-sm">2026-01-13</td>
@@ -298,6 +412,8 @@
                     <textarea class="form-textarea" rows="3" placeholder="미션에 대한 상세 설명을 입력하세요"></textarea>
                 </div>
 
+                <h4 style="font-size: 14px; margin: 20px 0 12px; color: var(--gray-700);">📌 필터링용 태그</h4>
+
                 <div class="grid-2">
                     <div class="form-group">
                         <label class="form-label">공간 *</label>
@@ -311,9 +427,9 @@
                         <label class="form-label">강도 *</label>
                         <select class="form-select">
                             <option value="">선택하세요</option>
-                            <option value="LIGHT">가벼운 (이동없음/5분이내)</option>
-                            <option value="MODERATE">보통 (동네범위/30분이내)</option>
-                            <option value="ACTIVE">적극적 (이동필요/1시간+)</option>
+                            <option value="LIGHT">5분이내</option>
+                            <option value="MODERATE">30분이내</option>
+                            <option value="ACTIVE">1시간+</option>
                         </select>
                     </div>
                 </div>
@@ -340,20 +456,22 @@
                     </div>
                 </div>
 
+                <h4 style="font-size: 14px; margin: 20px 0 12px; color: var(--gray-700);">⭐ 추천미션 분류용 태그 (선택)</h4>
+
                 <div class="grid-2">
                     <div class="form-group">
-                        <label class="form-label">즐기기 타입 (추천미션용)</label>
+                        <label class="form-label">즐기기 타입</label>
                         <select class="form-select">
-                            <option value="">선택하세요</option>
-                            <option value="OUTDOOR_NATURE">자연이나 야외 활동</option>
-                            <option value="SEASONAL_FOOD">제철 음식이나 요리</option>
-                            <option value="EMOTIONAL_CONTENT">감성 콘텐츠나 문화</option>
+                            <option value="">선택 안함</option>
+                            <option value="OUTDOOR_NATURE">자연/야외</option>
+                            <option value="SEASONAL_FOOD">제철음식</option>
+                            <option value="EMOTIONAL_CONTENT">감성콘텐츠</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">사용자 타입 (추천미션용)</label>
+                        <label class="form-label">사용자 타입</label>
                         <select class="form-select">
-                            <option value="">선택하세요</option>
+                            <option value="">선택 안함</option>
                             <option value="NATURE_EXPLORER">자연 탐험가</option>
                             <option value="NEIGHBORHOOD_WALKER">동네 산책러</option>
                             <option value="SEASONAL_FOODIE">제철 미식가</option>
@@ -362,13 +480,9 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">상태</label>
-                    <select class="form-select">
-                        <option value="POOL">POOL (미션풀)</option>
-                        <option value="PENDING">PENDING (배정대기)</option>
-                    </select>
-                </div>
+                <p style="font-size: 12px; color: var(--gray-500); margin-top: -8px;">
+                    💡 추천미션 분류 태그가 있는 미션을 "추천미션으로 이동"하면 해당 사용자 타입의 추천미션으로 자동 배치됩니다.
+                </p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal()">취소</button>

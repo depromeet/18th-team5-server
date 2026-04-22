@@ -1,0 +1,6 @@
+// peektime-admin 개별 설정
+// 공통 설정은 루트 build.gradle의 subprojects에서 적용됨
+
+dependencies {
+    // Admin 모듈 전용 의존성 추가 시 여기에 작성
+}

@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Run Tests & Generate Coverage
+        run: ./gradlew testAll jacocoTestReport
+
+      - name: Upload peektime-api JaCoCo Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report-api
+          path: peektime-api/build/reports/jacoco/test
+
+      - name: Upload peektime-admin JaCoCo Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report-admin
+          path: peektime-admin/build/reports/jacoco/test

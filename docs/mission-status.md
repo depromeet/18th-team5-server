@@ -19,16 +19,18 @@
 └─────────────────────────────────────────────────────────────┘
           │                              │
           ▼                              ▼
-┌─────────────────────┐      ┌─────────────────────────────┐
-│    DailyMission     │      │   RecommendedMissionPool    │
-│  (오늘의 미션 배정)   │      │   (추천 미션 배정)           │
-│                     │      │                             │
-│  - solar_term_id    │      │   - solar_term_id           │
-│  - mission_id       │      │   - user_type               │
-│  - date             │      │   - mission_id              │
-│  - display_order    │      │   - enjoy_type              │
-└─────────────────────┘      │   - display_order           │
-                             └─────────────────────────────┘
+┌─────────────────────────┐    ┌─────────────────────────────┐
+│     DailyMission        │    │   RecommendedMissionPool    │
+│   (오늘의 미션 배정)     │    │   (추천 미션 배정)           │
+│                         │    │                             │
+│  - solar_term_id        │    │   - solar_term_id           │
+│  - mission_id           │    │   - user_type               │
+│  - date (nullable)      │    │   - mission_id              │
+│  - display_order        │    │   - enjoy_type              │
+│                         │    │   - display_order           │
+│  date=NULL → 배정대기   │    └─────────────────────────────┘
+│  date=값   → 배정완료   │
+└─────────────────────────┘
 ```
 
 ---
@@ -69,6 +71,35 @@ public class Mission {
 
 ---
 
+## DailyMission 엔티티 필드
+
+```java
+public class DailyMission {
+    private Long id;
+    private Mission mission;
+    private SolarTerm solarTerm;
+    private LocalDate date;        // NULL이면 배정대기, 값 있으면 배정완료
+    private Integer displayOrder;
+}
+```
+
+**배정 상태 판단:**
+- `date = NULL` → 배정대기 (오늘의미션 페이지 좌측 패널)
+- `date = 값` → 배정완료 (스케줄 보드에 표시)
+
+```sql
+-- 배정대기 미션 조회
+SELECT * FROM daily_mission
+WHERE solar_term_id = :solarTermId AND date IS NULL;
+
+-- 배정완료 미션 조회 (날짜별)
+SELECT * FROM daily_mission
+WHERE solar_term_id = :solarTermId AND date IS NOT NULL
+ORDER BY date, display_order;
+```
+
+---
+
 ## Admin 플로우
 
 ### 1. 미션 생성 (미션풀 관리)
@@ -83,16 +114,28 @@ Mission 테이블에 저장 (모든 태그 포함)
 
 ### 2. 오늘의 미션 배정
 
+**Step 1: 배정대기로 이동**
+```
+미션풀 관리 페이지
+    ↓
+미션 선택 → "오늘의미션으로" 클릭
+    ↓
+DailyMission 테이블에 저장 (date = NULL)
+    ↓
+오늘의 미션 페이지 "배정대기" 목록에 표시
+```
+
+**Step 2: 날짜에 배정**
 ```
 오늘의 미션 페이지 진입
     ↓
 절기 선택 (예: 입춘)
     ↓
-미션풀에서 미션 선택 (드래그)
+배정대기 목록에서 미션 드래그
     ↓
 날짜 슬롯에 드롭
     ↓
-DailyMission 테이블에 저장
+DailyMission.date 업데이트 (NULL → 실제 날짜)
 ```
 
 ### 3. 추천 미션 배정

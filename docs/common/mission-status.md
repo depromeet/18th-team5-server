@@ -176,15 +176,47 @@ DailyMission 레코드 삭제
 
 ### 3. 추천 미션 배정
 
+**Step 1: 추천미션으로 이동 (INSERT)**
 ```
-미션풀에서 미션 선택 (EnjoyType, UserType 태그 있는 미션)
+미션풀 관리 페이지
     ↓
-"추천미션으로 이동" 클릭
+미션 선택 (EnjoyType, UserType 태그 필수)
     ↓
-RecommendedMissionPool 테이블에 저장
+"추천미션으로" 클릭
     ↓
-해당 UserType + EnjoyType 그룹에 자동 분류
+API 호출: POST /admin/recommended-missions
+    ↓
+RecommendedMissionPool 테이블에 INSERT
+    ↓
+해당 UserType + EnjoyType 그룹에 자동 분류되어 표시
 ```
+
+**Step 2: 풀로 이동 (DELETE)**
+```
+추천 미션 페이지에서 "풀로" 버튼 클릭
+    ↓
+API 호출: DELETE /admin/recommended-missions/{id}
+    ↓
+RecommendedMissionPool 레코드 삭제
+    ↓
+미션이 미션풀로 돌아감
+```
+
+**흐름도**
+```
+┌─────────┐   POST/INSERT    ┌─────────────────────────┐
+│  미션풀  │ ───────────────→ │  추천미션               │
+│         │ ←─────────────── │  (UserType별 자동 분류)  │
+└─────────┘  DELETE/DELETE   └─────────────────────────┘
+```
+
+**API 요약**
+| 동작 | API | DB 작업 |
+|------|-----|---------|
+| 풀 → 추천미션 ("추천미션으로") | POST | INSERT |
+| 추천미션 → 풀 ("풀로") | DELETE | DELETE |
+
+> **참고**: 미션의 UserType, EnjoyType 태그를 기반으로 자동 분류됨. 태그 수정은 미션풀 관리에서 가능.
 
 ---
 

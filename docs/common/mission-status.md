@@ -158,12 +158,21 @@ DailyMission 레코드 삭제
 
 > **중요**: 날짜에 배정된 미션을 풀로 보내려면, 먼저 배정대기로 드래그한 후 "풀로" 버튼 클릭
 
+**흐름도**
+```
+┌─────────┐   POST/INSERT    ┌─────────┐   PATCH/UPDATE   ┌─────────┐
+│  미션풀  │ ───────────────→ │ 배정대기 │ ←──────────────→ │  날짜   │
+└─────────┘ ←─────────────── └─────────┘                   └─────────┘
+             DELETE/DELETE
+```
+
 **API 요약**
-| 동작 | HTTP | Endpoint | DB |
-|------|------|----------|-----|
-| 풀 → 배정대기 | `POST` | `/admin/daily-missions` | INSERT |
-| 배정대기 ↔ 날짜 | `PATCH` | `/admin/daily-missions/{id}` | UPDATE |
-| 배정대기 → 풀 | `DELETE` | `/admin/daily-missions/{id}` | DELETE |
+| 동작 | API | DB 작업 |
+|------|-----|---------|
+| 풀 → 배정대기 ("오늘의미션으로") | POST | INSERT (date=NULL) |
+| 배정대기 → 날짜 (드래그) | PATCH | UPDATE (date=값) |
+| 날짜 → 배정대기 (드래그) | PATCH | UPDATE (date=NULL) |
+| 배정대기 → 풀 ("풀로") | DELETE | DELETE |
 
 ### 3. 추천 미션 배정
 

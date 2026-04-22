@@ -181,9 +181,9 @@
                     <div class="stat-sub">4개 타입 × 15개</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-label">배정 대기</div>
-                    <div class="stat-value">3</div>
-                    <div class="stat-sub">PENDING 상태</div>
+                    <div class="stat-label">미배정 미션</div>
+                    <div class="stat-value">173</div>
+                    <div class="stat-sub">선택미션 후보</div>
                 </div>
             </div>
 
@@ -208,11 +208,11 @@
                                 <p>미션풀에 새 미션을 추가하세요</p>
                             </div>
                         </a>
-                        <a href="recommended-mission.html" class="quick-action">
+                        <a href="mission-pool.html" class="quick-action">
                             <div class="quick-action-icon">🤖</div>
                             <div class="quick-action-text">
                                 <h4>AI 미션 생성</h4>
-                                <p>LLM으로 추천 미션을 생성하세요</p>
+                                <p>미션풀에서 AI로 미션을 생성하세요</p>
                             </div>
                         </a>
                     </div>
@@ -220,31 +220,31 @@
 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">미션 상태 현황</h3>
+                        <h3 class="card-title">미션 배정 현황</h3>
                     </div>
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>상태</th>
+                                <th>배정</th>
                                 <th>개수</th>
                                 <th>비율</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td><span class="tag tag-gray">POOL</span></td>
-                                <td>200</td>
-                                <td>80.6%</td>
+                                <td><span class="tag tag-blue">오늘의미션</span></td>
+                                <td>15</td>
+                                <td>6.0%</td>
                             </tr>
                             <tr>
-                                <td><span class="tag tag-yellow">PENDING</span></td>
-                                <td>18</td>
-                                <td>7.3%</td>
+                                <td><span class="tag tag-green">추천미션</span></td>
+                                <td>60</td>
+                                <td>24.2%</td>
                             </tr>
                             <tr>
-                                <td><span class="tag tag-green">ASSIGNED</span></td>
-                                <td>30</td>
-                                <td>12.1%</td>
+                                <td><span class="text-gray">미배정</span></td>
+                                <td>173</td>
+                                <td>69.8%</td>
                             </tr>
                         </tbody>
                     </table>

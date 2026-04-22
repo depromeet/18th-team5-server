@@ -13,8 +13,6 @@
 ```
 {타입}: {제목}
 - 추가 설명 (필요시)
-
-Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ```
 
 ## 허용 타입

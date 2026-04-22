@@ -224,10 +224,10 @@
                 <div class="filter-bar">
                     <input type="text" class="form-input search-input" placeholder="미션 검색...">
                     <select class="form-select filter-select">
-                        <option value="">상태 전체</option>
-                        <option value="POOL">POOL</option>
-                        <option value="PENDING">PENDING</option>
-                        <option value="ASSIGNED">ASSIGNED</option>
+                        <option value="">배정 전체</option>
+                        <option value="DAILY">오늘의미션</option>
+                        <option value="RECOMMENDED">추천미션</option>
+                        <option value="NONE">미배정</option>
                     </select>
                     <select class="form-select filter-select">
                         <option value="">공간 전체</option>
@@ -239,6 +239,11 @@
                         <option value="LIGHT">5분이내</option>
                         <option value="MODERATE">30분이내</option>
                         <option value="ACTIVE">1시간+</option>
+                    </select>
+                    <select class="form-select filter-select">
+                        <option value="">동반 전체</option>
+                        <option value="ALONE">혼자</option>
+                        <option value="TOGETHER">같이</option>
                     </select>
                     <select class="form-select filter-select">
                         <option value="">카테고리 전체</option>
@@ -253,8 +258,8 @@
                 <!-- Bulk Actions -->
                 <div class="bulk-actions">
                     <span class="bulk-actions-label">선택된 미션:</span>
-                    <button class="btn btn-outline btn-sm">📅 오늘의미션 배정대기로</button>
-                    <button class="btn btn-outline btn-sm">⭐ 추천미션으로 이동</button>
+                    <button class="btn btn-outline btn-sm">📅 오늘의미션으로</button>
+                    <button class="btn btn-outline btn-sm">⭐ 추천미션으로</button>
                     <button class="btn btn-outline btn-sm" style="color: #EF4444; border-color: #EF4444;">🗑️ 삭제</button>
                 </div>
 
@@ -268,7 +273,7 @@
                             <th>미션명</th>
                             <th>필터링 태그</th>
                             <th>추천미션 분류</th>
-                            <th>상태</th>
+                            <th>배정</th>
                             <th>생성일</th>
                             <th style="width: 100px;">관리</th>
                         </tr>
@@ -281,12 +286,13 @@
                                 <span class="tag tag-gray">감각</span>
                                 <span class="tag tag-gray">실외</span>
                                 <span class="tag tag-gray">5분이내</span>
+                                <span class="tag tag-gray">혼자</span>
                             </td>
                             <td class="tags-cell">
                                 <span class="tag tag-enjoy">자연/야외</span>
                                 <span class="tag tag-user">자연 탐험가</span>
                             </td>
-                            <td><span class="tag tag-yellow">PENDING</span></td>
+                            <td><span class="tag tag-green">추천미션</span></td>
                             <td class="text-gray text-sm">2026-01-15</td>
                             <td>
                                 <div class="table-actions">
@@ -302,12 +308,13 @@
                                 <span class="tag tag-gray">기록</span>
                                 <span class="tag tag-gray">실내</span>
                                 <span class="tag tag-gray">5분이내</span>
+                                <span class="tag tag-gray">혼자</span>
                             </td>
                             <td class="tags-cell">
                                 <span class="tag tag-enjoy">감성콘텐츠</span>
                                 <span class="tag tag-user">일상 관찰자</span>
                             </td>
-                            <td><span class="tag tag-yellow">PENDING</span></td>
+                            <td><span class="tag tag-green">추천미션</span></td>
                             <td class="text-gray text-sm">2026-01-15</td>
                             <td>
                                 <div class="table-actions">
@@ -323,11 +330,12 @@
                                 <span class="tag tag-gray">장소</span>
                                 <span class="tag tag-gray">실내</span>
                                 <span class="tag tag-gray">30분이내</span>
+                                <span class="tag tag-gray">혼자</span>
                             </td>
                             <td class="tags-cell">
                                 <span class="text-gray text-sm">-</span>
                             </td>
-                            <td><span class="tag tag-green">ASSIGNED</span></td>
+                            <td><span class="tag tag-blue">오늘의미션</span></td>
                             <td class="text-gray text-sm">2026-01-14</td>
                             <td>
                                 <div class="table-actions">
@@ -343,12 +351,13 @@
                                 <span class="tag tag-gray">음식</span>
                                 <span class="tag tag-gray">실내</span>
                                 <span class="tag tag-gray">1시간+</span>
+                                <span class="tag tag-gray">같이</span>
                             </td>
                             <td class="tags-cell">
                                 <span class="tag tag-enjoy">제철음식</span>
                                 <span class="tag tag-user">제철 미식가</span>
                             </td>
-                            <td><span class="tag tag-green">ASSIGNED</span></td>
+                            <td><span class="tag tag-blue">오늘의미션</span></td>
                             <td class="text-gray text-sm">2026-01-14</td>
                             <td>
                                 <div class="table-actions">
@@ -364,11 +373,12 @@
                                 <span class="tag tag-gray">음식</span>
                                 <span class="tag tag-gray">실외</span>
                                 <span class="tag tag-gray">30분이내</span>
+                                <span class="tag tag-gray">혼자</span>
                             </td>
                             <td class="tags-cell">
                                 <span class="text-gray text-sm">-</span>
                             </td>
-                            <td><span class="tag tag-gray">POOL</span></td>
+                            <td><span class="text-gray text-sm">미배정</span></td>
                             <td class="text-gray text-sm">2026-01-13</td>
                             <td>
                                 <div class="table-actions">

@@ -69,6 +69,24 @@ public class Mission {
 }
 ```
 
+### Soft Delete를 사용하는 이유
+
+**사용자 완료 기록이 Mission을 참조하기 때문**
+
+```
+사용자가 미션 완료 → 완료 기록: mission_id=123
+    ↓
+Admin이 해당 미션 삭제
+    ↓
+Hard Delete 시 → 완료 기록에서 미션 정보 참조 불가 ❌
+Soft Delete 시 → 완료 기록에서 미션 정보 정상 조회 ✅
+```
+
+- 삭제된 미션도 "내가 완료한 미션" 목록에서 정보 표시 가능
+- 필요 시 삭제된 미션 복구 가능
+- 미션풀 조회 시 `WHERE deleted = false` 조건 필요
+```
+
 ---
 
 ## DailyMission 엔티티 필드

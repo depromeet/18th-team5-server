@@ -222,6 +222,30 @@
             color: var(--gray-400);
             font-size: 13px;
         }
+
+        .back-to-pool-btn {
+            padding: 4px 8px;
+            background: none;
+            border: 1px solid var(--gray-300);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            color: var(--gray-500);
+            white-space: nowrap;
+        }
+
+        .back-to-pool-btn:hover {
+            background: #FEE2E2;
+            border-color: #EF4444;
+            color: #EF4444;
+        }
+
+        .mission-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -291,9 +315,12 @@
                     </p>
 
                     <div class="mission-card" draggable="true">
-                        <div class="mission-card-title">
-                            <span class="drag-handle">⋮⋮</span>
-                            봄의 첫 소리 찾기
+                        <div class="mission-card-header">
+                            <div class="mission-card-title">
+                                <span class="drag-handle">⋮⋮</span>
+                                봄의 첫 소리 찾기
+                            </div>
+                            <button class="back-to-pool-btn" title="미션풀로 되돌리기">풀로</button>
                         </div>
                         <div class="mission-card-tags">
                             <span class="tag tag-gray">감각</span>
@@ -304,9 +331,12 @@
                     </div>
 
                     <div class="mission-card" draggable="true">
-                        <div class="mission-card-title">
-                            <span class="drag-handle">⋮⋮</span>
-                            새해 다짐, 입춘에 다시 시작하기
+                        <div class="mission-card-header">
+                            <div class="mission-card-title">
+                                <span class="drag-handle">⋮⋮</span>
+                                새해 다짐, 입춘에 다시 시작하기
+                            </div>
+                            <button class="back-to-pool-btn" title="미션풀로 되돌리기">풀로</button>
                         </div>
                         <div class="mission-card-tags">
                             <span class="tag tag-gray">기록</span>
@@ -317,9 +347,12 @@
                     </div>
 
                     <div class="mission-card" draggable="true">
-                        <div class="mission-card-title">
-                            <span class="drag-handle">⋮⋮</span>
-                            겨우내 묶은 먼지 털어내기
+                        <div class="mission-card-header">
+                            <div class="mission-card-title">
+                                <span class="drag-handle">⋮⋮</span>
+                                겨우내 묶은 먼지 털어내기
+                            </div>
+                            <button class="back-to-pool-btn" title="미션풀로 되돌리기">풀로</button>
                         </div>
                         <div class="mission-card-tags">
                             <span class="tag tag-gray">장소</span>
@@ -378,7 +411,7 @@
                                         <span class="tag tag-gray">혼자</span>
                                     </div>
                                 </div>
-                                <button class="remove-btn">✕</button>
+                                <button class="back-to-pool-btn" title="미션풀로 되돌리기">풀로</button>
                             </div>
                         </div>
                     </div>
@@ -400,7 +433,7 @@
                                         <span class="tag tag-gray">같이</span>
                                     </div>
                                 </div>
-                                <button class="remove-btn">✕</button>
+                                <button class="back-to-pool-btn" title="미션풀로 되돌리기">풀로</button>
                             </div>
                         </div>
                     </div>
@@ -422,7 +455,7 @@
                                         <span class="tag tag-gray">같이</span>
                                     </div>
                                 </div>
-                                <button class="remove-btn">✕</button>
+                                <button class="back-to-pool-btn" title="미션풀로 되돌리기">풀로</button>
                             </div>
                         </div>
                     </div>
@@ -444,7 +477,7 @@
                                         <span class="tag tag-gray">혼자</span>
                                     </div>
                                 </div>
-                                <button class="remove-btn">✕</button>
+                                <button class="back-to-pool-btn" title="미션풀로 되돌리기">풀로</button>
                             </div>
                         </div>
                     </div>

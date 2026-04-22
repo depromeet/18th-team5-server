@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오늘의 미션 - PeekTime Admin</title>
+    <link rel="stylesheet" href="common.css">
+    <style>
+        .header-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .drag-drop-container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        /* 배정 대기 패널 */
+        .pending-panel {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            padding: 20px;
+            height: fit-content;
+            position: sticky;
+            top: 32px;
+        }
+
+        .pending-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .pending-header h3 {
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        .pending-count {
+            background: var(--gray-100);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .mission-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+
+        .mission-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+        }
+
+        .mission-card:active {
+            cursor: grabbing;
+        }
+
+        .mission-card .drag-handle {
+            color: var(--gray-300);
+            margin-right: 8px;
+        }
+
+        .mission-card-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+        }
+
+        .mission-card-tags {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* 스케줄 보드 */
+        .schedule-board {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            padding: 24px;
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .schedule-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .schedule-title h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .schedule-date {
+            color: var(--gray-500);
+            font-size: 13px;
+        }
+
+        /* 날짜 슬롯 */
+        .date-slot {
+            display: flex;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .date-slot:last-child {
+            border-bottom: none;
+        }
+
+        .date-info {
+            width: 60px;
+            text-align: right;
+            padding-top: 10px;
+        }
+
+        .date-day {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .date-weekday {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .date-slot.weekend .date-day,
+        .date-slot.weekend .date-weekday {
+            color: var(--weekend);
+        }
+
+        .slot-area {
+            flex: 1;
+            min-height: 60px;
+            border: 2px dashed var(--gray-200);
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .slot-area:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .slot-area.has-mission {
+            border-style: solid;
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .slot-area.weekend.has-mission {
+            border-color: var(--weekend);
+        }
+
+        .slot-mission {
+            flex: 1;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slot-mission .drag-handle {
+            color: var(--gray-300);
+        }
+
+        .slot-mission-content {
+            flex: 1;
+        }
+
+        .slot-mission-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .slot-mission-tags {
+            display: flex;
+            gap: 4px;
+        }
+
+        .remove-btn {
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 16px;
+        }
+
+        .remove-btn:hover {
+            color: #EF4444;
+        }
+
+        .empty-slot {
+            width: 100%;
+            text-align: center;
+            color: var(--gray-400);
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">🌿 peektime admin</div>
+            <nav>
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    대시보드
+                </a>
+                <a href="mission-pool.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    미션 풀 관리
+                </a>
+                <a href="daily-mission.html" class="nav-item active">
+                    <span class="nav-icon">📅</span>
+                    오늘의 미션
+                </a>
+                <a href="recommended-mission.html" class="nav-item">
+                    <span class="nav-icon">⭐</span>
+                    추천 미션
+                </a>
+                <a href="selected-mission.html" class="nav-item">
+                    <span class="nav-icon">✓</span>
+                    선택 미션
+                </a>
+                <a href="settings.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    설정
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="page-header flex-between">
+                <div>
+                    <div class="breadcrumb">오늘의 미션</div>
+                    <h1 class="page-title">일자별 미션 드래그 앤 드롭</h1>
+                    <p class="page-description">연도와 절기를 선택하고 미션을 날짜로 끌어다 놓아 스케줄을 완성하세요.</p>
+                </div>
+                <div class="header-controls">
+                    <select class="form-select" style="width: 100px;">
+                        <option>2026</option>
+                        <option>2025</option>
+                    </select>
+                    <select class="form-select" style="width: 120px; background: var(--primary-light); border-color: var(--primary); color: var(--primary);">
+                        <option>입춘</option>
+                        <option>우수</option>
+                        <option>경칩</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="drag-drop-container">
+                <!-- 배정 대기 패널 -->
+                <div class="pending-panel">
+                    <div class="pending-header">
+                        <span style="color: var(--gray-400);">입춘</span>
+                        <h3>배정 대기</h3>
+                        <span class="pending-count">3</span>
+                    </div>
+
+                    <div class="mission-card" draggable="true">
+                        <div class="mission-card-title">
+                            <span class="drag-handle">⋮⋮</span>
+                            봄의 첫 소리 찾기
+                        </div>
+                        <div class="mission-card-tags">
+                            <span class="tag tag-gray">감각</span>
+                            <span class="tag tag-gray">실외/가벼운</span>
+                        </div>
+                    </div>
+
+                    <div class="mission-card" draggable="true">
+                        <div class="mission-card-title">
+                            <span class="drag-handle">⋮⋮</span>
+                            새해 다짐, 입춘에 다시 시작하기
+                        </div>
+                        <div class="mission-card-tags">
+                            <span class="tag tag-gray">기록</span>
+                            <span class="tag tag-gray">실내/가벼운</span>
+                        </div>
+                    </div>
+
+                    <div class="mission-card" draggable="true">
+                        <div class="mission-card-title">
+                            <span class="drag-handle">⋮⋮</span>
+                            겨우내 묶은 먼지 털어내기
+                        </div>
+                        <div class="mission-card-tags">
+                            <span class="tag tag-gray">장소</span>
+                            <span class="tag tag-gray">실내/보통</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 스케줄 보드 -->
+                <div class="schedule-board">
+                    <div class="schedule-header">
+                        <div class="schedule-title">
+                            <span>📅</span>
+                            <h3>2026년 입춘 스케줄 보드</h3>
+                        </div>
+                        <span class="schedule-date">2026-02-04 ~ 2026-02-18</span>
+                    </div>
+
+                    <!-- 날짜 슬롯들 -->
+                    <div class="date-slot">
+                        <div class="date-info">
+                            <div class="date-day">2.4</div>
+                            <div class="date-weekday">수요일</div>
+                        </div>
+                        <div class="slot-area">
+                            <div class="empty-slot">미션을 여기에 드래그하세요</div>
+                        </div>
+                    </div>
+
+                    <div class="date-slot">
+                        <div class="date-info">
+                            <div class="date-day">2.5</div>
+                            <div class="date-weekday">목요일</div>
+                        </div>
+                        <div class="slot-area">
+                            <div class="empty-slot">미션을 여기에 드래그하세요</div>
+                        </div>
+                    </div>
+
+                    <div class="date-slot">
+                        <div class="date-info">
+                            <div class="date-day">2.6</div>
+                            <div class="date-weekday">금요일</div>
+                        </div>
+                        <div class="slot-area has-mission">
+                            <div class="slot-mission">
+                                <span class="drag-handle">⋮⋮</span>
+                                <div class="slot-mission-content">
+                                    <div class="slot-mission-title">새봄맞이 공간 정리하기</div>
+                                    <div class="slot-mission-tags">
+                                        <span class="tag tag-gray">장소</span>
+                                        <span class="tag tag-gray">실내/보통</span>
+                                    </div>
+                                </div>
+                                <button class="remove-btn">✕</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="date-slot weekend">
+                        <div class="date-info">
+                            <div class="date-day">2.7</div>
+                            <div class="date-weekday">토요일</div>
+                        </div>
+                        <div class="slot-area weekend has-mission">
+                            <div class="slot-mission">
+                                <span class="drag-handle">⋮⋮</span>
+                                <div class="slot-mission-content">
+                                    <div class="slot-mission-title">봄나물 '달래'로 입맛 돋우기</div>
+                                    <div class="slot-mission-tags">
+                                        <span class="tag tag-gray">음식</span>
+                                        <span class="tag tag-gray">실내/적극적</span>
+                                    </div>
+                                </div>
+                                <button class="remove-btn">✕</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="date-slot weekend">
+                        <div class="date-info">
+                            <div class="date-day">2.8</div>
+                            <div class="date-weekday">일요일</div>
+                        </div>
+                        <div class="slot-area weekend has-mission">
+                            <div class="slot-mission">
+                                <span class="drag-handle">⋮⋮</span>
+                                <div class="slot-mission-content">
+                                    <div class="slot-mission-title">봄나물로 차리는 입춘 밥상</div>
+                                    <div class="slot-mission-tags">
+                                        <span class="tag tag-gray">음식</span>
+                                        <span class="tag tag-gray">실내/보통</span>
+                                    </div>
+                                </div>
+                                <button class="remove-btn">✕</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="date-slot">
+                        <div class="date-info">
+                            <div class="date-day">2.9</div>
+                            <div class="date-weekday">월요일</div>
+                        </div>
+                        <div class="slot-area has-mission">
+                            <div class="slot-mission">
+                                <span class="drag-handle">⋮⋮</span>
+                                <div class="slot-mission-content">
+                                    <div class="slot-mission-title">봄을 맞는 창문 닦기</div>
+                                    <div class="slot-mission-tags">
+                                        <span class="tag tag-gray">장소</span>
+                                        <span class="tag tag-gray">실내/보통</span>
+                                    </div>
+                                </div>
+                                <button class="remove-btn">✕</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="date-slot">
+                        <div class="date-info">
+                            <div class="date-day">2.10</div>
+                            <div class="date-weekday">화요일</div>
+                        </div>
+                        <div class="slot-area">
+                            <div class="empty-slot">미션을 여기에 드래그하세요</div>
+                        </div>
+                    </div>
+
+                    <div class="date-slot">
+                        <div class="date-info">
+                            <div class="date-day">2.11</div>
+                            <div class="date-weekday">수요일</div>
+                        </div>
+                        <div class="slot-area">
+                            <div class="empty-slot">미션을 여기에 드래그하세요</div>
+                        </div>
+                    </div>
+
+                    <!-- 더 많은 날짜들... -->
+                    <div style="text-align: center; padding: 16px; color: var(--gray-400); font-size: 13px;">
+                        ... 2.18 (화요일)까지 총 15일
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

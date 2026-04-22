@@ -6,8 +6,10 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum MissionType {
-    DAILY("오늘의 미션"),
-    RECOMMENDED("추천 미션");
+    DAILY("오늘의 미션", "모든 사용자에게 동일하게 제공되는 미션"),
+    RECOMMENDED("추천 미션", "사용자 타입별로 제공되는 맞춤 미션"),
+    SELECTED("선택 미션", "사용자가 직접 필터링해서 선택하는 미션");
 
+    private final String label;
     private final String description;
 }

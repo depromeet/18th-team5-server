@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>대시보드 - PeekTime Admin</title>
+    <link rel="stylesheet" href="common.css">
+    <style>
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            padding: 24px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+
+        .stat-value.primary {
+            color: var(--primary);
+        }
+
+        .stat-sub {
+            font-size: 13px;
+            color: var(--gray-400);
+            margin-top: 4px;
+        }
+
+        .current-term {
+            background: linear-gradient(135deg, var(--primary) 0%, #059669 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+        }
+
+        .current-term h2 {
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .current-term .term-name {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .current-term .term-date {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--gray-50);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--gray-700);
+            transition: all 0.2s;
+        }
+
+        .quick-action:hover {
+            background: var(--gray-100);
+        }
+
+        .quick-action-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .quick-action-text h4 {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .quick-action-text p {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">🌿 peektime admin</div>
+            <nav>
+                <a href="dashboard.html" class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    대시보드
+                </a>
+                <a href="mission-pool.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    미션 풀 관리
+                </a>
+                <a href="daily-mission.html" class="nav-item">
+                    <span class="nav-icon">📅</span>
+                    오늘의 미션
+                </a>
+                <a href="recommended-mission.html" class="nav-item">
+                    <span class="nav-icon">⭐</span>
+                    추천 미션
+                </a>
+                <a href="selected-mission.html" class="nav-item">
+                    <span class="nav-icon">✓</span>
+                    선택 미션
+                </a>
+                <a href="settings.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    설정
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="page-header">
+                <h1 class="page-title">대시보드</h1>
+                <p class="page-description">PeekTime 서비스 현황을 한눈에 확인하세요</p>
+            </div>
+
+            <!-- Current Solar Term -->
+            <div class="current-term">
+                <h2>현재 절기</h2>
+                <div class="term-name">🌸 입춘 (立春)</div>
+                <div class="term-date">2026년 2월 4일 ~ 2월 18일 · D-12</div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid-4 mb-24">
+                <div class="stat-card">
+                    <div class="stat-label">전체 미션</div>
+                    <div class="stat-value">248</div>
+                    <div class="stat-sub">미션풀 전체</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">오늘의 미션 배정</div>
+                    <div class="stat-value primary">12/15</div>
+                    <div class="stat-sub">입춘 기준</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 80%"></div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">추천 미션</div>
+                    <div class="stat-value">60</div>
+                    <div class="stat-sub">4개 타입 × 15개</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">미배정 미션</div>
+                    <div class="stat-value">173</div>
+                    <div class="stat-sub">선택미션 후보</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions & Recent Activity -->
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">빠른 작업</h3>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <a href="daily-mission.html" class="quick-action">
+                            <div class="quick-action-icon">📅</div>
+                            <div class="quick-action-text">
+                                <h4>오늘의 미션 배정하기</h4>
+                                <p>입춘 스케줄에 미션을 배정하세요</p>
+                            </div>
+                        </a>
+                        <a href="mission-pool.html" class="quick-action">
+                            <div class="quick-action-icon">➕</div>
+                            <div class="quick-action-text">
+                                <h4>새 미션 등록</h4>
+                                <p>미션풀에 새 미션을 추가하세요</p>
+                            </div>
+                        </a>
+                        <a href="mission-pool.html" class="quick-action">
+                            <div class="quick-action-icon">🤖</div>
+                            <div class="quick-action-text">
+                                <h4>AI 미션 생성</h4>
+                                <p>미션풀에서 AI로 미션을 생성하세요</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">미션 배정 현황</h3>
+                    </div>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>배정</th>
+                                <th>개수</th>
+                                <th>비율</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="tag tag-blue">오늘의미션</span></td>
+                                <td>15</td>
+                                <td>6.0%</td>
+                            </tr>
+                            <tr>
+                                <td><span class="tag tag-green">추천미션</span></td>
+                                <td>60</td>
+                                <td>24.2%</td>
+                            </tr>
+                            <tr>
+                                <td><span class="text-gray">미배정</span></td>
+                                <td>173</td>
+                                <td>69.8%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -36,21 +36,12 @@ public class SolarTerm extends BaseEntity {
     @Column(name = "solar_year", nullable = false)
     private Integer year;
 
-    @Column(name = "seasonal_foods", columnDefinition = "TEXT")
-    private String seasonalFoods;
-
-    @Column(name = "recommended_activities", columnDefinition = "TEXT")
-    private String recommendedActivities;
-
     @Builder
-    public SolarTerm(String name, String description, LocalDate startDate, LocalDate endDate,
-                     Integer year, String seasonalFoods, String recommendedActivities) {
+    public SolarTerm(String name, String description, LocalDate startDate, LocalDate endDate, Integer year) {
         this.name = name;
         this.description = description;
         this.startDate = startDate;
         this.endDate = endDate;
         this.year = year;
-        this.seasonalFoods = seasonalFoods;
-        this.recommendedActivities = recommendedActivities;
     }
 }

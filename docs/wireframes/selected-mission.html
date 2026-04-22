@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>선택 미션 - PeekTime Admin</title>
+    <link rel="stylesheet" href="common.css">
+    <style>
+        .info-banner {
+            background: #FEF3C7;
+            border: 1px solid #F59E0B;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .info-banner-icon {
+            font-size: 20px;
+        }
+
+        .info-banner-content h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #92400E;
+            margin-bottom: 4px;
+        }
+
+        .info-banner-content p {
+            font-size: 13px;
+            color: #B45309;
+        }
+
+        .filter-panel {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .filter-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-groups {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .filter-group {
+            min-width: 180px;
+        }
+
+        .filter-group-label {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-chip {
+            padding: 6px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--primary);
+        }
+
+        .filter-chip.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .results-count {
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        .results-count strong {
+            color: var(--primary);
+        }
+
+        .mission-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .mission-card-selectable {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+
+        .mission-card-selectable:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
+        }
+
+        .mission-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .mission-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .mission-card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .mission-card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--gray-400);
+        }
+
+        .excluded-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background: #FEE2E2;
+            color: #DC2626;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">🌿 peektime admin</div>
+            <nav>
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    대시보드
+                </a>
+                <a href="mission-pool.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    미션 풀 관리
+                </a>
+                <a href="daily-mission.html" class="nav-item">
+                    <span class="nav-icon">📅</span>
+                    오늘의 미션
+                </a>
+                <a href="recommended-mission.html" class="nav-item">
+                    <span class="nav-icon">⭐</span>
+                    추천 미션
+                </a>
+                <a href="selected-mission.html" class="nav-item active">
+                    <span class="nav-icon">✓</span>
+                    선택 미션
+                </a>
+                <a href="settings.html" class="nav-item">
+                    <span class="nav-icon">⚙️</span>
+                    설정
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="page-header">
+                <div class="breadcrumb">선택 미션</div>
+                <h1 class="page-title">선택 미션 미리보기</h1>
+                <p class="page-description">사용자가 필터링으로 선택할 수 있는 미션 목록을 미리 확인하세요</p>
+            </div>
+
+            <!-- 안내 배너 -->
+            <div class="info-banner">
+                <span class="info-banner-icon">💡</span>
+                <div class="info-banner-content">
+                    <h4>선택 미션이란?</h4>
+                    <p>오늘의 미션, 추천 미션에 포함되지 않은 미션풀의 미션들입니다. 사용자는 태그 필터링을 통해 원하는 미션을 직접 선택할 수 있습니다.</p>
+                </div>
+            </div>
+
+            <!-- 필터 패널 -->
+            <div class="filter-panel">
+                <div class="filter-title">
+                    🔍 필터링 시뮬레이션
+                </div>
+                <div class="filter-groups">
+                    <div class="filter-group">
+                        <div class="filter-group-label">공간</div>
+                        <div class="filter-chips">
+                            <button class="filter-chip active">전체</button>
+                            <button class="filter-chip">실내</button>
+                            <button class="filter-chip">실외</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-group-label">강도</div>
+                        <div class="filter-chips">
+                            <button class="filter-chip active">전체</button>
+                            <button class="filter-chip">5분이내</button>
+                            <button class="filter-chip">30분이내</button>
+                            <button class="filter-chip">1시간+</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-group-label">동반</div>
+                        <div class="filter-chips">
+                            <button class="filter-chip active">전체</button>
+                            <button class="filter-chip">혼자</button>
+                            <button class="filter-chip">같이</button>
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-group-label">카테고리</div>
+                        <div class="filter-chips">
+                            <button class="filter-chip active">전체</button>
+                            <button class="filter-chip">음식</button>
+                            <button class="filter-chip">자연</button>
+                            <button class="filter-chip">기록</button>
+                            <button class="filter-chip">장소</button>
+                            <button class="filter-chip">감각</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 결과 -->
+            <div class="card">
+                <div class="results-header">
+                    <div class="results-count">
+                        선택 가능한 미션 <strong>156개</strong>
+                        <span style="color: var(--gray-400); margin-left: 8px;">
+                            (전체 248개 중 오늘의미션 15개 + 추천미션 60개 + 배정대기 17개 제외)
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mission-grid">
+                    <div class="mission-card-selectable">
+                        <div class="mission-card-header">
+                            <div class="mission-card-title">동네 카페에서 계절 음료 마시기</div>
+                        </div>
+                        <div class="mission-card-tags">
+                            <span class="tag tag-gray">음식</span>
+                            <span class="tag tag-gray">실외</span>
+                            <span class="tag tag-gray">5분이내</span>
+                            <span class="tag tag-gray">혼자</span>
+                        </div>
+                        <div class="mission-card-meta">
+                            <span>POOL</span>
+                            <span>2026-01-13 등록</span>
+                        </div>
+                    </div>
+
+                    <div class="mission-card-selectable">
+                        <div class="mission-card-header">
+                            <div class="mission-card-title">아침 햇살 받으며 스트레칭하기</div>
+                        </div>
+                        <div class="mission-card-tags">
+                            <span class="tag tag-gray">감각</span>
+                            <span class="tag tag-gray">실내</span>
+                            <span class="tag tag-gray">5분이내</span>
+                            <span class="tag tag-gray">혼자</span>
+                        </div>
+                        <div class="mission-card-meta">
+                            <span>POOL</span>
+                            <span>2026-01-12 등록</span>
+                        </div>
+                    </div>
+
+                    <div class="mission-card-selectable">
+                        <div class="mission-card-header">
+                            <div class="mission-card-title">근처 꽃집에서 봄꽃 한 송이 사오기</div>
+                        </div>
+                        <div class="mission-card-tags">
+                            <span class="tag tag-gray">자연</span>
+                            <span class="tag tag-gray">실외</span>
+                            <span class="tag tag-gray">30분이내</span>
+                            <span class="tag tag-gray">혼자</span>
+                        </div>
+                        <div class="mission-card-meta">
+                            <span>POOL</span>
+                            <span>2026-01-11 등록</span>
+                        </div>
+                    </div>
+
+                    <div class="mission-card-selectable">
+                        <div class="mission-card-header">
+                            <div class="mission-card-title">봄맞이 옷장 정리하기</div>
+                        </div>
+                        <div class="mission-card-tags">
+                            <span class="tag tag-gray">장소</span>
+                            <span class="tag tag-gray">실내</span>
+                            <span class="tag tag-gray">1시간+</span>
+                            <span class="tag tag-gray">혼자</span>
+                        </div>
+                        <div class="mission-card-meta">
+                            <span>POOL</span>
+                            <span>2026-01-10 등록</span>
+                        </div>
+                    </div>
+
+                    <div class="mission-card-selectable">
+                        <div class="mission-card-header">
+                            <div class="mission-card-title">가족과 함께 봄나물 캐러 가기</div>
+                        </div>
+                        <div class="mission-card-tags">
+                            <span class="tag tag-gray">자연</span>
+                            <span class="tag tag-gray">실외</span>
+                            <span class="tag tag-gray">1시간+</span>
+                            <span class="tag tag-blue">같이</span>
+                        </div>
+                        <div class="mission-card-meta">
+                            <span>POOL</span>
+                            <span>2026-01-09 등록</span>
+                        </div>
+                    </div>
+
+                    <div class="mission-card-selectable">
+                        <div class="mission-card-header">
+                            <div class="mission-card-title">봄 향기 나는 차 한 잔 우려 마시기</div>
+                        </div>
+                        <div class="mission-card-tags">
+                            <span class="tag tag-gray">음식</span>
+                            <span class="tag tag-gray">실내</span>
+                            <span class="tag tag-gray">5분이내</span>
+                            <span class="tag tag-gray">혼자</span>
+                        </div>
+                        <div class="mission-card-meta">
+                            <span>POOL</span>
+                            <span>2026-01-08 등록</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div style="display: flex; justify-content: center; margin-top: 24px; gap: 8px;">
+                    <button class="btn btn-outline">◀</button>
+                    <button class="btn btn-primary">1</button>
+                    <button class="btn btn-outline">2</button>
+                    <button class="btn btn-outline">3</button>
+                    <button class="btn btn-outline">...</button>
+                    <button class="btn btn-outline">▶</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 필터 칩 토글 (데모용)
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', function() {
+                const siblings = this.parentElement.querySelectorAll('.filter-chip');
+                siblings.forEach(s => s.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

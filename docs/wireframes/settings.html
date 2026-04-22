@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>설정 - PeekTime Admin</title>
+    <link rel="stylesheet" href="common.css">
+    <style>
+        .settings-section {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            margin-bottom: 24px;
+        }
+
+        .settings-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .settings-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .settings-header p {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .settings-body {
+            padding: 24px;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .settings-row:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            flex: 1;
+        }
+
+        .settings-label h4 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .settings-label p {
+            font-size: 13px;
+            color: var(--gray-500);
+        }
+
+        .settings-control {
+            min-width: 200px;
+        }
+
+        /* 절기 테이블 */
+        .solar-term-table {
+            width: 100%;
+        }
+
+        .solar-term-table th {
+            text-align: left;
+            padding: 12px 16px;
+            background: var(--gray-50);
+            font-weight: 500;
+            font-size: 13px;
+            color: var(--gray-600);
+        }
+
+        .solar-term-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .term-name {
+            font-weight: 500;
+        }
+
+        .term-icon {
+            margin-right: 8px;
+        }
+
+        .current-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        /* Toggle Switch */
+        .toggle {
+            position: relative;
+            width: 48px;
+            height: 24px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--gray-300);
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        .toggle input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+
+        .toggle input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        .api-key-input {
+            display: flex;
+            gap: 12px;
+        }
+
+        .api-key-input input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">🌿 peektime admin</div>
+            <nav>
+                <a href="dashboard.html" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    대시보드
+                </a>
+                <a href="mission-pool.html" class="nav-item">
+                    <span class="nav-icon">📋</span>
+                    미션 풀 관리
+                </a>
+                <a href="daily-mission.html" class="nav-item">
+                    <span class="nav-icon">📅</span>
+                    오늘의 미션
+                </a>
+                <a href="recommended-mission.html" class="nav-item">
+                    <span class="nav-icon">⭐</span>
+                    추천 미션
+                </a>
+                <a href="selected-mission.html" class="nav-item">
+                    <span class="nav-icon">✓</span>
+                    선택 미션
+                </a>
+                <a href="settings.html" class="nav-item active">
+                    <span class="nav-icon">⚙️</span>
+                    설정
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="page-header">
+                <div class="breadcrumb">설정</div>
+                <h1 class="page-title">시스템 설정</h1>
+                <p class="page-description">PeekTime Admin 시스템 설정을 관리합니다</p>
+            </div>
+
+            <!-- 절기 관리 -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h3>📅 절기 관리</h3>
+                    <p>24절기 정보를 확인하고 관리합니다</p>
+                </div>
+                <div class="settings-body" style="padding: 0;">
+                    <table class="solar-term-table">
+                        <thead>
+                            <tr>
+                                <th>절기</th>
+                                <th>시작일</th>
+                                <th>종료일</th>
+                                <th>오늘의 미션</th>
+                                <th>추천 미션</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="term-name">
+                                    <span class="term-icon">🌸</span>
+                                    입춘 (立春)
+                                    <span class="current-badge">현재</span>
+                                </td>
+                                <td>2026-02-04</td>
+                                <td>2026-02-18</td>
+                                <td><span class="tag tag-green">12/15</span></td>
+                                <td><span class="tag tag-green">60/60</span></td>
+                            </tr>
+                            <tr>
+                                <td class="term-name">
+                                    <span class="term-icon">💧</span>
+                                    우수 (雨水)
+                                </td>
+                                <td>2026-02-19</td>
+                                <td>2026-03-05</td>
+                                <td><span class="tag tag-yellow">0/15</span></td>
+                                <td><span class="tag tag-yellow">0/60</span></td>
+                            </tr>
+                            <tr>
+                                <td class="term-name">
+                                    <span class="term-icon">🐛</span>
+                                    경칩 (驚蟄)
+                                </td>
+                                <td>2026-03-06</td>
+                                <td>2026-03-20</td>
+                                <td><span class="tag tag-gray">0/15</span></td>
+                                <td><span class="tag tag-gray">0/60</span></td>
+                            </tr>
+                            <tr>
+                                <td class="term-name">
+                                    <span class="term-icon">🌷</span>
+                                    춘분 (春分)
+                                </td>
+                                <td>2026-03-21</td>
+                                <td>2026-04-04</td>
+                                <td><span class="tag tag-gray">0/15</span></td>
+                                <td><span class="tag tag-gray">0/60</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- AI 설정 -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h3>🤖 AI 미션 생성 설정</h3>
+                    <p>LLM API 연동 및 프롬프트 설정</p>
+                </div>
+                <div class="settings-body">
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <h4>OpenAI API Key</h4>
+                            <p>GPT-4 모델을 사용하여 미션을 생성합니다</p>
+                        </div>
+                        <div class="settings-control api-key-input">
+                            <input type="password" class="form-input" value="sk-••••••••••••••••" style="max-width: 300px;">
+                            <button class="btn btn-outline">변경</button>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <h4>자동 미션 생성</h4>
+                            <p>새 절기 시작 시 자동으로 AI 미션을 생성합니다</p>
+                        </div>
+                        <div class="settings-control">
+                            <label class="toggle">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <h4>미션 검수 필요</h4>
+                            <p>AI가 생성한 미션을 자동 배포하지 않고 검수 대기 상태로 유지합니다</p>
+                        </div>
+                        <div class="settings-control">
+                            <label class="toggle">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 알림 설정 -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h3>🔔 알림 설정</h3>
+                    <p>관리자 알림 설정</p>
+                </div>
+                <div class="settings-body">
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <h4>이메일 알림</h4>
+                            <p>새 절기 시작, 미션 배정 미완료 시 이메일 알림</p>
+                        </div>
+                        <div class="settings-control">
+                            <label class="toggle">
+                                <input type="checkbox" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <h4>알림 수신 이메일</h4>
+                            <p>알림을 받을 이메일 주소</p>
+                        </div>
+                        <div class="settings-control">
+                            <input type="email" class="form-input" value="admin@peektime.com" style="max-width: 250px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 계정 설정 -->
+            <div class="settings-section">
+                <div class="settings-header">
+                    <h3>👤 계정 설정</h3>
+                    <p>관리자 계정 정보</p>
+                </div>
+                <div class="settings-body">
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <h4>비밀번호 변경</h4>
+                            <p>마지막 변경: 2026-01-15</p>
+                        </div>
+                        <div class="settings-control">
+                            <button class="btn btn-outline">비밀번호 변경</button>
+                        </div>
+                    </div>
+                    <div class="settings-row">
+                        <div class="settings-label">
+                            <h4>로그아웃</h4>
+                            <p>현재 세션을 종료합니다</p>
+                        </div>
+                        <div class="settings-control">
+                            <button class="btn btn-secondary">로그아웃</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

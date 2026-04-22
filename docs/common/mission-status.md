@@ -114,13 +114,15 @@ Mission 테이블에 저장 (모든 태그 포함)
 
 ### 2. 오늘의 미션 배정
 
-**Step 1: 배정대기로 이동**
+**Step 1: 배정대기로 이동 (INSERT)**
 ```
 미션풀 관리 페이지
     ↓
 미션 선택 → "오늘의미션으로" 클릭
     ↓
-DailyMission 테이블에 저장 (date = NULL)
+API 호출: POST /admin/daily-missions
+    ↓
+DailyMission 테이블에 INSERT (date = NULL)
     ↓
 오늘의 미션 페이지 "배정대기" 목록에 표시
 ```
@@ -155,6 +157,13 @@ DailyMission 레코드 삭제
 ```
 
 > **중요**: 날짜에 배정된 미션을 풀로 보내려면, 먼저 배정대기로 드래그한 후 "풀로" 버튼 클릭
+
+**API 요약**
+| 동작 | HTTP | Endpoint | DB |
+|------|------|----------|-----|
+| 풀 → 배정대기 | `POST` | `/admin/daily-missions` | INSERT |
+| 배정대기 ↔ 날짜 | `PATCH` | `/admin/daily-missions/{id}` | UPDATE |
+| 배정대기 → 풀 | `DELETE` | `/admin/daily-missions/{id}` | DELETE |
 
 ### 3. 추천 미션 배정
 

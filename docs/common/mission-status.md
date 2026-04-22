@@ -125,18 +125,36 @@ DailyMission 테이블에 저장 (date = NULL)
 오늘의 미션 페이지 "배정대기" 목록에 표시
 ```
 
-**Step 2: 날짜에 배정**
+**Step 2: 날짜에 배정 (드래그앤드롭)**
 ```
-오늘의 미션 페이지 진입
+배정대기에서 미션 드래그 → 날짜 슬롯에 드롭
     ↓
-절기 선택 (예: 입춘)
-    ↓
-배정대기 목록에서 미션 드래그
-    ↓
-날짜 슬롯에 드롭
+즉시 API 호출: PATCH /admin/daily-missions/{id}
     ↓
 DailyMission.date 업데이트 (NULL → 실제 날짜)
 ```
+
+**Step 3: 배정 해제 (드래그앤드롭)**
+```
+날짜 슬롯에서 미션 드래그 → 배정대기 패널에 드롭
+    ↓
+즉시 API 호출: PATCH /admin/daily-missions/{id}
+    ↓
+DailyMission.date 업데이트 (실제 날짜 → NULL)
+```
+
+**Step 4: 풀로 이동 (배정대기에서만 가능)**
+```
+배정대기 패널에서 "풀로" 버튼 클릭
+    ↓
+즉시 API 호출: DELETE /admin/daily-missions/{id}
+    ↓
+DailyMission 레코드 삭제
+    ↓
+미션이 미션풀로 돌아감
+```
+
+> **중요**: 날짜에 배정된 미션을 풀로 보내려면, 먼저 배정대기로 드래그한 후 "풀로" 버튼 클릭
 
 ### 3. 추천 미션 배정
 

@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "mission")
 @Getter
@@ -24,6 +26,7 @@ public class Mission extends BaseEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    // 필터링용 태그
     @Enumerated(EnumType.STRING)
     @Column(name = "space_type", nullable = false)
     private SpaceType spaceType;
@@ -40,23 +43,27 @@ public class Mission extends BaseEntity {
     @Column(name = "companion_type", nullable = false)
     private CompanionType companionType = CompanionType.SOLO;
 
+    // 추천미션 분류용 태그
     @Enumerated(EnumType.STRING)
-    @Column(name = "enjoy_type", nullable = false)
+    @Column(name = "enjoy_type")
     private EnjoyType enjoyType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_type")
     private UserType userType;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private MissionStatus status = MissionStatus.POOL;
+    // Soft Delete
+    @Column(name = "deleted", nullable = false)
+    private boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @Builder
     public Mission(String title, String description, SpaceType spaceType,
                    IntensityType intensityType, CategoryType categoryType,
                    CompanionType companionType, EnjoyType enjoyType,
-                   UserType userType, MissionStatus status) {
+                   UserType userType) {
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;
@@ -65,18 +72,29 @@ public class Mission extends BaseEntity {
         this.companionType = companionType != null ? companionType : CompanionType.SOLO;
         this.enjoyType = enjoyType;
         this.userType = userType;
-        this.status = status != null ? status : MissionStatus.POOL;
     }
 
-    public void moveToPending() {
-        this.status = MissionStatus.PENDING;
+    public void softDelete() {
+        this.deleted = true;
+        this.deletedAt = LocalDateTime.now();
     }
 
-    public void assign() {
-        this.status = MissionStatus.ASSIGNED;
+    public void restore() {
+        this.deleted = false;
+        this.deletedAt = null;
     }
 
-    public void returnToPool() {
-        this.status = MissionStatus.POOL;
+    public void update(String title, String description, SpaceType spaceType,
+                       IntensityType intensityType, CategoryType categoryType,
+                       CompanionType companionType, EnjoyType enjoyType,
+                       UserType userType) {
+        this.title = title;
+        this.description = description;
+        this.spaceType = spaceType;
+        this.intensityType = intensityType;
+        this.categoryType = categoryType;
+        this.companionType = companionType;
+        this.enjoyType = enjoyType;
+        this.userType = userType;
     }
 }

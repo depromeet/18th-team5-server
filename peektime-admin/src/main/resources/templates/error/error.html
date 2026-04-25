@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/blank}">
+<head>
+    <title>오류</title>
+    <th:block layout:fragment="styles">
+        <style>
+            body {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                background: linear-gradient(135deg, #FEE2E2 0%, var(--gray-50) 100%);
+            }
+
+            .error-container {
+                width: 100%;
+                max-width: 500px;
+                padding: 20px;
+            }
+
+            .error-card {
+                background: white;
+                border-radius: 16px;
+                padding: 40px;
+                box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+                text-align: center;
+            }
+
+            .error-icon {
+                font-size: 64px;
+                margin-bottom: 24px;
+            }
+
+            .error-status {
+                font-size: 48px;
+                font-weight: 700;
+                color: #EF4444;
+                margin-bottom: 8px;
+            }
+
+            .error-code {
+                font-size: 14px;
+                color: var(--gray-500);
+                margin-bottom: 16px;
+            }
+
+            .error-message {
+                font-size: 16px;
+                color: var(--gray-700);
+                margin-bottom: 32px;
+                line-height: 1.6;
+            }
+
+            .error-actions {
+                display: flex;
+                gap: 12px;
+                justify-content: center;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <th:block layout:fragment="content">
+        <div class="error-container">
+            <div class="error-card">
+                <div class="error-icon">:(</div>
+                <div class="error-status" th:text="${status} ?: '500'">500</div>
+                <div class="error-code" th:text="${errorCode} ?: 'INTERNAL_SERVER_ERROR'">INTERNAL_SERVER_ERROR</div>
+                <div class="error-message" th:text="${errorMessage} ?: '알 수 없는 오류가 발생했습니다.'">
+                    오류가 발생했습니다.
+                </div>
+                <div class="error-actions">
+                    <a href="javascript:history.back()" class="btn btn-secondary">이전으로</a>
+                    <a th:href="@{/admin}" class="btn btn-primary">대시보드로</a>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</body>
+</html>

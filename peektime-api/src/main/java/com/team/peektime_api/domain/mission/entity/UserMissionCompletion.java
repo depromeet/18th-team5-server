@@ -13,9 +13,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_mission_completion", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_completion", columnNames = {"user_id", "mission_id", "completed_at"})
-})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserMissionCompletion extends BaseEntity {

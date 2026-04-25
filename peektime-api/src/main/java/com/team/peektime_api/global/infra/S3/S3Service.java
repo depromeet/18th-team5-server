@@ -58,6 +58,10 @@ public class S3Service {
         return presignedRequest.url().toString();
     }
 
+    public String getObjectUrl(String objectKey) {
+        return String.format("https://%s.s3.ap-northeast-2.amazonaws.com/%s", bucket, objectKey);
+    }
+
     public void deleteImage(String objectKey) {
         s3Client.deleteObject(DeleteObjectRequest.builder()
                 .bucket(bucket)

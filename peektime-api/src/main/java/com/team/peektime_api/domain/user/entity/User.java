@@ -17,11 +17,11 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "device_uuid", nullable = false, unique = true, length = 36)
+    private String deviceUuid;
+
     @Column(name = "nickname", length = 100)
     private String nickname;
-
-    @Column(name = "email", length = 255)
-    private String email;
 
     @Column(name = "push_token", length = 255)
     private String pushToken;
@@ -30,9 +30,9 @@ public class User extends BaseEntity {
     private UserOnboarding onboarding;
 
     @Builder
-    public User(String nickname, String email, String pushToken) {
+    public User(String deviceUuid, String nickname, String pushToken) {
+        this.deviceUuid = deviceUuid;
         this.nickname = nickname;
-        this.email = email;
         this.pushToken = pushToken;
     }
 

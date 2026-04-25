@@ -1,6 +1,10 @@
 // peektime-admin 개별 설정
 // 공통 설정은 루트 build.gradle의 subprojects에서 적용됨
 
+bootRun {
+    systemProperty 'spring.profiles.active', 'local'
+}
+
 dependencies {
     // Thymeleaf
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'

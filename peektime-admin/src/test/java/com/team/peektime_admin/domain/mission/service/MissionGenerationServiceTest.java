@@ -4,25 +4,15 @@ import com.team.peektime_admin.domain.mission.dto.GeneratedMissionDto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
+@ActiveProfiles("local")
 class MissionGenerationServiceTest {
-
-    @DynamicPropertySource
-    static void setProperties(DynamicPropertyRegistry registry) throws IOException {
-        String content = Files.readString(Path.of("../.env"));
-        String apiKey = content.split("=")[1].trim();
-        registry.add("gemini.api-key", () -> apiKey);
-    }
 
     @Autowired
     private MissionGenerationService missionGenerationService;

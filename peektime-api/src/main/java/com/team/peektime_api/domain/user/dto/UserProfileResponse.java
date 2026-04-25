@@ -6,14 +6,14 @@ import lombok.Getter;
 import java.time.LocalDateTime;
 
 @Getter
-public class UserResponse {
+public class UserProfileResponse {
 
     private final Long id;
     private final String nickname;
     private final String email;
     private final LocalDateTime createdAt;
 
-    public UserResponse(User user) {
+    public UserProfileResponse(User user) {
         this.id = user.getId();
         this.nickname = user.getNickname();
         this.email = user.getEmail();

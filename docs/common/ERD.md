@@ -62,9 +62,20 @@ erDiagram
 
     User {
         bigint id PK
+        varchar device_uuid UK
         varchar nickname
-        varchar email
         varchar push_token
+        datetime created_at
+        datetime updated_at
+    }
+
+    DeviceAuth {
+        bigint id PK
+        bigint user_id FK
+        varchar device_uuid
+        varchar refresh_token
+        datetime expires_at
+        boolean revoked
         datetime created_at
         datetime updated_at
     }
@@ -117,6 +128,7 @@ erDiagram
     SolarTerm ||--o{ MissionCompletionStats : "절기별"
 
     User ||--|| UserOnboarding : "1:1"
+    User ||--o{ DeviceAuth : "디바이스 인증"
     User ||--o{ UserMissionCompletion : "완료기록"
     User ||--o{ UserRecord : "절기기록"
 ```
@@ -141,10 +153,11 @@ erDiagram
 
 | 테이블 | 설명 |
 |--------|------|
-| `User` | 사용자 기본 정보 |
+| `User` | 사용자 기본 정보 (device_uuid 기반) |
+| `DeviceAuth` | 디바이스 인증 및 refresh token 관리 |
 | `UserOnboarding` | 온보딩 답변 (1:1) |
 | `UserMissionCompletion` | 미션 완료 기록 |
-| `UserRecord` | 절기별 사용자 기록 |
+| `UserRecord` | 제철 기록 탭 자유 기록 |
 
 > `MissionCompletionStats`는 peektime-admin DB에만 존재하며, peektime-api는 admin HTTP API를 호출하여 조회합니다.
 

@@ -5,11 +5,14 @@ import com.team.peektime_api.global.response.SuccessCode;
 import com.team.peektime_api.global.response.SuccessResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "S3", description = "S3 파일 관리")
+@Validated
 @RestController
 @RequestMapping("/api/v1/s3")
 @RequiredArgsConstructor
@@ -21,7 +24,7 @@ public class S3Controller {
     @GetMapping("/presigned-url")
     public ResponseEntity<SuccessResponse<PresignedUrlResponse>> getPresignedUrl(
             @RequestParam String fileName,
-            @RequestParam String contentType
+            @RequestParam @Pattern(regexp = "image/jpeg|image/png|image/heic") String contentType
     ) {
         PresignedUrlResponse response = s3Service.generatePresignedUrl(fileName, contentType);
         return ResponseEntity.ok(SuccessResponse.of(SuccessCode.S3_PRESIGNED_URL, response));

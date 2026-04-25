@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>선택 미션</title>
+    <th:block layout:fragment="styles">
+        <style>
+            .preview-header {
+                background: linear-gradient(135deg, var(--primary-light) 0%, #F0FDF4 100%);
+                border: 1px solid var(--primary);
+                border-radius: 12px;
+                padding: 20px 24px;
+                margin-bottom: 24px;
+            }
+
+            .preview-header h3 {
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .preview-header p {
+                font-size: 13px;
+                color: var(--gray-600);
+            }
+
+            .filter-section {
+                background: white;
+                border-radius: 12px;
+                border: 1px solid var(--gray-200);
+                padding: 24px;
+                margin-bottom: 24px;
+            }
+
+            .filter-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+            }
+
+            .filter-group label {
+                display: block;
+                font-size: 13px;
+                font-weight: 500;
+                color: var(--gray-600);
+                margin-bottom: 8px;
+            }
+
+            .result-count {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 16px;
+                background: var(--gray-50);
+                border-radius: 8px;
+                margin-bottom: 16px;
+            }
+
+            .result-count strong {
+                color: var(--primary);
+                font-size: 18px;
+            }
+
+            .mission-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 16px;
+            }
+
+            .mission-preview-card {
+                background: white;
+                border: 1px solid var(--gray-200);
+                border-radius: 8px;
+                padding: 16px;
+            }
+
+            .mission-preview-card h4 {
+                font-size: 14px;
+                font-weight: 500;
+                margin-bottom: 8px;
+            }
+
+            .mission-preview-card p {
+                font-size: 13px;
+                color: var(--gray-500);
+                margin-bottom: 12px;
+            }
+
+            .excluded-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 8px;
+                background: #FEE2E2;
+                color: #DC2626;
+                border-radius: 4px;
+                font-size: 11px;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <th:block layout:fragment="content">
+        <div class="page-header">
+            <div class="breadcrumb">선택 미션</div>
+            <h1 class="page-title">선택 미션 미리보기</h1>
+            <p class="page-description">사용자가 필터링으로 선택할 수 있는 미션 목록을 미리 확인하세요.</p>
+        </div>
+
+        <div class="preview-header">
+            <h3>💡 선택 미션이란?</h3>
+            <p>오늘의 미션과 추천 미션에 포함되지 않은 미션 중, 사용자가 필터 조건에 맞게 직접 선택하는 미션입니다. 하루에 한 번만 선택할 수 있습니다.</p>
+        </div>
+
+        <!-- 필터 섹션 -->
+        <div class="filter-section">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 16px;">필터 조건</h3>
+            <form th:action="@{/admin/selected-missions}" method="get" class="filter-grid">
+                <div class="filter-group">
+                    <label>공간</label>
+                    <select name="spaceType" class="form-select">
+                        <option value="">전체</option>
+                        <option value="INDOOR" th:selected="${spaceType == 'INDOOR'}">실내</option>
+                        <option value="OUTDOOR" th:selected="${spaceType == 'OUTDOOR'}">실외</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>강도</label>
+                    <select name="intensityType" class="form-select">
+                        <option value="">전체</option>
+                        <option value="LIGHT" th:selected="${intensityType == 'LIGHT'}">5분이내</option>
+                        <option value="MODERATE" th:selected="${intensityType == 'MODERATE'}">30분이내</option>
+                        <option value="ACTIVE" th:selected="${intensityType == 'ACTIVE'}">1시간+</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>카테고리</label>
+                    <select name="categoryType" class="form-select">
+                        <option value="">전체</option>
+                        <option value="FOOD" th:selected="${categoryType == 'FOOD'}">음식</option>
+                        <option value="NATURE" th:selected="${categoryType == 'NATURE'}">자연</option>
+                        <option value="RECORD" th:selected="${categoryType == 'RECORD'}">기록</option>
+                        <option value="PLACE" th:selected="${categoryType == 'PLACE'}">장소</option>
+                        <option value="SENSE" th:selected="${categoryType == 'SENSE'}">감각</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>동반</label>
+                    <select name="companionType" class="form-select">
+                        <option value="">전체</option>
+                        <option value="SOLO" th:selected="${companionType == 'SOLO'}">혼자</option>
+                        <option value="TOGETHER" th:selected="${companionType == 'TOGETHER'}">같이</option>
+                    </select>
+                </div>
+            </form>
+            <div style="margin-top: 16px; text-align: right;">
+                <button type="submit" class="btn btn-primary" onclick="this.closest('form').submit()">필터 적용</button>
+            </div>
+        </div>
+
+        <!-- 결과 -->
+        <div class="result-count">
+            <span>선택 가능한 미션:</span>
+            <strong th:text="${#lists.size(missions)}">0</strong>
+            <span>개</span>
+            <span style="margin-left: auto; font-size: 12px; color: var(--gray-400);">
+                (전체 <span th:text="${totalMissions}">0</span>개 중 오늘의미션/추천미션 제외)
+            </span>
+        </div>
+
+        <div class="mission-grid">
+            <div th:each="mission : ${missions}" class="mission-preview-card">
+                <h4 th:text="${mission.title}">미션명</h4>
+                <p th:text="${mission.description}">설명</p>
+                <div class="mission-item-tags">
+                    <span class="tag tag-gray" th:text="${mission.categoryType?.label}">카테고리</span>
+                    <span class="tag tag-gray" th:text="${mission.spaceType?.label}">공간</span>
+                    <span class="tag tag-gray" th:text="${mission.intensityType?.label}">강도</span>
+                    <span class="tag tag-gray" th:text="${mission.companionType?.label}">동반</span>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(missions)}" class="text-center text-gray" style="padding: 60px; background: var(--gray-50); border-radius: 12px;">
+            필터 조건에 맞는 선택 미션이 없습니다.
+        </div>
+    </th:block>
+</body>
+</html>

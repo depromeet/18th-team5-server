@@ -1,0 +1,31 @@
+# 운영 환경 설정
+# 환경변수 플레이스홀더 사용
+
+spring:
+  application:
+    name: peektime-admin
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: true
+    encoding: UTF-8
+  datasource:
+    url: ${DATASOURCE_URL}
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+server:
+  port: ${SERVER_PORT:8081}
+
+admin:
+  username: ${ADMIN_USERNAME}
+  password: ${ADMIN_PASSWORD}
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  model: gemini-2.5-flash
+  endpoint: https://generativelanguage.googleapis.com/v1beta/models

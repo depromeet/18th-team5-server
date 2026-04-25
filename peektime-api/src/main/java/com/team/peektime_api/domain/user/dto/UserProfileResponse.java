@@ -9,14 +9,14 @@ import java.time.LocalDateTime;
 public class UserProfileResponse {
 
     private final Long id;
+    private final String deviceUuid;
     private final String nickname;
-    private final String email;
     private final LocalDateTime createdAt;
 
     public UserProfileResponse(User user) {
         this.id = user.getId();
+        this.deviceUuid = user.getDeviceUuid();
         this.nickname = user.getNickname();
-        this.email = user.getEmail();
         this.createdAt = user.getCreatedAt();
     }
 }

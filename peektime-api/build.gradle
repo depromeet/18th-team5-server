@@ -5,3 +5,6 @@ dependencies {
     // H2 웹 콘솔 (API 모듈에서만 사용)
     implementation 'org.springframework.boot:spring-boot-h2console'
 }
+bootRun {
+    systemProperty 'spring.profiles.active', 'local'
+}

@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>미션 풀 관리</title>
+    <th:block layout:fragment="styles">
+        <style>
+            .header-actions {
+                display: flex;
+                gap: 12px;
+            }
+
+            .filter-bar {
+                display: flex;
+                gap: 12px;
+                margin-bottom: 16px;
+                flex-wrap: wrap;
+            }
+
+            .search-input {
+                flex: 1;
+                min-width: 200px;
+            }
+
+            .filter-select {
+                min-width: 120px;
+            }
+
+            .bulk-actions {
+                display: flex;
+                gap: 12px;
+                padding: 12px 16px;
+                background: var(--gray-50);
+                border-radius: 8px;
+                margin-bottom: 16px;
+                align-items: center;
+            }
+
+            .bulk-actions-label {
+                font-size: 13px;
+                color: var(--gray-600);
+            }
+
+            .table-actions {
+                display: flex;
+                gap: 8px;
+            }
+
+            .action-btn {
+                padding: 6px 10px;
+                background: none;
+                border: 1px solid var(--gray-300);
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                color: var(--gray-600);
+            }
+
+            .action-btn:hover {
+                background: var(--gray-50);
+            }
+
+            .action-btn.danger:hover {
+                background: #FEE2E2;
+                border-color: #EF4444;
+                color: #EF4444;
+            }
+
+            .pagination {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 8px;
+                margin-top: 24px;
+            }
+
+            .page-btn {
+                padding: 8px 12px;
+                border: 1px solid var(--gray-300);
+                background: white;
+                border-radius: 6px;
+                cursor: pointer;
+            }
+
+            .page-btn.active {
+                background: var(--primary);
+                border-color: var(--primary);
+                color: white;
+            }
+
+            .mission-title {
+                font-weight: 500;
+                color: var(--gray-900);
+            }
+
+            .tags-cell {
+                display: flex;
+                gap: 4px;
+                flex-wrap: wrap;
+            }
+
+            .tag-enjoy {
+                background: #DBEAFE;
+                color: #2563EB;
+            }
+
+            .tag-user {
+                background: #F3E8FF;
+                color: #9333EA;
+            }
+
+            .ai-section {
+                background: linear-gradient(135deg, var(--primary-light) 0%, #F0FDF4 100%);
+                border: 1px solid var(--primary);
+                border-radius: 12px;
+                padding: 20px 24px;
+                margin-bottom: 24px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .ai-section-content h3 {
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 4px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .ai-section-content p {
+                font-size: 13px;
+                color: var(--gray-600);
+            }
+
+            .ai-section-actions {
+                display: flex;
+                gap: 12px;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <th:block layout:fragment="content">
+        <div class="page-header flex-between">
+            <div>
+                <div class="breadcrumb">미션 풀 관리</div>
+                <h1 class="page-title">전체 미션 관리</h1>
+                <p class="page-description">
+                    미션을 등록하고 관리하세요. 총 <span th:text="${totalCount} ?: 0">0</span>개의 미션이 있습니다.
+                </p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="openModal()">
+                    + 새 미션 등록
+                </button>
+            </div>
+        </div>
+
+        <!-- AI 미션 생성 섹션 -->
+        <div class="ai-section">
+            <div class="ai-section-content">
+                <h3>AI 미션 생성</h3>
+                <p>절기와 사용자 타입을 선택하면 AI가 미션을 자동 생성합니다.</p>
+            </div>
+            <div class="ai-section-actions">
+                <select class="form-select" id="aiSolarTerm" style="width: 120px;">
+                    <option th:each="term : ${solarTerms}" th:value="${term.id}" th:text="${term.name}">입춘</option>
+                </select>
+                <select class="form-select" id="aiUserType" style="width: 140px;">
+                    <option value="NATURE_EXPLORER">자연 탐험가</option>
+                    <option value="NEIGHBORHOOD_WALKER">동네 산책러</option>
+                    <option value="SEASONAL_GOURMET">제철 미식가</option>
+                    <option value="DAILY_OBSERVER">일상 관찰자</option>
+                </select>
+                <button class="btn btn-primary" onclick="generateMissions()">
+                    미션 생성
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <!-- Filter Bar -->
+            <form th:action="@{/admin/missions}" method="get" class="filter-bar">
+                <input type="text" name="keyword" th:value="${keyword}" class="form-input search-input" placeholder="미션 검색...">
+                <select name="spaceType" class="form-select filter-select">
+                    <option value="">공간 전체</option>
+                    <option value="INDOOR" th:selected="${spaceType == 'INDOOR'}">실내</option>
+                    <option value="OUTDOOR" th:selected="${spaceType == 'OUTDOOR'}">실외</option>
+                </select>
+                <select name="intensityType" class="form-select filter-select">
+                    <option value="">강도 전체</option>
+                    <option value="LIGHT" th:selected="${intensityType == 'LIGHT'}">5분이내</option>
+                    <option value="MODERATE" th:selected="${intensityType == 'MODERATE'}">30분이내</option>
+                    <option value="ACTIVE" th:selected="${intensityType == 'ACTIVE'}">1시간+</option>
+                </select>
+                <select name="categoryType" class="form-select filter-select">
+                    <option value="">카테고리 전체</option>
+                    <option value="FOOD" th:selected="${categoryType == 'FOOD'}">음식</option>
+                    <option value="NATURE" th:selected="${categoryType == 'NATURE'}">자연</option>
+                    <option value="RECORD" th:selected="${categoryType == 'RECORD'}">기록</option>
+                    <option value="PLACE" th:selected="${categoryType == 'PLACE'}">장소</option>
+                    <option value="SENSE" th:selected="${categoryType == 'SENSE'}">감각</option>
+                </select>
+                <button type="submit" class="btn btn-secondary">검색</button>
+            </form>
+
+            <!-- Table -->
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">
+                            <input type="checkbox" id="selectAll">
+                        </th>
+                        <th>미션명</th>
+                        <th>필터링 태그</th>
+                        <th>추천미션 분류</th>
+                        <th>생성일</th>
+                        <th style="width: 100px;">관리</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="mission : ${missions}">
+                        <td><input type="checkbox" th:value="${mission.id}"></td>
+                        <td class="mission-title" th:text="${mission.title}">미션명</td>
+                        <td class="tags-cell">
+                            <span class="tag tag-gray" th:text="${mission.categoryType?.label}">카테고리</span>
+                            <span class="tag tag-gray" th:text="${mission.spaceType?.label}">공간</span>
+                            <span class="tag tag-gray" th:text="${mission.intensityType?.label}">강도</span>
+                            <span class="tag tag-gray" th:text="${mission.companionType?.label}">동반</span>
+                        </td>
+                        <td class="tags-cell">
+                            <span th:if="${mission.enjoyType != null}" class="tag tag-enjoy" th:text="${mission.enjoyType.label}">즐기기</span>
+                            <span th:if="${mission.userType != null}" class="tag tag-user" th:text="${mission.userType.label}">사용자</span>
+                            <span th:if="${mission.enjoyType == null && mission.userType == null}" class="text-gray text-sm">-</span>
+                        </td>
+                        <td class="text-gray text-sm" th:text="${#temporals.format(mission.createdAt, 'yyyy-MM-dd')}">2026-01-15</td>
+                        <td>
+                            <div class="table-actions">
+                                <button class="action-btn" th:onclick="'editMission(' + ${mission.id} + ')'">수정</button>
+                                <button class="action-btn danger" th:onclick="'deleteMission(' + ${mission.id} + ')'">삭제</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(missions)}">
+                        <td colspan="6" class="text-center text-gray" style="padding: 40px;">
+                            등록된 미션이 없습니다.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div class="pagination" th:if="${totalPages > 1}">
+                <button class="page-btn" th:disabled="${currentPage == 0}"
+                        th:onclick="'location.href=\'/admin/missions?page=' + (${currentPage} - 1) + '\''">◀</button>
+                <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                    <button class="page-btn" th:classappend="${i == currentPage} ? 'active'"
+                            th:text="${i + 1}"
+                            th:onclick="'location.href=\'/admin/missions?page=' + ${i} + '\''">1</button>
+                </th:block>
+                <button class="page-btn" th:disabled="${currentPage == totalPages - 1}"
+                        th:onclick="'location.href=\'/admin/missions?page=' + (${currentPage} + 1) + '\''">▶</button>
+            </div>
+        </div>
+
+        <!-- Modal: 미션 등록/수정 -->
+        <div class="modal-overlay" id="missionModal" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="modalTitle">새 미션 등록</h3>
+                    <button class="modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <form id="missionForm" th:action="@{/api/admin/missions}" method="post">
+                    <input type="hidden" id="missionId" name="id">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">미션명 *</label>
+                            <input type="text" id="missionTitle" name="title" class="form-input" placeholder="미션 제목을 입력하세요" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">미션 설명</label>
+                            <textarea id="missionDescription" name="description" class="form-textarea" rows="3" placeholder="미션에 대한 상세 설명을 입력하세요"></textarea>
+                        </div>
+
+                        <h4 style="font-size: 14px; margin: 20px 0 12px; color: var(--gray-700);">필터링용 태그</h4>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label">공간 *</label>
+                                <select id="spaceType" name="spaceType" class="form-select" required>
+                                    <option value="">선택하세요</option>
+                                    <option value="INDOOR">실내</option>
+                                    <option value="OUTDOOR">실외</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">강도 *</label>
+                                <select id="intensityType" name="intensityType" class="form-select" required>
+                                    <option value="">선택하세요</option>
+                                    <option value="LIGHT">5분이내</option>
+                                    <option value="MODERATE">30분이내</option>
+                                    <option value="ACTIVE">1시간+</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label">동반 *</label>
+                                <select id="companionType" name="companionType" class="form-select" required>
+                                    <option value="">선택하세요</option>
+                                    <option value="SOLO">혼자</option>
+                                    <option value="TOGETHER">같이</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">카테고리 *</label>
+                                <select id="categoryType" name="categoryType" class="form-select" required>
+                                    <option value="">선택하세요</option>
+                                    <option value="FOOD">음식</option>
+                                    <option value="NATURE">자연</option>
+                                    <option value="RECORD">기록</option>
+                                    <option value="PLACE">장소</option>
+                                    <option value="SENSE">감각</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h4 style="font-size: 14px; margin: 20px 0 12px; color: var(--gray-700);">추천미션 분류용 태그 (선택)</h4>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label class="form-label">즐기기 타입</label>
+                                <select id="enjoyType" name="enjoyType" class="form-select">
+                                    <option value="">선택 안함</option>
+                                    <option value="NATURE_OUTDOOR">자연/야외</option>
+                                    <option value="SEASONAL_FOOD">제철음식</option>
+                                    <option value="EMOTIONAL_CONTENT">감성콘텐츠</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">사용자 타입</label>
+                                <select id="userType" name="userType" class="form-select">
+                                    <option value="">선택 안함</option>
+                                    <option value="NATURE_EXPLORER">자연 탐험가</option>
+                                    <option value="NEIGHBORHOOD_WALKER">동네 산책러</option>
+                                    <option value="SEASONAL_GOURMET">제철 미식가</option>
+                                    <option value="DAILY_OBSERVER">일상 관찰자</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">취소</button>
+                        <button type="submit" class="btn btn-primary">저장</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </th:block>
+
+    <th:block layout:fragment="scripts">
+        <script>
+            function openModal() {
+                document.getElementById('modalTitle').textContent = '새 미션 등록';
+                document.getElementById('missionForm').reset();
+                document.getElementById('missionId').value = '';
+                document.getElementById('missionModal').style.display = 'flex';
+            }
+
+            function closeModal() {
+                document.getElementById('missionModal').style.display = 'none';
+            }
+
+            function editMission(id) {
+                // TODO: API 호출로 미션 정보 조회 후 모달에 채우기
+                document.getElementById('modalTitle').textContent = '미션 수정';
+                document.getElementById('missionId').value = id;
+                document.getElementById('missionModal').style.display = 'flex';
+            }
+
+            function deleteMission(id) {
+                if (confirm('정말 삭제하시겠습니까?')) {
+                    // TODO: API 호출
+                    location.href = '/api/admin/missions/' + id + '/delete';
+                }
+            }
+
+            function generateMissions() {
+                const solarTermId = document.getElementById('aiSolarTerm').value;
+                const userType = document.getElementById('aiUserType').value;
+                // TODO: AI 미션 생성 API 호출
+                alert('AI 미션 생성 기능은 준비 중입니다.');
+            }
+
+            // 전체 선택
+            document.getElementById('selectAll')?.addEventListener('change', function() {
+                document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => {
+                    cb.checked = this.checked;
+                });
+            });
+        </script>
+    </th:block>
+</body>
+</html>

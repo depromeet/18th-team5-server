@@ -28,7 +28,6 @@ jobs:
             docker stop peektime-admin 2>/dev/null || true
             docker rm peektime-admin 2>/dev/null || true
             docker run -d --name peektime-admin -p 8080:8081 \
-              -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }} \
-              -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} \
-              -e SPRING_SQL_INIT_MODE=never \
+              --env-file /home/ubuntu/18th-team5-server/.env \
+              -e SPRING_PROFILES_ACTIVE=prod \
               peektime-admin:dev

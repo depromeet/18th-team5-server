@@ -46,6 +46,7 @@ public class SecurityConfig {
             )
             .csrf(csrf -> csrf
                 .ignoringRequestMatchers("/h2-console/**")
+                .ignoringRequestMatchers("/api/**")
             )
             .headers(headers -> headers
                 .frameOptions(frame -> frame.sameOrigin())

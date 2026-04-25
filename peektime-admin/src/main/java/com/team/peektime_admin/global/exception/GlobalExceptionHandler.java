@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
         if (isApiRequest(request)) {
             return ResponseEntity
                     .status(ErrorCode.INTERNAL_SERVER_ERROR.getHttpStatus())
-                    .body(ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, e.getMessage()));
+                    .body(ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR.getCode(), e.getMessage()));
         }
         model.addAttribute("errorCode", ErrorCode.INTERNAL_SERVER_ERROR.getCode());
         model.addAttribute("errorMessage", e.getMessage());

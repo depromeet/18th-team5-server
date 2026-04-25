@@ -2,6 +2,11 @@
 
 ## 전체 ERD
 
+![ERD](./erd.png)
+
+<details>
+<summary>Mermaid 코드 (GitHub 렌더링용)</summary>
+
 ```mermaid
 erDiagram
     %% ===== ADMIN (미션 관리) =====
@@ -123,6 +128,8 @@ erDiagram
     User ||--o{ UserMissionCompletion : "완료기록"
     User ||--o{ UserRecord : "절기기록"
 ```
+
+</details>
 
 ---
 

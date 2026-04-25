@@ -19,7 +19,7 @@ class MissionGenerationServiceTest {
 
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) throws IOException {
-        String content = Files.readString(Path.of(".env"));
+        String content = Files.readString(Path.of("../.env"));
         String apiKey = content.split("=")[1].trim();
         registry.add("gemini.api-key", () -> apiKey);
     }
@@ -46,7 +46,7 @@ class MissionGenerationServiceTest {
 
             assertThat(mission.getTitle()).isNotBlank();
             assertThat(mission.getSpaceType()).isIn("INDOOR", "OUTDOOR");
-            assertThat(mission.getIntensityType()).isIn("LIGHT", "ACTIVE");
+            assertThat(mission.getIntensityType()).isIn("LIGHT", "MODERATE", "ACTIVE");
             assertThat(mission.getCompanionType()).isIn("SOLO", "TOGETHER");
             assertThat(mission.getCategoryType()).isIn("FOOD", "NATURE", "RECORD", "PLACE", "SENSE");
         });

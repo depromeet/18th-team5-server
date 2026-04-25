@@ -55,9 +55,11 @@ public class MissionGenerationService {
     }
 
     @Transactional
-    public List<GeneratedMissionDto> generateMissionsWithSolarTermAndUserType(Long solarTermId, UserType userType, int count) {
+    public List<GeneratedMissionDto> generateMissionsWithSolarTermAndUserType(Long solarTermId, String userTypeStr, int count) {
         SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
                 .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
+
+        UserType userType = parseEnum(UserType.class, userTypeStr);
 
         String prompt = MissionPromptTemplate.generateWithSolarTermAndUserType(solarTerm, userType, count);
         List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);

@@ -27,7 +27,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public Object handleException(Exception e, Model model, HttpServletRequest request) {
+    public Object handleException(Exception e, Model model, HttpServletRequest request) throws Exception {
+        // H2 콘솔 요청은 예외 처리하지 않음
+        if (isH2ConsoleRequest(request)) {
+            throw e;
+        }
         log.error("Unhandled exception: ", e);
         if (isApiRequest(request)) {
             return ResponseEntity
@@ -43,5 +47,10 @@ public class GlobalExceptionHandler {
     private boolean isApiRequest(HttpServletRequest request) {
         String uri = request.getRequestURI();
         return uri.startsWith("/api/");
+    }
+
+    private boolean isH2ConsoleRequest(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        return uri.startsWith("/h2-console");
     }
 }

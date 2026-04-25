@@ -105,17 +105,6 @@ erDiagram
         datetime updated_at
     }
 
-    MissionCompletionStats {
-        bigint id PK
-        bigint mission_id
-        enum mission_type
-        bigint solar_term_id
-        date reference_date
-        int completion_count
-        datetime created_at
-        datetime updated_at
-    }
-
     %% ===== 관계 =====
 
     Mission ||--o{ DailyMission : "배정"
@@ -123,6 +112,9 @@ erDiagram
 
     Mission ||--o{ RecommendedMissionPool : "추천"
     SolarTerm ||--o{ RecommendedMissionPool : "절기별"
+
+    Mission ||--o{ MissionCompletionStats : "통계"
+    SolarTerm ||--o{ MissionCompletionStats : "절기별"
 
     User ||--|| UserOnboarding : "1:1"
     User ||--o{ UserMissionCompletion : "완료기록"
@@ -153,7 +145,8 @@ erDiagram
 | `UserOnboarding` | 온보딩 답변 (1:1) |
 | `UserMissionCompletion` | 미션 완료 기록 |
 | `UserRecord` | 절기별 사용자 기록 |
-| `MissionCompletionStats` | 미션 완료 통계 (집계용) |
+
+> `MissionCompletionStats`는 peektime-admin DB에만 존재하며, peektime-api는 admin HTTP API를 호출하여 조회합니다.
 
 ---
 
@@ -169,8 +162,9 @@ erDiagram
 ### 약한 결합 (ID만 저장)
 - `UserMissionCompletion.mission_id` → Mission (모듈 분리)
 - `UserRecord.solar_term_id` → SolarTerm (모듈 분리)
-- `MissionCompletionStats.mission_id` → Mission
-- `MissionCompletionStats.solar_term_id` → SolarTerm
+
+### 모듈 간 API 호출
+- `peektime-api` → `peektime-admin` HTTP API 호출로 `MissionCompletionStats` 조회
 
 ---
 

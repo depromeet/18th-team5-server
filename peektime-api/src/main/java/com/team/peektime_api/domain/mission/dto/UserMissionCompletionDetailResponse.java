@@ -10,6 +10,7 @@ public record UserMissionCompletionDetailResponse(
         Long completionId,
         Long missionId,
         MissionType missionType,
+        String objectKey,
         String presignedImageUrl,
         String memo,
         OffsetDateTime completedAt
@@ -19,6 +20,7 @@ public record UserMissionCompletionDetailResponse(
                 completion.getId(),
                 completion.getMissionId(),
                 completion.getMissionType(),
+                completion.getObjectKey(),
                 presignedImageUrl,
                 completion.getMemo(),
                 completion.getCompletedAt().atOffset(ZoneOffset.ofHours(9))

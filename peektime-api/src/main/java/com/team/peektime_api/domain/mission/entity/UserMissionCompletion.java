@@ -32,8 +32,8 @@ public class UserMissionCompletion extends BaseEntity {
     @Column(name = "mission_type", nullable = false)
     private MissionType missionType;
 
-    @Column(name = "image_url", length = 500)
-    private String imageUrl;
+    @Column(name = "object_key", length = 500)
+    private String objectKey;
 
     @Column(name = "memo", length = 200)
     private String memo;
@@ -43,11 +43,11 @@ public class UserMissionCompletion extends BaseEntity {
 
     @Builder
     public UserMissionCompletion(User user, Long missionId, MissionType missionType,
-                                  String imageUrl, String memo, LocalDateTime completedAt) {
+                                  String objectKey, String memo, LocalDateTime completedAt) {
         this.user = user;
         this.missionId = missionId;
         this.missionType = missionType;
-        this.imageUrl = imageUrl;
+        this.objectKey = objectKey;
         this.memo = memo;
         this.completedAt = completedAt != null ? completedAt : LocalDateTime.now();
     }
@@ -57,7 +57,7 @@ public class UserMissionCompletion extends BaseEntity {
                 .user(user)
                 .missionId(missionId)
                 .missionType(request.missionType())
-                .imageUrl(request.objectKey())
+                .objectKey(request.objectKey())
                 .memo(request.memo())
                 .completedAt(request.completedAt() != null
                         ? request.completedAt().toLocalDateTime()

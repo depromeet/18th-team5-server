@@ -44,8 +44,8 @@ public class UserMissionCompletionService {
                 .stream()
                 .map(completion -> UserMissionCompletionDetailResponse.of(
                         completion,
-                        completion.getImageUrl() != null
-                                ? s3Service.generatePresignedViewUrl(completion.getImageUrl())
+                        completion.getObjectKey() != null
+                                ? s3Service.generatePresignedViewUrl(completion.getObjectKey())
                                 : null
                 ))
                 .toList();

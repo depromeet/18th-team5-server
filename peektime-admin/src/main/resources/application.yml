@@ -32,6 +32,6 @@ admin:
   password: admin123
 
 gemini:
-  api-key: ${env.GEMINI_API_KEY}
   model: gemini-2.5-flash
   endpoint: https://generativelanguage.googleapis.com/v1beta/models
+  # api-key는 프로필별 설정 파일에서 정의

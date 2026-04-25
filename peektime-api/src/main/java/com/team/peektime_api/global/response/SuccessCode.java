@@ -26,6 +26,7 @@ public enum SuccessCode {
 
     // S3
     S3_PRESIGNED_URL("S3_200", "Presigned URL 발급 성공"),
+    S3_PRESIGNED_VIEW_URL("S3_200", "조회용 Presigned URL 발급 성공"),
     S3_IMAGE_DELETED("S3_200", "이미지 삭제 성공");
 
     private final String code;

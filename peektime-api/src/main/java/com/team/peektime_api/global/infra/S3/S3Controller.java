@@ -30,6 +30,15 @@ public class S3Controller {
         return ResponseEntity.ok(SuccessResponse.of(SuccessCode.S3_PRESIGNED_URL, response));
     }
 
+    @Operation(summary = "조회용 Presigned URL 발급", description = "S3 이미지 조회용 Presigned URL을 발급합니다.(유효시간 10분)")
+    @GetMapping("/presigned-url/view")
+    public ResponseEntity<SuccessResponse<String>> getPresignedViewUrl(
+            @RequestParam String objectKey
+    ) {
+        String presignedUrl = s3Service.generatePresignedViewUrl(objectKey);
+        return ResponseEntity.ok(SuccessResponse.of(SuccessCode.S3_PRESIGNED_VIEW_URL, presignedUrl));
+    }
+
     @Operation(summary = "S3 이미지 삭제", description = "S3에 업로드된 이미지를 삭제합니다.")
     @DeleteMapping("/image")
     public ResponseEntity<SuccessResponse<Void>> deleteImage(

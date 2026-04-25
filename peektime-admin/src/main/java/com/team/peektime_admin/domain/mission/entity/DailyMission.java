@@ -12,8 +12,7 @@ import java.time.LocalDate;
 
 @Entity
 @Table(name = "daily_mission", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_mission_date", columnNames = {"mission_date"}),
-        @UniqueConstraint(name = "uk_mission_term", columnNames = {"mission_id", "solar_term_id"})
+        @UniqueConstraint(name = "uk_daily_mission_term", columnNames = {"mission_id", "solar_term_id"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -31,13 +30,40 @@ public class DailyMission extends BaseEntity {
     @JoinColumn(name = "solar_term_id", nullable = false)
     private SolarTerm solarTerm;
 
-    @Column(name = "mission_date", nullable = false)
+    // NULL = 배정대기, 값 = 배정완료
+    @Column(name = "mission_date")
     private LocalDate missionDate;
 
+    @Column(name = "display_order")
+    private Integer displayOrder;
+
     @Builder
-    public DailyMission(Mission mission, SolarTerm solarTerm, LocalDate missionDate) {
+    public DailyMission(Mission mission, SolarTerm solarTerm, LocalDate missionDate, Integer displayOrder) {
         this.mission = mission;
         this.solarTerm = solarTerm;
         this.missionDate = missionDate;
+        this.displayOrder = displayOrder;
+    }
+
+    public boolean isPending() {
+        return this.missionDate == null;
+    }
+
+    public boolean isAssigned() {
+        return this.missionDate != null;
+    }
+
+    public void assignToDate(LocalDate date, Integer order) {
+        this.missionDate = date;
+        this.displayOrder = order;
+    }
+
+    public void unassign() {
+        this.missionDate = null;
+        this.displayOrder = null;
+    }
+
+    public void updateDisplayOrder(Integer order) {
+        this.displayOrder = order;
     }
 }

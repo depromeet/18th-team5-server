@@ -33,10 +33,18 @@ public class RecommendedMissionPool extends BaseEntity {
     @Column(name = "user_type", nullable = false)
     private UserType userType;
 
+    @Column(name = "display_order")
+    private Integer displayOrder;
+
     @Builder
-    public RecommendedMissionPool(Mission mission, SolarTerm solarTerm, UserType userType) {
+    public RecommendedMissionPool(Mission mission, SolarTerm solarTerm, UserType userType, Integer displayOrder) {
         this.mission = mission;
         this.solarTerm = solarTerm;
         this.userType = userType;
+        this.displayOrder = displayOrder;
+    }
+
+    public void updateDisplayOrder(Integer order) {
+        this.displayOrder = order;
     }
 }

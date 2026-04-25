@@ -1,6 +1,5 @@
 package com.team.peektime_api.domain.mission.entity;
 
-import com.team.peektime_api.domain.record.entity.UserRecord;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.global.common.BaseEntity;
 import com.team.peektime_api.global.common.enums.MissionType;
@@ -10,11 +9,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_mission_completion", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_completion", columnNames = {"user_id", "mission_id", "solar_term_id"})
+        @UniqueConstraint(name = "uk_completion", columnNames = {"user_id", "mission_id", "completed_at"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -35,28 +34,23 @@ public class UserMissionCompletion extends BaseEntity {
     @Column(name = "mission_type", nullable = false)
     private MissionType missionType;
 
-    @Column(name = "solar_term_id", nullable = false)
-    private Long solarTermId;
+    @Column(name = "image_url", length = 500)
+    private String imageUrl;
 
-    @Column(name = "completed_date", nullable = false)
-    private LocalDate completedDate;
+    @Column(name = "memo", length = 200)
+    private String memo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "record_id")
-    private UserRecord record;
+    @Column(name = "completed_at", nullable = false)
+    private LocalDateTime completedAt;
 
     @Builder
     public UserMissionCompletion(User user, Long missionId, MissionType missionType,
-                                  Long solarTermId, LocalDate completedDate, UserRecord record) {
+                                  String imageUrl, String memo, LocalDateTime completedAt) {
         this.user = user;
         this.missionId = missionId;
         this.missionType = missionType;
-        this.solarTermId = solarTermId;
-        this.completedDate = completedDate;
-        this.record = record;
-    }
-
-    public void linkRecord(UserRecord record) {
-        this.record = record;
+        this.imageUrl = imageUrl;
+        this.memo = memo;
+        this.completedAt = completedAt != null ? completedAt : LocalDateTime.now();
     }
 }

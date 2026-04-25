@@ -1,6 +1,7 @@
 package com.team.peektime_admin.domain.mission.service;
 
 import com.team.peektime_admin.domain.mission.dto.GeneratedMissionDto;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -10,8 +11,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled("Gemini API 실제 호출 테스트 - 수동 실행 전용")
 @SpringBootTest
-@ActiveProfiles("local")
 class MissionGenerationServiceTest {
 
     @Autowired

@@ -28,7 +28,7 @@ jobs:
             docker stop peektime-admin 2>/dev/null || true
             docker rm peektime-admin 2>/dev/null || true
             docker run -d --name peektime-admin -p 8080:8081 \
-              -e SPRING_SECURITY_USER_NAME=${{ secrets.ADMIN_USERNAME }} \
-              -e SPRING_SECURITY_USER_PASSWORD=${{ secrets.ADMIN_PASSWORD }} \
+              -e ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }} \
+              -e ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }} \
               -e SPRING_SQL_INIT_MODE=never \
               peektime-admin:dev

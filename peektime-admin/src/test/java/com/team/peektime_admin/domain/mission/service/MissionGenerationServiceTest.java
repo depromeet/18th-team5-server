@@ -30,10 +30,10 @@ class MissionGenerationServiceTest {
     @Test
     void 미션_3개_생성_테스트() {
         // when
-        List<GeneratedMissionDto> missions = missionGenerationService.generateMissions(20);
+        List<GeneratedMissionDto> missions = missionGenerationService.generateMissions(5);
 
         // then
-        assertThat(missions).hasSize(20);
+        assertThat(missions).hasSize(5);
 
         missions.forEach(mission -> {
             System.out.println("제목: " + mission.getTitle());

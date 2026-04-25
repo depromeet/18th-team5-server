@@ -1,6 +1,5 @@
 package com.team.peektime_api.domain.record.entity;
 
-import com.team.peektime_api.domain.record.dto.ImageUploadConfirmRequest;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.global.common.BaseEntity;
 import jakarta.persistence.*;
@@ -48,15 +47,5 @@ public class UserRecord extends BaseEntity {
         this.recordDate = recordDate;
         this.imageUrl = imageUrl;
         this.memo = memo;
-    }
-
-    public static UserRecord of(User user, ImageUploadConfirmRequest request) {
-        return UserRecord.builder()
-                .user(user)
-                .solarTermId(request.solarTermId())
-                .recordDate(request.recordDate())
-                .imageUrl(request.objectKey())
-                .memo(request.memo())
-                .build();
     }
 }

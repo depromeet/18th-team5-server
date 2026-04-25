@@ -175,7 +175,8 @@
                     <option value="SEASONAL_GOURMET">제철 미식가</option>
                     <option value="DAILY_OBSERVER">일상 관찰자</option>
                 </select>
-                <button class="btn btn-primary" onclick="generateMissions()">
+                <input type="number" id="aiCount" class="form-input" style="width: 80px;" value="5" min="1" max="20" placeholder="개수">
+                <button class="btn btn-primary" id="generateBtn" onclick="generateMissions()">
                     미션 생성
                 </button>
             </div>
@@ -390,11 +391,52 @@
                 }
             }
 
-            function generateMissions() {
+            async function generateMissions() {
                 const solarTermId = document.getElementById('aiSolarTerm').value;
                 const userType = document.getElementById('aiUserType').value;
-                // TODO: AI 미션 생성 API 호출
-                alert('AI 미션 생성 기능은 준비 중입니다.');
+                const count = parseInt(document.getElementById('aiCount').value) || 5;
+                const generateBtn = document.getElementById('generateBtn');
+
+                if (!solarTermId) {
+                    alert('절기를 선택해주세요.');
+                    return;
+                }
+
+                if (count < 1 || count > 20) {
+                    alert('생성 개수는 1~20개 사이로 입력해주세요.');
+                    return;
+                }
+
+                generateBtn.disabled = true;
+                generateBtn.textContent = '생성 중...';
+
+                try {
+                    const response = await fetch('/api/admin/missions/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            solarTermId: parseInt(solarTermId),
+                            userType: userType,
+                            count: count
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('API 요청 실패');
+                    }
+
+                    const data = await response.json();
+                    alert(`${data.missions.length}개의 미션이 생성되었습니다.`);
+                    location.reload();
+                } catch (error) {
+                    console.error('미션 생성 오류:', error);
+                    alert('미션 생성 중 오류가 발생했습니다.');
+                } finally {
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = '미션 생성';
+                }
             }
 
             // 전체 선택

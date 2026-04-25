@@ -24,7 +24,7 @@ public class AdminPageController {
     private final RecommendedMissionPoolRepository recommendedMissionPoolRepository;
     private final SolarTermRepository solarTermRepository;
 
-    @GetMapping
+    @GetMapping({"", "/dashboard"})
     public String dashboard(Model model) {
         // 현재 절기 조회
         LocalDate today = LocalDate.now();

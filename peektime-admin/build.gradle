@@ -3,6 +3,17 @@
 
 bootRun {
     systemProperty 'spring.profiles.active', 'local'
+
+    // .env 파일에서 환경 변수 로드
+    def envFile = rootProject.file('.env')
+    if (envFile.exists()) {
+        envFile.readLines().each { line ->
+            if (line && !line.startsWith('#') && line.contains('=')) {
+                def (key, value) = line.split('=', 2)
+                environment key.trim(), value.trim()
+            }
+        }
+    }
 }
 
 dependencies {

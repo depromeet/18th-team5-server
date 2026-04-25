@@ -7,7 +7,7 @@ spring:
     cache: false
     encoding: UTF-8
   datasource:
-    url: jdbc:h2:tcp://localhost:9092/~/h2-data/peektime-admin
+    url: jdbc:h2:mem:peektime-admin;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -19,9 +19,17 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
 
 server:
   port: 8081
+
+admin:
+  username: admin
+  password: admin123
 
 gemini:
   api-key: ${GEMINI_API_KEY}

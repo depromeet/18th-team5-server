@@ -1,0 +1,33 @@
+name: Deploy Admin to EC2
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  EC2_HOST: ${{ secrets.ADMIN_EC2_HOST }}
+  EC2_USER: ${{ secrets.ADMIN_EC2_USER }}
+  EC2_KEY: ${{ secrets.ADMIN_EC2_KEY }}
+
+jobs:
+  deploy-admin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ${{ env.EC2_USER }}
+          key: ${{ env.EC2_KEY }}
+          script: |
+            cd /home/ubuntu/18th-team5-server
+            git fetch origin && git reset --hard origin/main
+            ./gradlew clean build -x test -q
+            docker build -f Dockerfile.admin -t peektime-admin:dev .
+            docker stop peektime-admin 2>/dev/null || true
+            docker rm peektime-admin 2>/dev/null || true
+            docker run -d --name peektime-admin -p 8080:8081 \
+              --env-file /home/ubuntu/18th-team5-server/.env \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              peektime-admin:dev

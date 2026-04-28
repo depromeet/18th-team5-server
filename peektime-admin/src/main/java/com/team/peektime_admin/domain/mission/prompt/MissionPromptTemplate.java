@@ -1,6 +1,7 @@
 package com.team.peektime_admin.domain.mission.prompt;
 
 import com.team.peektime_admin.domain.solarterm.entity.SolarTerm;
+import com.team.peektime_admin.global.common.enums.UserType;
 
 public class MissionPromptTemplate {
 
@@ -91,6 +92,26 @@ public class MissionPromptTemplate {
                 OUTPUT_FORMAT +
                 "\n## 요청\n" +
                 "'" + solarTerm.getName() + "' 절기에 맞는 " + count + "개의 미션을 생성해주세요.";
+    }
+
+    public static String generateWithSolarTermAndUserType(SolarTerm solarTerm, UserType userType, int count) {
+        String solarTermInfo = buildSolarTermInfo(solarTerm);
+        String userTypeInfo = buildUserTypeInfo(userType);
+        return SYSTEM_PROMPT +
+                solarTermInfo +
+                userTypeInfo +
+                ATTRIBUTE_DESCRIPTION +
+                OUTPUT_FORMAT +
+                "\n## 요청\n" +
+                "'" + solarTerm.getName() + "' 절기에 맞고, '" + userType.getLabel() + "' 타입의 사용자를 위한 " + count + "개의 미션을 생성해주세요.\n" +
+                "생성되는 모든 미션의 userType은 반드시 '" + userType.name() + "'이어야 합니다.";
+    }
+
+    private static String buildUserTypeInfo(UserType userType) {
+        return "\n## 대상 사용자 타입\n" +
+                "- 타입: " + userType.getLabel() + "\n" +
+                "- 설명: " + userType.getDescription() + "\n" +
+                "\n이 사용자 타입에 맞는 미션을 생성해주세요.\n";
     }
 
     private static String buildSolarTermInfo(SolarTerm solarTerm) {

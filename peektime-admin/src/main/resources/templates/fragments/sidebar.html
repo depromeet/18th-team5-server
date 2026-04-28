@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <aside class="sidebar" th:fragment="sidebar">
+        <div class="logo">PeekTime Admin</div>
+        <nav>
+            <a th:href="@{/admin}" class="nav-item" th:classappend="${menu == 'dashboard'} ? 'active'">
+                <span class="nav-icon">📊</span>
+                대시보드
+            </a>
+            <a th:href="@{/admin/missions}" class="nav-item" th:classappend="${menu == 'mission-pool'} ? 'active'">
+                <span class="nav-icon">📋</span>
+                미션 풀 관리
+            </a>
+            <a th:href="@{/admin/daily-missions}" class="nav-item" th:classappend="${menu == 'daily-mission'} ? 'active'">
+                <span class="nav-icon">📅</span>
+                오늘의 미션
+            </a>
+            <a th:href="@{/admin/recommended-missions}" class="nav-item" th:classappend="${menu == 'recommended-mission'} ? 'active'">
+                <span class="nav-icon">⭐</span>
+                추천 미션
+            </a>
+            <a th:href="@{/admin/selected-missions}" class="nav-item" th:classappend="${menu == 'selected-mission'} ? 'active'">
+                <span class="nav-icon">✓</span>
+                선택 미션
+            </a>
+            <a th:href="@{/admin/settings}" class="nav-item" th:classappend="${menu == 'settings'} ? 'active'">
+                <span class="nav-icon">⚙️</span>
+                설정
+            </a>
+        </nav>
+    </aside>
+</body>
+</html>

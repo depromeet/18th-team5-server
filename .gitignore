@@ -38,6 +38,4 @@ out/
 ### Environment ###
 .env
 *.env
-
-### Local config ###
 **/application-local.yml

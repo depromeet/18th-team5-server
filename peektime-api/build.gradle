@@ -8,3 +8,6 @@ dependencies {
     implementation 'software.amazon.awssdk:s3:2.42.38'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 }
+bootRun {
+    systemProperty 'spring.profiles.active', 'local'
+}

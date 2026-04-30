@@ -6,17 +6,23 @@ import com.team.peektime_api.global.common.enums.MissionType;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
-public record UserMissionCompletionResponse(
+public record UserMissionCompletionDetailResponse(
         Long completionId,
         Long missionId,
         MissionType missionType,
+        String objectKey,
+        String presignedImageUrl,
+        String memo,
         OffsetDateTime completedAt
 ) {
-    public static UserMissionCompletionResponse from(UserMissionCompletion completion) {
-        return new UserMissionCompletionResponse(
+    public static UserMissionCompletionDetailResponse of(UserMissionCompletion completion, String presignedImageUrl) {
+        return new UserMissionCompletionDetailResponse(
                 completion.getId(),
                 completion.getMissionId(),
                 completion.getMissionType(),
+                completion.getObjectKey(),
+                presignedImageUrl,
+                completion.getMemo(),
                 completion.getCompletedAt().atOffset(ZoneOffset.ofHours(9))
         );
     }

@@ -2,18 +2,23 @@ package com.team.peektime_api.domain.mission.dto;
 
 import com.team.peektime_api.global.common.enums.MissionType;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
+import jakarta.validation.constraints.Size;
 
-@Getter
-public class UserMissionCompletionRequest {
+import java.time.OffsetDateTime;
 
-    @NotNull
-    private Long missionId;
+public record UserMissionCompletionRequest(
 
-    @NotNull
-    private MissionType missionType;
+        @NotNull
+        Long userId,
 
-    private String imageUrl;
+        @NotNull
+        MissionType missionType,
 
-    private String memo;
-}
+        @Size(max = 500)
+        String objectKey,
+
+        @Size(max = 200)
+        String memo,
+
+        OffsetDateTime completedAt
+) {}

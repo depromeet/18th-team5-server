@@ -39,3 +39,4 @@ out/
 .env
 *.env
 **/application-local.yml
+peektime-admin/src/test/resources/application.yml

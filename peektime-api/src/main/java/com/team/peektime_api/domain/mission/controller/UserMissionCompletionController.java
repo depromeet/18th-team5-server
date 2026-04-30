@@ -25,19 +25,19 @@ public class UserMissionCompletionController {
 
     @Operation(summary = "미션 완료 기록", description = "S3 업로드 완료 후 미션 완료를 기록합니다. 동일 미션 중복 완료 시 409 반환.")
     @PostMapping("/{missionId}/complete")
-    public ResponseEntity<SuccessResponse<UserMissionCompletionResponse>> completeMission(
+    public SuccessResponse<UserMissionCompletionResponse> completeMission(
             @PathVariable Long missionId,
             @RequestBody @Valid UserMissionCompletionRequest request
     ) {
-        return ResponseEntity.ok(SuccessResponse.of(SuccessCode.MISSION_COMPLETED, userMissionCompletionService.completeMission(missionId, request)));
+        return SuccessResponse.of(SuccessCode.MISSION_COMPLETED, userMissionCompletionService.completeMission(missionId, request));
     }
 
     @Operation(summary = "미션 완료 기록 조회", description = "특정 미션의 완료 기록을 조회합니다. 이미지는 Presigned URL로 제공됩니다.")
     @GetMapping("/{missionId}/completions")
-    public ResponseEntity<SuccessResponse<List<UserMissionCompletionDetailResponse>>> getMissionCompletions(
+    public SuccessResponse<List<UserMissionCompletionDetailResponse>> getMissionCompletions(
             @PathVariable Long missionId,
             @RequestParam Long userId
     ) {
-        return ResponseEntity.ok(SuccessResponse.of(SuccessCode.MISSION_FOUND, userMissionCompletionService.getMissionCompletions(missionId, userId)));
+        return SuccessResponse.of(SuccessCode.MISSION_FOUND, userMissionCompletionService.getMissionCompletions(missionId, userId));
     }
 }

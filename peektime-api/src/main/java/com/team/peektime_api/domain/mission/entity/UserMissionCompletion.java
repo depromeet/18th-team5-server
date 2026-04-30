@@ -53,15 +53,17 @@ public class UserMissionCompletion extends BaseEntity {
     }
 
     public static UserMissionCompletion of(User user, Long missionId, UserMissionCompletionRequest request) {
+        LocalDateTime completedAt = request.completedAt() != null
+                ? request.completedAt().toLocalDateTime()
+                : LocalDateTime.now();
+
         return UserMissionCompletion.builder()
                 .user(user)
                 .missionId(missionId)
                 .missionType(request.missionType())
                 .objectKey(request.objectKey())
                 .memo(request.memo())
-                .completedAt(request.completedAt() != null
-                        ? request.completedAt().toLocalDateTime()
-                        : LocalDateTime.now())
+                .completedAt(completedAt)
                 .build();
     }
 }

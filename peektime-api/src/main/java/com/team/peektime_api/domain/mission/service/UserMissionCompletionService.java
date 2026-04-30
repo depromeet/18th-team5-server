@@ -42,13 +42,17 @@ public class UserMissionCompletionService {
     public List<UserMissionCompletionDetailResponse> getMissionCompletions(Long missionId, Long userId) {
         return userMissionCompletionRepository.findByUser_IdAndMissionId(userId, missionId)
                 .stream()
-                .map(completion -> UserMissionCompletionDetailResponse.of(
-                        completion,
-                        completion.getObjectKey() != null
-                                ? s3Service.generatePresignedViewUrl(completion.getObjectKey())
-                                : null
-                ))
+                .map(this::toDetailResponse)
                 .toList();
+    }
+
+    /* 완성된 미션 세부사항 조회 */
+    private UserMissionCompletionDetailResponse toDetailResponse(UserMissionCompletion completion) {
+        String presignedUrl = completion.getObjectKey() != null
+                ? s3Service.generatePresignedViewUrl(completion.getObjectKey())
+                : null;
+
+        return UserMissionCompletionDetailResponse.of(completion, presignedUrl);
     }
 
     private User findUser(Long userId) {

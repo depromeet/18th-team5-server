@@ -101,13 +101,94 @@
             }
 
             .tag-enjoy {
-                background: #DBEAFE;
-                color: #2563EB;
+                background: #F3E8FF;
+                color: #9333EA;
             }
 
             .tag-user {
                 background: #F3E8FF;
                 color: #9333EA;
+            }
+
+            .tag-daily {
+                background: #DCFCE7;
+                color: #16A34A;
+            }
+
+            .tag-recommended {
+                background: #DBEAFE;
+                color: #2563EB;
+            }
+
+            .bulk-actions {
+                display: none;
+                gap: 12px;
+                padding: 12px 16px;
+                background: var(--gray-50);
+                border-radius: 8px;
+                margin-bottom: 16px;
+                align-items: center;
+            }
+
+            .bulk-actions.show {
+                display: flex;
+            }
+
+            .bulk-actions-label {
+                font-size: 14px;
+                color: var(--gray-700);
+                font-weight: 500;
+            }
+
+            .btn-bulk {
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+            .btn-bulk-daily {
+                background: white;
+                border: 1px solid var(--gray-300);
+                color: var(--gray-700);
+            }
+
+            .btn-bulk-daily:hover {
+                background: #DCFCE7;
+                border-color: #16A34A;
+                color: #16A34A;
+            }
+
+            .btn-bulk-recommended {
+                background: white;
+                border: 1px solid var(--gray-300);
+                color: var(--gray-700);
+            }
+
+            .btn-bulk-recommended:hover {
+                background: #FEF9C3;
+                border-color: #CA8A04;
+                color: #CA8A04;
+            }
+
+            .btn-bulk-delete {
+                background: white;
+                border: 1px solid #EF4444;
+                color: #EF4444;
+            }
+
+            .btn-bulk-delete:hover {
+                background: #FEE2E2;
+            }
+
+            .bulk-hint {
+                font-size: 12px;
+                color: var(--gray-500);
+                margin-left: auto;
             }
 
             .ai-section {
@@ -182,6 +263,21 @@
             </div>
         </div>
 
+        <!-- Bulk Actions -->
+        <div class="bulk-actions" id="bulkActions">
+            <span class="bulk-actions-label">선택된 미션:</span>
+            <button type="button" class="btn-bulk btn-bulk-daily" onclick="moveToDailyMission()">
+                📅 오늘의미션으로
+            </button>
+            <button type="button" class="btn-bulk btn-bulk-recommended" onclick="openRecommendedModal()">
+                ⭐ 추천미션으로
+            </button>
+            <button type="button" class="btn-bulk btn-bulk-delete" onclick="bulkDelete()">
+                🗑️ 삭제
+            </button>
+            <span class="bulk-hint">💡 "오늘의미션으로" 클릭 시 → 배정대기 상태로 이동 (날짜 미지정) → 오늘의 미션 페이지에서 드래그하여 배정</span>
+        </div>
+
         <div class="card">
             <!-- Filter Bar -->
             <form th:action="@{/admin/missions}" method="get" class="filter-bar">
@@ -218,24 +314,32 @@
                         <th>미션명</th>
                         <th>필터링 태그</th>
                         <th>추천미션 분류</th>
+                        <th>배정</th>
                         <th>생성일</th>
                         <th style="width: 100px;">관리</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr th:each="mission : ${missions}">
-                        <td><input type="checkbox" th:value="${mission.id}"></td>
+                        <td><input type="checkbox" class="mission-checkbox" th:value="${mission.id}"></td>
                         <td class="mission-title" th:text="${mission.title}">미션명</td>
                         <td class="tags-cell">
                             <span class="tag tag-gray" th:text="${mission.categoryType?.label}">카테고리</span>
                             <span class="tag tag-gray" th:text="${mission.spaceType?.label}">공간</span>
-                            <span class="tag tag-gray" th:text="${mission.intensityType?.label}">강도</span>
-                            <span class="tag tag-gray" th:text="${mission.companionType?.label}">동반</span>
+                            <span class="tag tag-gray" th:text="${mission.intensityType?.shortLabel}">강도</span>
+                            <span class="tag tag-gray" th:text="${mission.companionType?.shortLabel}">동반</span>
                         </td>
                         <td class="tags-cell">
-                            <span th:if="${mission.enjoyType != null}" class="tag tag-enjoy" th:text="${mission.enjoyType.label}">즐기기</span>
+                            <span th:if="${mission.enjoyType != null}" class="tag tag-enjoy" th:text="${mission.enjoyType.shortLabel}">즐기기</span>
                             <span th:if="${mission.userType != null}" class="tag tag-user" th:text="${mission.userType.label}">사용자</span>
                             <span th:if="${mission.enjoyType == null && mission.userType == null}" class="text-gray text-sm">-</span>
+                        </td>
+                        <td>
+                            <span th:if="${assignmentMap.get(mission.id) != null && assignmentMap.get(mission.id).name() == 'DAILY'}"
+                                  class="tag tag-daily">오늘의미션</span>
+                            <span th:if="${assignmentMap.get(mission.id) != null && assignmentMap.get(mission.id).name() == 'RECOMMENDED'}"
+                                  class="tag tag-recommended">추천미션</span>
+                            <span th:if="${assignmentMap.get(mission.id) == null}" class="text-gray text-sm">-</span>
                         </td>
                         <td class="text-gray text-sm" th:text="${#temporals.format(mission.createdAt, 'yyyy-MM-dd')}">2026-01-15</td>
                         <td>
@@ -246,7 +350,7 @@
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(missions)}">
-                        <td colspan="6" class="text-center text-gray" style="padding: 40px;">
+                        <td colspan="7" class="text-center text-gray" style="padding: 40px;">
                             등록된 미션이 없습니다.
                         </td>
                     </tr>
@@ -264,6 +368,63 @@
                 </th:block>
                 <button class="page-btn" th:disabled="${currentPage == totalPages - 1}"
                         th:onclick="'location.href=\'/admin/missions?page=' + (${currentPage} + 1) + '\''">▶</button>
+            </div>
+        </div>
+
+        <!-- Modal: 추천미션 이동 -->
+        <div class="modal-overlay" id="recommendedModal" style="display: none;">
+            <div class="modal" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">추천미션으로 이동</h3>
+                    <button class="modal-close" onclick="closeRecommendedModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">절기 선택 *</label>
+                        <select id="recommendedSolarTerm" class="form-select" required>
+                            <option value="">절기를 선택하세요</option>
+                            <option th:each="term : ${solarTerms}" th:value="${term.id}" th:text="${term.name}">입춘</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">사용자 타입 *</label>
+                        <select id="recommendedUserType" class="form-select" required>
+                            <option value="">사용자 타입을 선택하세요</option>
+                            <option th:each="ut : ${userTypes}" th:value="${ut.name()}" th:text="${ut.label}">자연 탐험가</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeRecommendedModal()">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="moveToRecommendedMission()">이동</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: 오늘의미션 이동 -->
+        <div class="modal-overlay" id="dailyModal" style="display: none;">
+            <div class="modal" style="max-width: 400px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">오늘의미션으로 이동</h3>
+                    <button class="modal-close" onclick="closeDailyModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">절기 선택 *</label>
+                        <select id="dailySolarTerm" class="form-select" required>
+                            <option value="">절기를 선택하세요</option>
+                            <option th:each="term : ${solarTerms}" th:value="${term.id}" th:text="${term.name}">입춘</option>
+                        </select>
+                    </div>
+                    <p style="font-size: 13px; color: var(--gray-600); margin-top: 12px;">
+                        선택한 절기의 배정대기 상태로 이동합니다.<br>
+                        오늘의 미션 페이지에서 드래그하여 날짜를 배정하세요.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeDailyModal()">취소</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmMoveToDailyMission()">이동</button>
+                </div>
             </div>
         </div>
 
@@ -366,6 +527,7 @@
 
     <th:block layout:fragment="scripts">
         <script>
+            // 미션 등록/수정 모달
             function openModal() {
                 document.getElementById('modalTitle').textContent = '새 미션 등록';
                 document.getElementById('missionForm').reset();
@@ -378,7 +540,6 @@
             }
 
             function editMission(id) {
-                // TODO: API 호출로 미션 정보 조회 후 모달에 채우기
                 document.getElementById('modalTitle').textContent = '미션 수정';
                 document.getElementById('missionId').value = id;
                 document.getElementById('missionModal').style.display = 'flex';
@@ -386,11 +547,165 @@
 
             function deleteMission(id) {
                 if (confirm('정말 삭제하시겠습니까?')) {
-                    // TODO: API 호출
-                    location.href = '/api/admin/missions/' + id + '/delete';
+                    fetch('/api/admin/missions/' + id, {
+                        method: 'DELETE'
+                    }).then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            alert('삭제 중 오류가 발생했습니다.');
+                        }
+                    });
                 }
             }
 
+            // 추천미션 모달
+            function openRecommendedModal() {
+                const selected = getSelectedMissionIds();
+                if (selected.length === 0) {
+                    alert('미션을 선택해주세요.');
+                    return;
+                }
+                document.getElementById('recommendedModal').style.display = 'flex';
+            }
+
+            function closeRecommendedModal() {
+                document.getElementById('recommendedModal').style.display = 'none';
+            }
+
+            async function moveToRecommendedMission() {
+                const solarTermId = document.getElementById('recommendedSolarTerm').value;
+                const userType = document.getElementById('recommendedUserType').value;
+                const missionIds = getSelectedMissionIds();
+
+                if (!solarTermId) {
+                    alert('절기를 선택해주세요.');
+                    return;
+                }
+                if (!userType) {
+                    alert('사용자 타입을 선택해주세요.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/admin/missions/bulk/recommended', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            missionIds: missionIds,
+                            solarTermId: parseInt(solarTermId),
+                            userType: userType
+                        })
+                    });
+
+                    if (response.ok) {
+                        alert('추천미션으로 이동되었습니다.');
+                        location.reload();
+                    } else {
+                        const error = await response.json();
+                        alert(error.message || '이동 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('이동 중 오류가 발생했습니다.');
+                }
+            }
+
+            // 오늘의미션 모달
+            function moveToDailyMission() {
+                const selected = getSelectedMissionIds();
+                if (selected.length === 0) {
+                    alert('미션을 선택해주세요.');
+                    return;
+                }
+                document.getElementById('dailyModal').style.display = 'flex';
+            }
+
+            function closeDailyModal() {
+                document.getElementById('dailyModal').style.display = 'none';
+            }
+
+            async function confirmMoveToDailyMission() {
+                const solarTermId = document.getElementById('dailySolarTerm').value;
+                const missionIds = getSelectedMissionIds();
+
+                if (!solarTermId) {
+                    alert('절기를 선택해주세요.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/admin/missions/bulk/daily', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            missionIds: missionIds,
+                            solarTermId: parseInt(solarTermId)
+                        })
+                    });
+
+                    if (response.ok) {
+                        alert('오늘의미션 배정대기로 이동되었습니다.');
+                        location.reload();
+                    } else {
+                        const error = await response.json();
+                        alert(error.message || '이동 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('이동 중 오류가 발생했습니다.');
+                }
+            }
+
+            // Bulk 삭제
+            async function bulkDelete() {
+                const selected = getSelectedMissionIds();
+                if (selected.length === 0) {
+                    alert('미션을 선택해주세요.');
+                    return;
+                }
+
+                if (!confirm(`${selected.length}개의 미션을 삭제하시겠습니까?`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/admin/missions/bulk/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ missionIds: selected })
+                    });
+
+                    if (response.ok) {
+                        alert('삭제되었습니다.');
+                        location.reload();
+                    } else {
+                        alert('삭제 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('삭제 중 오류가 발생했습니다.');
+                }
+            }
+
+            // 선택된 미션 ID 가져오기
+            function getSelectedMissionIds() {
+                return Array.from(document.querySelectorAll('.mission-checkbox:checked'))
+                    .map(cb => parseInt(cb.value));
+            }
+
+            // Bulk Actions 표시/숨김
+            function updateBulkActions() {
+                const selected = document.querySelectorAll('.mission-checkbox:checked').length;
+                const bulkActions = document.getElementById('bulkActions');
+                if (selected > 0) {
+                    bulkActions.classList.add('show');
+                } else {
+                    bulkActions.classList.remove('show');
+                }
+            }
+
+            // AI 미션 생성
             async function generateMissions() {
                 const solarTermId = document.getElementById('aiSolarTerm').value;
                 const userType = document.getElementById('aiUserType').value;
@@ -441,9 +756,15 @@
 
             // 전체 선택
             document.getElementById('selectAll')?.addEventListener('change', function() {
-                document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => {
+                document.querySelectorAll('.mission-checkbox').forEach(cb => {
                     cb.checked = this.checked;
                 });
+                updateBulkActions();
+            });
+
+            // 개별 체크박스 이벤트
+            document.querySelectorAll('.mission-checkbox').forEach(cb => {
+                cb.addEventListener('change', updateBulkActions);
             });
         </script>
     </th:block>

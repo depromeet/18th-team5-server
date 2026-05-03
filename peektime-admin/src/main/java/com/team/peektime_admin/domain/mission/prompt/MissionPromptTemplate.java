@@ -7,8 +7,8 @@ import com.team.peektime_admin.global.common.enums.UserType;
 public class MissionPromptTemplate {
 
     private static final String SYSTEM_PROMPT = """
-            당신은 계절과 절기에 맞는 일상 미션을 생성하는 전문가입니다.
-            사용자가 일상에서 쉽게 실천할 수 있는 미션을 생성해주세요.
+            당신은 'peektime' 앱의 미션 기획자입니다.
+            'peektime'은 사용자들이 계절(절기)의 변화를 느끼고 일상에서 소소한 미션을 수행하며 기록하는 서비스입니다.
             """;
 
     private static final String ATTRIBUTE_DESCRIPTION = """

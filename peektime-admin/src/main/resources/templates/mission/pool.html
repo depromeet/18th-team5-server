@@ -468,8 +468,8 @@
                     <h3 class="modal-title" id="modalTitle">새 미션 등록</h3>
                     <button class="modal-close" onclick="closeModal()">&times;</button>
                 </div>
-                <form id="missionForm" th:action="@{/api/admin/missions}" method="post">
-                    <input type="hidden" id="missionId" name="id">
+                <form id="missionForm" onsubmit="saveMission(event)">
+                    <input type="hidden" id="missionId">
                     <div class="modal-body">
                         <div class="form-group">
                             <label class="form-label">미션명 *</label>
@@ -534,7 +534,7 @@
                                     <option value="">선택 안함</option>
                                     <option value="NATURE_OUTDOOR">자연/야외</option>
                                     <option value="SEASONAL_FOOD">제철음식</option>
-                                    <option value="EMOTIONAL_CONTENT">감성콘텐츠</option>
+                                    <option value="CULTURE_CONTENT">감성콘텐츠</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -572,10 +572,67 @@
                 document.getElementById('missionModal').style.display = 'none';
             }
 
-            function editMission(id) {
-                document.getElementById('modalTitle').textContent = '미션 수정';
-                document.getElementById('missionId').value = id;
-                document.getElementById('missionModal').style.display = 'flex';
+            async function editMission(id) {
+                try {
+                    const response = await fetch('/api/admin/missions/' + id);
+                    if (!response.ok) throw new Error('미션 조회 실패');
+                    const mission = await response.json();
+
+                    document.getElementById('modalTitle').textContent = '미션 수정';
+                    document.getElementById('missionId').value = id;
+                    document.getElementById('missionTitle').value = mission.title || '';
+                    document.getElementById('missionDescription').value = mission.description || '';
+                    document.getElementById('spaceType').value = mission.spaceType || '';
+                    document.getElementById('intensityType').value = mission.intensityType || '';
+                    document.getElementById('companionType').value = mission.companionType || '';
+                    document.getElementById('categoryType').value = mission.categoryType || '';
+                    document.getElementById('enjoyType').value = mission.enjoyType || '';
+                    document.getElementById('userType').value = mission.userType || '';
+                    document.getElementById('missionModal').style.display = 'flex';
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('미션 정보를 불러오는데 실패했습니다.');
+                }
+            }
+
+            async function saveMission(event) {
+                event.preventDefault();
+
+                const id = document.getElementById('missionId').value;
+                const isEdit = id !== '';
+
+                const data = {
+                    title: document.getElementById('missionTitle').value,
+                    description: document.getElementById('missionDescription').value,
+                    spaceType: document.getElementById('spaceType').value,
+                    intensityType: document.getElementById('intensityType').value,
+                    companionType: document.getElementById('companionType').value,
+                    categoryType: document.getElementById('categoryType').value,
+                    enjoyType: document.getElementById('enjoyType').value || null,
+                    userType: document.getElementById('userType').value || null
+                };
+
+                try {
+                    const url = isEdit ? '/api/admin/missions/' + id : '/api/admin/missions';
+                    const method = isEdit ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.message || '저장 실패');
+                    }
+
+                    alert(isEdit ? '미션이 수정되었습니다.' : '미션이 등록되었습니다.');
+                    location.reload();
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('저장 중 오류가 발생했습니다: ' + error.message);
+                }
             }
 
             function deleteMission(id) {

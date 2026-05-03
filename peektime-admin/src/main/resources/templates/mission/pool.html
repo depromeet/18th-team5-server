@@ -256,6 +256,11 @@
                     <option value="SEASONAL_GOURMET">제철 미식가</option>
                     <option value="DAILY_OBSERVER">일상 관찰자</option>
                 </select>
+                <select class="form-select" id="aiEnjoyType" style="width: 120px;">
+                    <option value="NATURE_OUTDOOR">자연/야외</option>
+                    <option value="SEASONAL_FOOD">제철음식</option>
+                    <option value="CULTURE_CONTENT">감성콘텐츠</option>
+                </select>
                 <input type="number" id="aiCount" class="form-input" style="width: 80px;" value="5" min="1" max="20" placeholder="개수">
                 <button class="btn btn-primary" id="generateBtn" onclick="generateMissions()">
                     미션 생성
@@ -709,6 +714,7 @@
             async function generateMissions() {
                 const solarTermId = document.getElementById('aiSolarTerm').value;
                 const userType = document.getElementById('aiUserType').value;
+                const enjoyType = document.getElementById('aiEnjoyType').value;
                 const count = parseInt(document.getElementById('aiCount').value) || 5;
                 const generateBtn = document.getElementById('generateBtn');
 
@@ -734,6 +740,7 @@
                         body: JSON.stringify({
                             solarTermId: parseInt(solarTermId),
                             userType: userType,
+                            enjoyType: enjoyType,
                             count: count
                         })
                     });

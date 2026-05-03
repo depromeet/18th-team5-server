@@ -65,6 +65,19 @@ public class MissionGenerationService {
         return missions;
     }
 
+    @Transactional
+    public List<GeneratedMissionDto> generateMissionsWithSolarTermAndUserTypeAndEnjoyType(
+            Long solarTermId, UserType userType, EnjoyType enjoyType, int count) {
+        SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
+                .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
+
+        String prompt = MissionPromptTemplate.generateWithSolarTermAndUserTypeAndEnjoyType(
+                solarTerm, userType, enjoyType, count);
+        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
+        saveMissions(missions);
+        return missions;
+    }
+
     private void saveMissions(List<GeneratedMissionDto> missionDtos) {
         List<Mission> missions = missionDtos.stream()
                 .map(this::toEntity)

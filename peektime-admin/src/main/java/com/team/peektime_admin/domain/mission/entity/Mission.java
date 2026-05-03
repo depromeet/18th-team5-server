@@ -84,17 +84,5 @@ public class Mission extends BaseEntity {
         this.deletedAt = null;
     }
 
-    public void update(String title, String description, SpaceType spaceType,
-                       IntensityType intensityType, CategoryType categoryType,
-                       CompanionType companionType, EnjoyType enjoyType,
-                       UserType userType) {
-        this.title = title;
-        this.description = description;
-        this.spaceType = spaceType;
-        this.intensityType = intensityType;
-        this.categoryType = categoryType;
-        this.companionType = companionType;
-        this.enjoyType = enjoyType;
-        this.userType = userType;
-    }
+
 }

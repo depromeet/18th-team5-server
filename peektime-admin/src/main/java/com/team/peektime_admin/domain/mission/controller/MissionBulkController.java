@@ -53,16 +53,9 @@ public class MissionBulkController {
     @PostMapping
     @Transactional
     public ResponseEntity<Map<String, Object>> createMission(@RequestBody MissionRequest request) {
-        Mission mission = Mission.builder()
-                .title(request.getTitle())
-                .description(request.getDescription())
-                .spaceType(request.getSpaceType())
-                .intensityType(request.getIntensityType())
-                .companionType(request.getCompanionType())
-                .categoryType(request.getCategoryType())
-                .enjoyType(request.getEnjoyType())
-                .userType(request.getUserType())
-                .build();
+
+
+        Mission mission = Mission.create(request);
 
         Mission saved = missionRepository.save(mission);
         return ResponseEntity.ok(Map.of(

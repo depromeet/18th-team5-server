@@ -100,14 +100,36 @@
                 flex-wrap: wrap;
             }
 
-            .tag-enjoy {
+            /* EnjoyType 색상 */
+            .tag-enjoy-nature {
+                background: #DCFCE7;
+                color: #15803D;
+            }
+            .tag-enjoy-food {
+                background: #FEF3C7;
+                color: #B45309;
+            }
+            .tag-enjoy-culture {
                 background: #F3E8FF;
                 color: #9333EA;
             }
 
-            .tag-user {
-                background: #F3E8FF;
-                color: #9333EA;
+            /* UserType 색상 */
+            .tag-user-explorer {
+                background: #D1FAE5;
+                color: #047857;
+            }
+            .tag-user-walker {
+                background: #DBEAFE;
+                color: #1D4ED8;
+            }
+            .tag-user-gourmet {
+                background: #FFEDD5;
+                color: #C2410C;
+            }
+            .tag-user-observer {
+                background: #FCE7F3;
+                color: #BE185D;
             }
 
             .tag-daily {
@@ -335,8 +357,14 @@
                             <span class="tag tag-gray" th:text="${mission.companionType?.shortLabel}">동반</span>
                         </td>
                         <td class="tags-cell">
-                            <span th:if="${mission.enjoyType != null}" class="tag tag-enjoy" th:text="${mission.enjoyType.shortLabel}">즐기기</span>
-                            <span th:if="${mission.userType != null}" class="tag tag-user" th:text="${mission.userType.label}">사용자</span>
+                            <span th:if="${mission.enjoyType != null}"
+                                  class="tag"
+                                  th:classappend="${mission.enjoyType.name() == 'NATURE_OUTDOOR'} ? 'tag-enjoy-nature' : (${mission.enjoyType.name() == 'SEASONAL_FOOD'} ? 'tag-enjoy-food' : 'tag-enjoy-culture')"
+                                  th:text="${mission.enjoyType.shortLabel}">즐기기</span>
+                            <span th:if="${mission.userType != null}"
+                                  class="tag"
+                                  th:classappend="${mission.userType.name() == 'NATURE_EXPLORER'} ? 'tag-user-explorer' : (${mission.userType.name() == 'NEIGHBORHOOD_WALKER'} ? 'tag-user-walker' : (${mission.userType.name() == 'SEASONAL_GOURMET'} ? 'tag-user-gourmet' : 'tag-user-observer'))"
+                                  th:text="${mission.userType.label}">사용자</span>
                             <span th:if="${mission.enjoyType == null && mission.userType == null}" class="text-gray text-sm">-</span>
                         </td>
                         <td>

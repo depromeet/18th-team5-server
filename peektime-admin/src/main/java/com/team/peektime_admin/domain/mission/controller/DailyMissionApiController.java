@@ -42,7 +42,7 @@ public class DailyMissionApiController {
                     existing.unassign();
                 });
 
-        dailyMission.assignToDate(request.getDate(), 1);
+        dailyMission.assignToDate(request.getDate());
 
         return ResponseEntity.ok(Map.of("message", "배정되었습니다."));
     }

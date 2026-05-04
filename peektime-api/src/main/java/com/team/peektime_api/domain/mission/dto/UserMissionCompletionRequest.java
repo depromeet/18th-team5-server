@@ -9,9 +9,6 @@ import java.time.OffsetDateTime;
 public record UserMissionCompletionRequest(
 
         @NotNull
-        Long userId,
-
-        @NotNull
         MissionType missionType,
 
         @Size(max = 500)

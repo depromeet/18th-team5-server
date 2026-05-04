@@ -1,5 +1,6 @@
 package com.team.peektime_admin.domain.mission.entity;
 
+import com.team.peektime_admin.domain.mission.dto.MissionRequest;
 import com.team.peektime_admin.global.common.BaseEntity;
 import com.team.peektime_admin.global.common.enums.*;
 import jakarta.persistence.*;
@@ -60,7 +61,7 @@ public class Mission extends BaseEntity {
     private LocalDateTime deletedAt;
 
     @Builder
-    public Mission(String title, String description, SpaceType spaceType,
+    private Mission(String title, String description, SpaceType spaceType,
                    IntensityType intensityType, CategoryType categoryType,
                    CompanionType companionType, EnjoyType enjoyType,
                    UserType userType) {
@@ -72,6 +73,19 @@ public class Mission extends BaseEntity {
         this.companionType = companionType != null ? companionType : CompanionType.SOLO;
         this.enjoyType = enjoyType;
         this.userType = userType;
+    }
+
+    public static Mission create(MissionRequest request) {
+        return Mission.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .spaceType(request.getSpaceType())
+                .intensityType(request.getIntensityType())
+                .companionType(request.getCompanionType())
+                .categoryType(request.getCategoryType())
+                .enjoyType(request.getEnjoyType())
+                .userType(request.getUserType())
+                .build();
     }
 
     public void softDelete() {
@@ -93,7 +107,7 @@ public class Mission extends BaseEntity {
         this.spaceType = spaceType;
         this.intensityType = intensityType;
         this.categoryType = categoryType;
-        this.companionType = companionType;
+        this.companionType = companionType != null ? companionType : CompanionType.SOLO;
         this.enjoyType = enjoyType;
         this.userType = userType;
     }

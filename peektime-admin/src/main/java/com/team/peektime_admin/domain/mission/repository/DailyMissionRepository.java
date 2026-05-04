@@ -14,4 +14,8 @@ public interface DailyMissionRepository extends JpaRepository<DailyMission, Long
     List<DailyMission> findBySolarTermIdAndMissionDateIsNull(Long solarTermId);
 
     List<DailyMission> findBySolarTermIdAndMissionDateIsNotNull(Long solarTermId);
+
+    boolean existsByMissionId(Long missionId);
+
+    List<DailyMission> findByMissionIdIn(List<Long> missionIds);
 }

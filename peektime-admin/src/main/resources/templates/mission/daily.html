@@ -335,30 +335,85 @@
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
         <script th:inline="javascript">
             function removeFromDaily(dailyMissionId) {
-                if (confirm('배정 대기에서 제거하시겠습니까?')) {
+                if (confirm('미션풀로 되돌리시겠습니까?')) {
                     fetch('/api/admin/daily-missions/' + dailyMissionId, {
                         method: 'DELETE'
                     }).then(() => location.reload());
                 }
             }
 
-            function assignToDate(dailyMissionId, date) {
-                fetch('/api/admin/daily-missions/' + dailyMissionId + '/assign', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ date: date })
-                }).then(() => location.reload());
+            async function assignToDate(dailyMissionId, date) {
+                try {
+                    const response = await fetch('/api/admin/daily-missions/' + dailyMissionId + '/assign', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ date: date })
+                    });
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('배정 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('배정 중 오류가 발생했습니다.');
+                }
             }
 
-            function unassignFromDate(dailyMissionId) {
-                fetch('/api/admin/daily-missions/' + dailyMissionId + '/unassign', {
-                    method: 'POST'
-                }).then(() => location.reload());
+            async function unassignFromDate(dailyMissionId) {
+                try {
+                    const response = await fetch('/api/admin/daily-missions/' + dailyMissionId + '/unassign', {
+                        method: 'POST'
+                    });
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('배정 해제 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('배정 해제 중 오류가 발생했습니다.');
+                }
             }
 
-            // TODO: SortableJS로 드래그앤드롭 구현
             document.addEventListener('DOMContentLoaded', function() {
-                console.log('Daily mission page loaded');
+                const pendingList = document.getElementById('pendingList');
+                const slotAreas = document.querySelectorAll('.slot-area');
+
+                // 배정대기 패널을 드롭 영역으로 설정
+                if (pendingList) {
+                    new Sortable(pendingList, {
+                        group: 'missions',
+                        animation: 150,
+                        ghostClass: 'sortable-ghost',
+                        chosenClass: 'sortable-chosen',
+                        onAdd: function(evt) {
+                            // 스케줄 보드에서 배정대기로 드롭된 경우
+                            const dailyMissionId = evt.item.dataset.id;
+                            if (dailyMissionId) {
+                                unassignFromDate(dailyMissionId);
+                            }
+                        }
+                    });
+                }
+
+                // 각 날짜 슬롯을 드롭 영역으로 설정
+                slotAreas.forEach(slotArea => {
+                    new Sortable(slotArea, {
+                        group: 'missions',
+                        animation: 150,
+                        ghostClass: 'sortable-ghost',
+                        chosenClass: 'sortable-chosen',
+                        onAdd: function(evt) {
+                            const dailyMissionId = evt.item.dataset.id;
+                            const date = slotArea.dataset.date;
+
+                            if (dailyMissionId && date) {
+                                assignToDate(dailyMissionId, date);
+                            }
+                        }
+                    });
+                });
             });
         </script>
     </th:block>

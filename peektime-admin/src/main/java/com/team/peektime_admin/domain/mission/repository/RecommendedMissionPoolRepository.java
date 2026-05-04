@@ -13,4 +13,8 @@ public interface RecommendedMissionPoolRepository extends JpaRepository<Recommen
     long countBySolarTermIdAndUserType(Long solarTermId, UserType userType);
 
     List<RecommendedMissionPool> findBySolarTermIdAndUserType(Long solarTermId, UserType userType);
+
+    boolean existsByMissionId(Long missionId);
+
+    List<RecommendedMissionPool> findByMissionIdIn(List<Long> missionIds);
 }

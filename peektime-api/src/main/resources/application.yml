@@ -19,6 +19,16 @@ spring:
   sql:
     init:
       mode: always
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:2592000000}
+
 cloud:
   aws:
     credentials:

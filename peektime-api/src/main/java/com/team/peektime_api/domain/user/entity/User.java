@@ -27,6 +27,7 @@ public class User extends BaseEntity {
     private String pushToken;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+
     private UserOnboarding onboarding;
 
     @Builder

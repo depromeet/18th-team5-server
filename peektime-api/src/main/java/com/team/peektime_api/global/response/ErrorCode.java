@@ -24,7 +24,10 @@ public enum ErrorCode {
     MISSION_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "MISSION_400", "선택할 수 없는 미션입니다"),
 
     // 기록
-    RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "RECORD_404", "기록을 찾을 수 없습니다");
+    RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "RECORD_404", "기록을 찾을 수 없습니다"),
+
+    // S3
+    S3_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "S3_400", "허용되지 않는 파일 형식입니다. (image/jpeg, image/png, image/heic)");
 
     private final HttpStatus httpStatus;
     private final String code;

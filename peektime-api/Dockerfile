@@ -9,7 +9,9 @@ WORKDIR /app
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
-COPY settings.gradle .
+
+# Docker 빌드용 settings.gradle 사용 (peektime-api만 포함)
+COPY peektime-api/settings.gradle.docker settings.gradle
 
 # peektime-api 모듈 복사
 COPY peektime-api peektime-api

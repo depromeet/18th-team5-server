@@ -1,4 +1,6 @@
+# ============================================
 # Build stage
+# ============================================
 FROM eclipse-temurin:25-jdk AS builder
 
 WORKDIR /app
@@ -7,6 +9,7 @@ WORKDIR /app
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
+COPY settings.gradle .
 
 # 실행 권한 부여
 RUN chmod +x ./gradlew
@@ -18,10 +21,17 @@ RUN ./gradlew dependencies --no-daemon || true
 COPY src src
 RUN ./gradlew bootJar --no-daemon
 
+# ============================================
 # Runtime stage
+# ============================================
 FROM eclipse-temurin:25-jre
 
 WORKDIR /app
+
+# curl 설치 (헬스체크용)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl && \
+    rm -rf /var/lib/apt/lists/*
 
 # 빌드된 JAR 복사
 COPY --from=builder /app/build/libs/*.jar app.jar

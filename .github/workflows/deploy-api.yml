@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: 코드 체크아웃
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4 # github 레포에서 코드 가져옴
 
       # AWS 인증 설정
       - name: AWS 자격증명 설정

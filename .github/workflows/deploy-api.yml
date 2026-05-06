@@ -21,7 +21,7 @@ on:
 # ============================================
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY: peektime/api
+  ECR_REPOSITORY: peaktime
   APP_DIR: /app/peektime-api
 
 jobs:

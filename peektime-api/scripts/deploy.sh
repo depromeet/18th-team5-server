@@ -50,7 +50,7 @@ main() {
     echo "🚀 배포 시작"
     echo "  현재: $CURRENT"
     echo "  타겟: $TARGET"
-    echo "  이미지: $ECR_REGISTRY/peektime/api:$IMAGE_TAG"
+    echo "  이미지: $ECR_REGISTRY/peaktime:$IMAGE_TAG"
     echo "========================================"
 
     echo ""

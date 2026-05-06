@@ -1,16 +1,11 @@
 spring:
   application:
     name: peektime-api
-  datasource:
-    url: ${DB_URL}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+  profiles:
+    active: local
   jpa:
     open-in-view: false
-    hibernate:
-      ddl-auto: create
-    show-sql: false
+
 cloud:
   aws:
     credentials:

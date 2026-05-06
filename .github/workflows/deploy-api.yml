@@ -71,7 +71,8 @@ jobs:
       - name: Docker 이미지 빌드 & 푸시
         uses: docker/build-push-action@v5
         with:
-          context: ./peektime-api
+          context: .  # 루트에서 빌드 (멀티모듈)
+          file: ./peektime-api/Dockerfile
           push: true
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.tags }}

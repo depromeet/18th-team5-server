@@ -1,24 +1,27 @@
 # ============================================
-# Build stage
+# Build stage (루트에서 빌드)
 # ============================================
 FROM eclipse-temurin:25-jdk AS builder
 
 WORKDIR /app
 
-# Gradle 파일 먼저 복사 (캐시 활용)
+# 루트 Gradle 파일 복사
 COPY gradlew .
 COPY gradle gradle
 COPY build.gradle .
+COPY settings.gradle .
+
+# peektime-api 모듈 복사
+COPY peektime-api peektime-api
 
 # 실행 권한 부여
 RUN chmod +x ./gradlew
 
 # 의존성 다운로드 (캐시 레이어)
-RUN ./gradlew dependencies --no-daemon || true
+RUN ./gradlew :peektime-api:dependencies --no-daemon || true
 
-# 소스 코드 복사 및 빌드
-COPY src src
-RUN ./gradlew bootJar --no-daemon
+# 빌드
+RUN ./gradlew :peektime-api:bootJar --no-daemon
 
 # ============================================
 # Runtime stage
@@ -33,7 +36,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # 빌드된 JAR 복사
-COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder /app/peektime-api/build/libs/*.jar app.jar
 
 # 포트 노출
 EXPOSE 8080

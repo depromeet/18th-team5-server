@@ -8,9 +8,9 @@ WORKDIR /app
 # 루트 Gradle 파일 복사
 COPY gradlew .
 COPY gradle gradle
+COPY build.gradle .
 
-# Docker 빌드용 build.gradle, settings.gradle 사용 (peektime-api만 포함)
-COPY peektime-api/build.gradle.docker build.gradle
+# Docker 빌드용 settings.gradle (peektime-api만 포함)
 COPY peektime-api/settings.gradle.docker settings.gradle
 
 # peektime-api 모듈 복사

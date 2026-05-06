@@ -9,9 +9,6 @@ on:
     paths:
       # 이 경로의 파일이 변경될 때만 배포
       - 'peektime-api/**'
-      - 'docker-compose.yml'
-      - 'nginx/**'
-      - 'scripts/**'
   # 수동 실행 (GitHub UI에서 버튼 클릭)
   workflow_dispatch:
     inputs:
@@ -116,8 +113,9 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_KEY }}
-          source: "docker-compose.yml,nginx,scripts"
+          source: "peektime-api/docker-compose.yml,peektime-api/nginx,peektime-api/scripts"
           target: ${{ env.APP_DIR }}
+          strip_components: 1  # peektime-api/ 경로 제거
           overwrite: true
 
       # EC2에 SSH 접속해서 배포 스크립트 실행

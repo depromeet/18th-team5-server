@@ -24,6 +24,11 @@ public enum SuccessCode {
     RECORD_CREATED("RECORD_201", "기록 생성 성공"),
     RECORD_FOUND("RECORD_200", "기록 조회 성공"),
 
+    // 인증
+    LOGIN_SUCCESS("AUTH_200", "로그인 성공"),
+    TOKEN_REFRESHED("AUTH_200_REFRESH", "Access Token 재발급 성공"),
+    LOGOUT_SUCCESS("AUTH_204", "로그아웃 성공"),
+
     // S3
     S3_PRESIGNED_URL("S3_200", "Presigned URL 발급 성공"),
     S3_IMAGE_DELETED("S3_200", "이미지 삭제 성공");

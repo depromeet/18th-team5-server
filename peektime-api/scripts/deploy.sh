@@ -69,6 +69,15 @@ main() {
     echo "🔄 $TARGET 컨테이너 시작..."
     docker compose up -d api-$TARGET
 
+    # 컨테이너가 실제로 running인지 확인
+    sleep 5
+    if ! docker ps --filter "name=peektime-api-$TARGET" --filter "status=running" | grep -q "peektime-api-$TARGET"; then
+        echo "❌ 컨테이너 시작 실패"
+        docker logs peektime-api-$TARGET 2>&1 || true
+        exit 1
+    fi
+    echo "✅ 컨테이너 running 상태 확인"
+
     echo ""
     if ! wait_for_health "api-$TARGET" "$TARGET_PORT"; then
         echo "❌ 배포 실패, 롤백"

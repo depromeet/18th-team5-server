@@ -131,6 +131,8 @@ jobs:
           key: ${{ secrets.EC2_KEY }}
           envs: ECR_REGISTRY,IMAGE_TAG
           script: |
+            set -e
+
             echo "🚀 배포 시작"
 
             # ECR 로그인 (이미지 pull 하려면 필요)

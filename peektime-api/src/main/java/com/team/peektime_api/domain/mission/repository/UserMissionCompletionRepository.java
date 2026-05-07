@@ -10,4 +10,6 @@ public interface UserMissionCompletionRepository extends JpaRepository<UserMissi
     boolean existsByUser_IdAndMissionId(Long userId, Long missionId);
 
     List<UserMissionCompletion> findByUser_IdAndMissionId(Long userId, Long missionId);
+
+    long countByMissionId(Long missionId);
 }

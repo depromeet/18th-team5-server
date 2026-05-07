@@ -11,6 +11,9 @@ jwt:
   access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:2592000000}
 
+admin:
+  base-url: ${ADMIN_BASE_URL:http://localhost:8081}
+
 cloud:
   aws:
     credentials:

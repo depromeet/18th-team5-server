@@ -35,6 +35,14 @@ wait_for_health() {
     return 1
 }
 
+ensure_nginx() {
+    if ! docker compose ps nginx --status running 2>/dev/null | grep -q "nginx"; then
+        echo "🔧 nginx 컨테이너가 없습니다. 시작합니다..."
+        docker compose up -d nginx
+        sleep 3
+    fi
+}
+
 main() {
     CURRENT=$(get_current)
 
@@ -76,6 +84,7 @@ upstream peektime_api {
 }
 EOF
 
+    ensure_nginx
     docker compose exec -T nginx nginx -s reload
     echo "✅ Nginx 리로드 완료"
 

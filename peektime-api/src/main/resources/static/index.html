@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PeakTime API</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 600px;
+            margin: 100px auto;
+            text-align: center;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .status { color: #4CAF50; font-size: 14px; margin-bottom: 30px; }
+        a {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        a:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PeakTime 서버 동작 중</h1>
+        <p class="status">이 페이지는 Spring Boot의 정적 리소스로 제공됩니다.</p>
+        <a href="/swagger-ui/index.html">Swagger UI</a>
+    </div>
+</body>
+</html>

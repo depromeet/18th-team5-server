@@ -36,7 +36,9 @@ out/
 .vscode/
 
 ### Environment ###
-.env
+peektime-api/.env
 *.env
 **/application-local.yml
 peektime-admin/src/test/resources/application.yml
+### Claude ###
+.claude/settings.local.json

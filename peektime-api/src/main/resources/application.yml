@@ -1,10 +1,15 @@
 spring:
   application:
-    name: peektime-api
+    name: peaktime-api
   profiles:
     active: local
   jpa:
     open-in-view: false
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:2592000000}
 
 cloud:
   aws:

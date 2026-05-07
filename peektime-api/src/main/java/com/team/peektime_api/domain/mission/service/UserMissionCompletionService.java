@@ -25,8 +25,8 @@ public class UserMissionCompletionService {
     private final S3Service s3Service;
 
     @Transactional
-    public UserMissionCompletionResponse completeMission(Long missionId, UserMissionCompletionRequest request) {
-        User user = findUser(request.userId());
+    public UserMissionCompletionResponse completeMission(Long userId, Long missionId, UserMissionCompletionRequest request) {
+        User user = findUser(userId);
 
         if (userMissionCompletionRepository.existsByUser_IdAndMissionId(user.getId(), missionId)) {
             throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
@@ -39,7 +39,7 @@ public class UserMissionCompletionService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserMissionCompletionDetailResponse> getMissionCompletions(Long missionId, Long userId) {
+    public List<UserMissionCompletionDetailResponse> getMissionCompletions(Long userId, Long missionId) {
         return userMissionCompletionRepository.findByUser_IdAndMissionId(userId, missionId)
                 .stream()
                 .map(this::toDetailResponse)
@@ -60,3 +60,4 @@ public class UserMissionCompletionService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 }
+

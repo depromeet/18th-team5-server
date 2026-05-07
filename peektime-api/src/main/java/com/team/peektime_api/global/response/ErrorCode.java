@@ -26,6 +26,12 @@ public enum ErrorCode {
     // 기록
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "RECORD_404", "기록을 찾을 수 없습니다"),
 
+    // 인증
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401", "유효하지 않은 토큰입니다"),
+    EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401_EXPIRED", "만료된 토큰입니다"),
+    REFRESH_TOKEN_NOT_FOUND(HttpStatus.UNAUTHORIZED, "AUTH_401_RT", "Refresh Token이 존재하지 않습니다"),
+    REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "AUTH_401_MISMATCH", "Refresh Token이 일치하지 않습니다"),
+
     // S3
     S3_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "S3_400", "허용되지 않는 파일 형식입니다. (image/jpeg, image/png, image/heic)");
 

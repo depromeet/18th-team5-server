@@ -15,6 +15,9 @@ public enum SuccessCode {
     USER_CREATED("USER_201", "사용자 생성 성공"),
     USER_UPDATED("USER_200", "사용자 정보 수정 성공"),
 
+    // 홈
+    HOME_FOUND("HOME_200", "홈 화면 조회 성공"),
+
     // 미션
     MISSION_FOUND("MISSION_200", "미션 조회 성공"),
     MISSION_COMPLETED("MISSION_200", "미션 완료 성공"),

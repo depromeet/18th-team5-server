@@ -8,9 +8,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @SpringBootApplication
 public class PeektimeApiApplication {
 
+
+
 	public static void main(String[] args) {
 		SpringApplication.run(PeektimeApiApplication.class, args);
 	}
-
 
 }

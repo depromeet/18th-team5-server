@@ -16,10 +16,10 @@ get_current() {
 wait_for_health() {
     local container=$1
     local port=$2
-    local max_attempts=30
+    local max_attempts=40
     local attempt=0
 
-    echo "⏳ $container 헬스체크 대기..."
+    echo "⏳ $container 헬스체크 대기... (최대 120초)"
 
     while [ $attempt -lt $max_attempts ]; do
         if curl -sf "http://localhost:$port/actuator/health" > /dev/null 2>&1; then
@@ -28,7 +28,7 @@ wait_for_health() {
         fi
         attempt=$((attempt + 1))
         echo "  시도 $attempt/$max_attempts..."
-        sleep 2
+        sleep 3
     done
 
     echo "❌ $container 헬스체크 실패"
@@ -59,6 +59,8 @@ main() {
     echo "  현재: $CURRENT"
     echo "  타겟: $TARGET"
     echo "  이미지: $ECR_REGISTRY/peaktime:$IMAGE_TAG"
+    echo "  디렉토리: $(pwd)"
+    echo "  .env 존재: $(test -f .env && echo 'YES' || echo 'NO')"
     echo "========================================"
 
     echo ""
@@ -69,9 +71,32 @@ main() {
     echo "🔄 $TARGET 컨테이너 시작..."
     docker compose up -d api-$TARGET
 
+    # Redis healthy + 컨테이너 시작 대기
+    echo "⏳ 컨테이너 준비 대기 중... (최대 30초)"
+    for i in {1..6}; do
+        sleep 5
+        if docker ps --filter "name=peektime-api-$TARGET" --filter "status=running" | grep -q "peektime-api-$TARGET"; then
+            echo "✅ 컨테이너 running 상태 확인"
+            break
+        fi
+        echo "  대기 중... ($((i*5))초)"
+        if [ $i -eq 6 ]; then
+            echo "❌ 컨테이너 시작 실패"
+            docker logs peektime-api-$TARGET 2>&1 || true
+            exit 1
+        fi
+    done
+
     echo ""
     if ! wait_for_health "api-$TARGET" "$TARGET_PORT"; then
         echo "❌ 배포 실패, 롤백"
+        echo ""
+        echo "📋 컨테이너 로그:"
+        docker logs peektime-api-$TARGET --tail 50 2>&1 || true
+        echo ""
+        echo "📋 컨테이너 상태:"
+        docker ps -a --filter "name=peektime-api-$TARGET" || true
+        echo ""
         docker compose stop api-$TARGET
         exit 1
     fi

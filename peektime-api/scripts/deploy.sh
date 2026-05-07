@@ -59,6 +59,8 @@ main() {
     echo "  현재: $CURRENT"
     echo "  타겟: $TARGET"
     echo "  이미지: $ECR_REGISTRY/peaktime:$IMAGE_TAG"
+    echo "  디렉토리: $(pwd)"
+    echo "  .env 존재: $(test -f .env && echo 'YES' || echo 'NO')"
     echo "========================================"
 
     echo ""
@@ -88,6 +90,13 @@ main() {
     echo ""
     if ! wait_for_health "api-$TARGET" "$TARGET_PORT"; then
         echo "❌ 배포 실패, 롤백"
+        echo ""
+        echo "📋 컨테이너 로그:"
+        docker logs peektime-api-$TARGET --tail 50 2>&1 || true
+        echo ""
+        echo "📋 컨테이너 상태:"
+        docker ps -a --filter "name=peektime-api-$TARGET" || true
+        echo ""
         docker compose stop api-$TARGET
         exit 1
     fi

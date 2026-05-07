@@ -35,6 +35,8 @@ public class UserMissionCompletionController {
                 userMissionCompletionService.completeMission(principal.getUserId(), missionId, request));
     }
 
+
+
     @Operation(summary = "미션 완료 기록 조회", description = "특정 미션의 완료 기록을 조회합니다. 이미지는 Presigned URL로 제공됩니다.")
     @GetMapping("/{missionId}/completions")
     public SuccessResponse<List<UserMissionCompletionDetailResponse>> getMissionCompletions(

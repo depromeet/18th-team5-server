@@ -1,25 +1,10 @@
 spring:
   application:
     name: peektime-api
-  datasource:
-    url: ${DB_URL}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+  profiles:
+    active: local
   jpa:
     open-in-view: false
-    hibernate:
-      ddl-auto: create
-    show-sql: false
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-
-jwt:
-  secret: ${JWT_SECRET}
-  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:2592000000}
 
 cloud:
   aws:

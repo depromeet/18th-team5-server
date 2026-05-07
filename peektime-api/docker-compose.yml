@@ -16,7 +16,7 @@ services:
     restart: always
 
   api-blue:
-    image: ${ECR_REGISTRY}/peaktime:${IMAGE_TAG:-latest}
+    image: 976972138580.dkr.ecr.ap-northeast-2.amazonaws.com/peaktime:${IMAGE_TAG:-latest}
     container_name: peektime-api-blue
     environment:
       - SPRING_PROFILES_ACTIVE=prod
@@ -32,7 +32,7 @@ services:
         condition: service_healthy
 
   api-green:
-    image: ${ECR_REGISTRY}/peaktime:${IMAGE_TAG:-latest}
+    image: 976972138580.dkr.ecr.ap-northeast-2.amazonaws.com/peaktime:${IMAGE_TAG:-latest}
     container_name: peektime-api-green
     environment:
       - SPRING_PROFILES_ACTIVE=prod

@@ -4,6 +4,9 @@
 spring:
   application:
     name: peektime-admin
+  sql:
+    init:
+      mode: always
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html

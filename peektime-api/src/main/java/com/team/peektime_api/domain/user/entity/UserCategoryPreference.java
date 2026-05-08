@@ -26,7 +26,7 @@ public class UserCategoryPreference extends BaseEntity {
     @Column(name = "category", nullable = false)
     private EnjoyType category;
 
-    @Column(name = "rank", nullable = false)
+    @Column(name = "preference_rank", nullable = false)
     private int rank;
 
     @Builder

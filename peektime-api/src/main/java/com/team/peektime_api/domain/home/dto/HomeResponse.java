@@ -1,5 +1,7 @@
 package com.team.peektime_api.domain.home.dto;
 
+import com.team.peektime_api.global.common.enums.MissionType;
+
 import java.time.LocalDate;
 
 public record HomeResponse(
@@ -19,7 +21,8 @@ public record HomeResponse(
     public record DailyMissionInfo(
             Long id,
             String title,
-            Long participantCount
+            Long participantCount,
+            MissionType missionType
     ) {
     }
 }

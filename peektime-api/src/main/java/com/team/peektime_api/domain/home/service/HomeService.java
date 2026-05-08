@@ -2,6 +2,7 @@ package com.team.peektime_api.domain.home.service;
 
 import com.team.peektime_api.domain.home.dto.HomeResponse;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
+import com.team.peektime_api.global.common.enums.MissionType;
 import com.team.peektime_api.global.infra.admin.AdminClient;
 import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,8 @@ public class HomeService {
             dailyMissionInfo = new HomeResponse.DailyMissionInfo(
                     adminData.dailyMission().id(),
                     adminData.dailyMission().title(),
-                    participantCount
+                    participantCount,
+                    MissionType.DAILY
             );
         }
 

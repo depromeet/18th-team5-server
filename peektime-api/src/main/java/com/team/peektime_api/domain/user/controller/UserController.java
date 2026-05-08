@@ -23,12 +23,12 @@ public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary = "내 정보 조회", description = "온보딩 완료 여부를 포함한 사용자 정보를 반환합니다.")
+    @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 정보와 온보딩 완료 여부를 조회합니다.")
     @GetMapping("/me")
     @ResponseStatus(HttpStatus.OK)
-    public SuccessResponse<UserProfileResponse> getMe(
+    public SuccessResponse<UserProfileResponse> getMyProfile(
             @AuthenticationPrincipal UserPrincipal principal) {
-        return SuccessResponse.of(SuccessCode.USER_FOUND, userService.getMe(principal.getUserId()));
+        return SuccessResponse.of(SuccessCode.USER_FOUND, userService.getMyProfile(principal.getUserId()));
     }
 
     @Operation(summary = "온보딩", description = "Q1(spaceType), Q2(intensityType), Q3(enjoyType 순위)를 받아 userType을 계산하고 저장합니다.")

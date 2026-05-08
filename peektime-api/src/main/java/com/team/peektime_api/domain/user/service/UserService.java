@@ -22,10 +22,10 @@ public class UserService {
     private final UserOnboardingRepository userOnboardingRepository;
 
     @Transactional(readOnly = true)
-    public UserProfileResponse getMe(Long userId) {
+    public UserProfileResponse getMyProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
-        return new UserProfileResponse(user);
+        return UserProfileResponse.from(user);
     }
 
     public UserOnboardingResponse saveOnboarding(Long userId, UserOnboardingRequest request) {

@@ -1,15 +1,19 @@
 spring:
   application:
     name: peaktime-api
+  profiles:
+    active: local
+  jpa:
+    open-in-view: false
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
 logging:
   level:
     org.springframework.web: DEBUG
     com.team.peektime_api: DEBUG
-  profiles:
-    active: local
-  jpa:
-    open-in-view: false
 
 jwt:
   secret: ${JWT_SECRET}

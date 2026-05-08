@@ -25,7 +25,8 @@ public class S3Service {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
-    private static final Duration PRESIGNED_URL_EXPIRY = Duration.ofMinutes(10);
+    private static final Duration UPLOAD_URL_EXPIRY = Duration.ofMinutes(10);
+    private static final Duration VIEW_URL_EXPIRY = Duration.ofDays(1);
 
     public PresignedUrlResponse generatePresignedUrl(String fileName, String contentType) {
         String objectKey = "images/" + UUID.randomUUID() + "_" + fileName;
@@ -37,7 +38,7 @@ public class S3Service {
                 .build();
 
         PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(r -> r
-                .signatureDuration(PRESIGNED_URL_EXPIRY)
+                .signatureDuration(UPLOAD_URL_EXPIRY)
                 .putObjectRequest(putObjectRequest)
         );
 
@@ -51,7 +52,7 @@ public class S3Service {
                 .build();
 
         PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(r -> r
-                .signatureDuration(PRESIGNED_URL_EXPIRY)
+                .signatureDuration(VIEW_URL_EXPIRY)
                 .getObjectRequest(getObjectRequest)
         );
 

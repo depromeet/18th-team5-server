@@ -2,6 +2,7 @@ package com.team.peektime_api.domain.user.controller;
 
 import com.team.peektime_api.domain.user.dto.UserOnboardingRequest;
 import com.team.peektime_api.domain.user.dto.UserOnboardingResponse;
+import com.team.peektime_api.domain.user.dto.UserProfileResponse;
 import com.team.peektime_api.domain.user.service.UserService;
 import com.team.peektime_api.global.auth.UserPrincipal;
 import com.team.peektime_api.global.response.SuccessCode;
@@ -22,7 +23,15 @@ public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary = "온보딩", description = "Q1(활동 공간), Q2(활동 방식), Q3(카테고리 순위)를 받아 userType과 카테고리 선호도를 저장합니다.")
+    @Operation(summary = "내 정보 조회", description = "온보딩 완료 여부를 포함한 사용자 정보를 반환합니다.")
+    @GetMapping("/me")
+    @ResponseStatus(HttpStatus.OK)
+    public SuccessResponse<UserProfileResponse> getMe(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return SuccessResponse.of(SuccessCode.USER_FOUND, userService.getMe(principal.getUserId()));
+    }
+
+    @Operation(summary = "온보딩", description = "Q1(spaceType), Q2(intensityType), Q3(enjoyType 순위)를 받아 userType을 계산하고 저장합니다.")
     @PostMapping("/onboarding")
     @ResponseStatus(HttpStatus.OK)
     public SuccessResponse<UserOnboardingResponse> onboarding(

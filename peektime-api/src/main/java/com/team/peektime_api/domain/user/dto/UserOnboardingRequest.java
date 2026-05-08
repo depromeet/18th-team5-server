@@ -1,40 +1,26 @@
 package com.team.peektime_api.domain.user.dto;
 
-import com.team.peektime_api.global.common.enums.ActivityStyle;
 import com.team.peektime_api.global.common.enums.EnjoyType;
+import com.team.peektime_api.global.common.enums.IntensityType;
 import com.team.peektime_api.global.common.enums.SpaceType;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
-
-import java.util.List;
 
 @Getter
 public class UserOnboardingRequest {
 
     @NotNull
-    private SpaceType activityLocation;
+    private SpaceType spaceType;
 
     @NotNull
-    private ActivityStyle activityStyle;
+    private IntensityType intensityType;
 
     @NotNull
-    @Size(min = 3, max = 3)
-    @Valid
-    private List<CategoryRankItem> categoryRanks;
+    private EnjoyType enjoyTypeFirst;
 
-    @Getter
-    public static class CategoryRankItem {
+    @NotNull
+    private EnjoyType enjoyTypeSecond;
 
-        @NotNull
-        private EnjoyType category;
-
-        @NotNull
-        @Min(1)
-        @Max(3)
-        private Integer rank;
-    }
+    @NotNull
+    private EnjoyType enjoyTypeThird;
 }

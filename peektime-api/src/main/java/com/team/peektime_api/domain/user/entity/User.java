@@ -1,7 +1,6 @@
 package com.team.peektime_api.domain.user.entity;
 
 import com.team.peektime_api.global.common.BaseEntity;
-import com.team.peektime_api.global.common.enums.UserType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -27,10 +26,6 @@ public class User extends BaseEntity {
     @Column(name = "push_token", length = 255)
     private String pushToken;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "user_type")
-    private UserType userType;
-
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private UserOnboarding onboarding;
 
@@ -47,9 +42,5 @@ public class User extends BaseEntity {
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
-    }
-
-    public void updateUserType(UserType userType) {
-        this.userType = userType;
     }
 }

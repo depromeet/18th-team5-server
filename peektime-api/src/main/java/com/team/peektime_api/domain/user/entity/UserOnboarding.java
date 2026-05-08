@@ -69,13 +69,13 @@ public class UserOnboarding extends BaseEntity {
 
     private UserType determineUserType(SpaceType space, IntensityType intensity) {
         if (space == SpaceType.OUTDOOR && intensity == IntensityType.ACTIVE) {
-            return UserType.NATURE_EXPLORER;
+            return UserType.EXPLORER;
         } else if (space == SpaceType.OUTDOOR) {
-            return UserType.NEIGHBORHOOD_WALKER;
+            return UserType.WALKER;
         } else if (intensity == IntensityType.ACTIVE) {
-            return UserType.SEASONAL_GOURMET;
+            return UserType.LIFE_CREATOR;
         } else {
-            return UserType.DAILY_OBSERVER;
+            return UserType.AESTHETE;
         }
     }
 

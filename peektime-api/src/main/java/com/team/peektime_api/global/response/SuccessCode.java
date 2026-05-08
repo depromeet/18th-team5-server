@@ -14,6 +14,7 @@ public enum SuccessCode {
     // 사용자
     USER_CREATED("USER_201", "사용자 생성 성공"),
     USER_UPDATED("USER_200", "사용자 정보 수정 성공"),
+    ONBOARDING_SAVED("USER_200_ONBOARD", "온보딩 저장 성공"),
 
     // 홈
     HOME_FOUND("HOME_200", "홈 화면 조회 성공"),

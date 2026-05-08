@@ -12,6 +12,7 @@ public enum SuccessCode {
     _CREATED("COMMON_201", "생성 성공"),
 
     // 사용자
+    USER_FOUND("USER_200", "사용자 조회 성공"),
     USER_CREATED("USER_201", "사용자 생성 성공"),
     USER_UPDATED("USER_200", "사용자 정보 수정 성공"),
 

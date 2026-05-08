@@ -1,6 +1,11 @@
 spring:
   application:
     name: peaktime-api
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    com.team.peektime_api: DEBUG
   profiles:
     active: local
   jpa:

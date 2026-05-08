@@ -81,7 +81,8 @@ curl -X POST 'https://api.peektime.com/api/v1/auth/login' \
     "dailyMission": {
       "id": 10,
       "title": "봄의 첫 신호 유리잔 바꿔주기",
-      "participantCount": 100
+      "participantCount": 100,
+      "missionType": "DAILY"
     }
   }
 }
@@ -114,6 +115,7 @@ curl -X POST 'https://api.peektime.com/api/v1/auth/login' \
 | `id` | Long | - | 미션 ID |
 | `title` | String | - | 미션 제목 |
 | `participantCount` | Long | - | 해당 미션 참여자 수 |
+| `missionType` | String | - | 미션 타입 (`DAILY`, `RECOMMENDED`, `SELECTED`) |
 
 > **Note**: 오늘 날짜에 배정된 미션이 없으면 `dailyMission: null`
 
@@ -155,19 +157,19 @@ curl -X POST 'https://api.peektime.com/api/v1/auth/login' \
 struct MissionData {
     let missionId: Int       // dailyMission.id
     let title: String        // dailyMission.title
-    let missionType: String  // "DAILY" (오늘의 미션)
+    let missionType: String  // dailyMission.missionType (서버에서 제공)
 }
 
 // 미션 기록 화면으로 전달
 let missionData = MissionData(
     missionId: response.result.dailyMission.id,
     title: response.result.dailyMission.title,
-    missionType: "DAILY"
+    missionType: response.result.dailyMission.missionType  // 서버 응답값 그대로 사용
 )
 navigateToMissionRecord(with: missionData)
 ```
 
-> **중요**: 미션 완료 API 호출 시 `missionId`와 `missionType`이 필요합니다.
+> **Note**: `missionType`은 서버에서 제공하므로 하드코딩하지 않고 응답값을 그대로 사용합니다.
 
 ---
 
@@ -216,3 +218,4 @@ navigateToMissionRecord(with: missionData)
 | 날짜 | 버전 | 변경 내용 |
 |------|------|----------|
 | 2026-05-08 | v1.0 | 최초 작성 |
+| 2026-05-08 | v1.1 | `dailyMission.missionType` 필드 추가 |

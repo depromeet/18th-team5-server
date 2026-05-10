@@ -58,7 +58,7 @@ public class DailyMissionCacheService {
 
     public boolean exists(LocalDate date) {
         String key = generateKey(date);
-        return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+        return redisTemplate.hasKey(key);
     }
 
     private String generateKey(LocalDate date) {

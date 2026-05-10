@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class DailyMissionCacheService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
 
     private final RedisTemplate<String, String> redisTemplate;
+
     private final ObjectMapper objectMapper;
 
     public void save(LocalDate date, AdminHomeResponse data) {

@@ -1,5 +1,4 @@
 name: Deploy PeekTime Admin
-
 on:
   push:
     branches: [main]
@@ -13,17 +12,15 @@ on:
 
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY: peektime-admin
+  ECR_REPOSITORY: peaktime-admin
   APP_DIR: /app/peektime-admin
 
 jobs:
   build-and-push:
     name: Build & Push to ECR
     runs-on: ubuntu-latest
-
     outputs:
       image_tag: ${{ steps.meta.outputs.tags }}
-
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
@@ -66,7 +63,6 @@ jobs:
     name: Deploy to EC2
     needs: build-and-push
     runs-on: ubuntu-latest
-
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
@@ -106,15 +102,11 @@ jobs:
           script: |
             set -e
             echo "배포 시작"
-
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
               docker login --username AWS --password-stdin $ECR_REGISTRY
-
             cd ${{ env.APP_DIR }}
             chmod +x scripts/*.sh
-
             export ECR_REGISTRY=$ECR_REGISTRY
             export IMAGE_TAG=$IMAGE_TAG
             ./scripts/deploy.sh
-
             echo "배포 완료"

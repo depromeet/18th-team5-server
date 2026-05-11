@@ -1,0 +1,16 @@
+spring:
+  sql:
+    init:
+      mode: never
+  thymeleaf:
+    cache: true         # prod에서는 캐시 켜기
+  datasource:
+    url: ${DATASOURCE_URL}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DATASOURCE_USERNAME}
+    password: ${DATASOURCE_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    defer-datasource-initialization: true

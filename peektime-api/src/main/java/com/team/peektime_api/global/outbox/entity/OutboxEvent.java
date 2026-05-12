@@ -1,0 +1,27 @@
+package com.team.peektime_api.global.outbox.entity;
+
+import com.team.peektime_api.global.common.BaseEntity;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "outbox_event")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class OutboxEvent extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String payload;
+
+    @Builder
+    public OutboxEvent(String payload) {
+        this.payload = payload;
+    }
+}

@@ -2,7 +2,7 @@ package com.team.peektime_api.global.outbox.scheduler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.peektime_api.global.infra.admin.AdminClient;
-import com.team.peektime_api.global.outbox.dto.MissionLogPayload;
+import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import com.team.peektime_api.global.outbox.entity.OutboxEvent;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;

@@ -11,9 +11,9 @@ import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.S3Service;
-import com.team.peektime_api.global.outbox.dto.MissionLogPayload;
+import com.team.peektime_api.domain.mission.event.MissionCompletedEvent;
+import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import com.team.peektime_api.global.outbox.entity.OutboxEvent;
-import com.team.peektime_api.global.outbox.event.MissionCompletedEvent;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
 import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -47,26 +47,16 @@ public class UserMissionCompletionService {
                 UserMissionCompletion.of(user, missionId, request)
         );
 
-        // Outbox 저장 + 이벤트 발행
-        LocalDateTime completedAt = completion.getCompletedAt();
-        MissionLogPayload payload = new MissionLogPayload(
+        MissionLogPayload payload = MissionLogPayload.of(
                 user.getDeviceUuid(),
                 missionId,
                 request.missionType(),
                 request.solarTermId(),
-                completedAt
+                completion.getCompletedAt()
         );
 
         OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
-
-        eventPublisher.publishEvent(new MissionCompletedEvent(
-                outbox.getId(),
-                user.getDeviceUuid(),
-                missionId,
-                request.missionType(),
-                request.solarTermId(),
-                completedAt
-        ));
+        eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
 
         return UserMissionCompletionResponse.from(completion);
     }

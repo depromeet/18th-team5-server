@@ -1,8 +1,6 @@
-package com.team.peektime_api.global.outbox.listener;
+package com.team.peektime_api.domain.mission.event;
 
 import com.team.peektime_api.global.infra.admin.AdminClient;
-import com.team.peektime_api.global.outbox.dto.MissionLogPayload;
-import com.team.peektime_api.global.outbox.event.MissionCompletedEvent;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

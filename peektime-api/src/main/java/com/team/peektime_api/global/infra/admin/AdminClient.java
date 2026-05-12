@@ -1,7 +1,7 @@
 package com.team.peektime_api.global.infra.admin;
 
 import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse;
-import com.team.peektime_api.global.outbox.dto.MissionLogPayload;
+import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;

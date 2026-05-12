@@ -19,16 +19,16 @@ public class HomeDataService {
     private final SolarTermRepository solarTermRepository;
     private final DailyMissionRepository dailyMissionRepository;
 
-    public HomeDataResponse getHomeData() {
-        LocalDate today = LocalDate.now();
+    public HomeDataResponse getHomeData(LocalDate date) {
+        LocalDate targetDate = (date != null) ? date : LocalDate.now();
 
-        SolarTerm currentSolarTerm = solarTermRepository.findByDate(today)
+        SolarTerm currentSolarTerm = solarTermRepository.findByDate(targetDate)
                 .orElse(null);
 
         DailyMission todayMission = null;
         if (currentSolarTerm != null) {
             todayMission = dailyMissionRepository
-                    .findBySolarTermIdAndMissionDate(currentSolarTerm.getId(), today)
+                    .findBySolarTermIdAndMissionDate(currentSolarTerm.getId(), targetDate)
                     .orElse(null);
         }
 

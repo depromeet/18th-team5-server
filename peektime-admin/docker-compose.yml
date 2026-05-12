@@ -36,6 +36,9 @@ services:
     networks:
       - peektime-admin-network
     restart: unless-stopped
+    depends_on:
+      - admin-blue
+      - admin-green
 
 networks:
   peektime-admin-network:

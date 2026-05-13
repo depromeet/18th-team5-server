@@ -47,6 +47,15 @@ public class UserMissionCompletionService {
                 UserMissionCompletion.of(user, missionId, request)
         );
 
+        MissionLogPayload payload = createMissionLogPayload(missionId, request, user, completion);
+
+        OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
+        eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
+
+        return UserMissionCompletionResponse.from(completion);
+    }
+
+    private static MissionLogPayload createMissionLogPayload(Long missionId, UserMissionCompletionRequest request, User user, UserMissionCompletion completion) {
         MissionLogPayload payload = MissionLogPayload.of(
                 user.getDeviceUuid(),
                 missionId,
@@ -54,12 +63,9 @@ public class UserMissionCompletionService {
                 request.solarTermId(),
                 completion.getCompletedAt()
         );
-
-        OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
-        eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
-
-        return UserMissionCompletionResponse.from(completion);
+        return payload;
     }
+
 
     private String toJson(MissionLogPayload payload) {
         try {
@@ -68,6 +74,8 @@ public class UserMissionCompletionService {
             throw new RuntimeException("JSON 직렬화 실패", e);
         }
     }
+
+
 
     @Transactional(readOnly = true)
     public List<UserMissionCompletionDetailResponse> getMissionCompletions(Long userId, Long missionId) {

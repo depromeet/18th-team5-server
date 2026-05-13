@@ -26,22 +26,27 @@ public class StatsService {
         String idempotencyKey = generateIdempotencyKey(request.userUuid(), request.missionId(), completedDate);
 
         if (userMissionLogRepository.existsByIdempotencyKey(idempotencyKey)) {
-            log.info("이미 존재하는 미션 로그, 무시: idempotencyKey={}", idempotencyKey);
+            log.info("이미 존재하는 미션 로그(이미 기록 완료), 무시: idempotencyKey={}", idempotencyKey);
             return;
         }
 
-        UserMissionLog missionLog = UserMissionLog.builder()
-                .idempotencyKey(idempotencyKey)
-                .userUuid(request.userUuid())
-                .missionId(request.missionId())
-                .missionType(request.missionType())
-                .solarTermId(request.solarTermId())
-                .completedDate(completedDate)
-                .completedAt(request.completedAt())
-                .build();
+        UserMissionLog missionLog = createMissionLogBy(request, idempotencyKey, completedDate);
 
         userMissionLogRepository.save(missionLog);
         log.info("미션 로그 저장 완료: idempotencyKey={}", idempotencyKey);
+    }
+
+    private static UserMissionLog createMissionLogBy(MissionLogRequest request, String idempotencyKey, LocalDate completedDate) {
+        UserMissionLog missionLog = UserMissionLog.create(
+                idempotencyKey,
+                request.userUuid(),
+                request.missionId(),
+                request.missionType(),
+                request.solarTermId(),
+                completedDate,
+                request.completedAt()
+        );
+        return missionLog;
     }
 
     private String generateIdempotencyKey(String userUuid, Long missionId, LocalDate completedDate) {

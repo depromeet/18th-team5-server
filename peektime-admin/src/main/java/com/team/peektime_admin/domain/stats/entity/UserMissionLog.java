@@ -48,9 +48,9 @@ public class UserMissionLog extends BaseEntity {
     @Column(name = "completed_at", nullable = false)
     private LocalDateTime completedAt;
 
-    @Builder
-    public UserMissionLog(String idempotencyKey, String userUuid, Long missionId, MissionType missionType,
-                          Long solarTermId, LocalDate completedDate, LocalDateTime completedAt) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private UserMissionLog(String idempotencyKey, String userUuid, Long missionId, MissionType missionType,
+                           Long solarTermId, LocalDate completedDate, LocalDateTime completedAt) {
         this.idempotencyKey = idempotencyKey;
         this.userUuid = userUuid;
         this.missionId = missionId;
@@ -58,5 +58,19 @@ public class UserMissionLog extends BaseEntity {
         this.solarTermId = solarTermId;
         this.completedDate = completedDate;
         this.completedAt = completedAt != null ? completedAt : LocalDateTime.now();
+    }
+
+    public static UserMissionLog create(String idempotencyKey, String userUuid, Long missionId,
+                                         MissionType missionType, Long solarTermId,
+                                         LocalDate completedDate, LocalDateTime completedAt) {
+        return UserMissionLog.builder()
+                .idempotencyKey(idempotencyKey)
+                .userUuid(userUuid)
+                .missionId(missionId)
+                .missionType(missionType)
+                .solarTermId(solarTermId)
+                .completedDate(completedDate)
+                .completedAt(completedAt)
+                .build();
     }
 }

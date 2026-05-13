@@ -2,8 +2,9 @@ package com.team.peektime_admin.domain.stats.controller;
 
 import com.team.peektime_admin.domain.stats.dto.MissionLogRequest;
 import com.team.peektime_admin.domain.stats.service.StatsService;
+import com.team.peektime_admin.global.response.SuccessCode;
+import com.team.peektime_admin.global.response.SuccessResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,8 +18,8 @@ public class StatsApiController {
     private final StatsService statsService;
 
     @PostMapping("/mission-log")
-    public ResponseEntity<Void> saveMissionLog(@RequestBody MissionLogRequest request) {
+    public SuccessResponse<Void> saveMissionLog(@RequestBody MissionLogRequest request) {
         statsService.saveMissionLog(request);
-        return ResponseEntity.ok().build();
+        return SuccessResponse.of(SuccessCode.MISSION_LOG_SAVED, null);
     }
 }

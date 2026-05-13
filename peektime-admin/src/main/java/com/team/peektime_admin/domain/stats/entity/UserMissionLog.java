@@ -26,6 +26,9 @@ public class UserMissionLog extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "idempotency_key", nullable = false, unique = true)
+    private String idempotencyKey;
+
     @Column(name = "user_uuid", nullable = false, length = 36)
     private String userUuid;
 
@@ -46,8 +49,9 @@ public class UserMissionLog extends BaseEntity {
     private LocalDateTime completedAt;
 
     @Builder
-    public UserMissionLog(String userUuid, Long missionId, MissionType missionType,
+    public UserMissionLog(String idempotencyKey, String userUuid, Long missionId, MissionType missionType,
                           Long solarTermId, LocalDate completedDate, LocalDateTime completedAt) {
+        this.idempotencyKey = idempotencyKey;
         this.userUuid = userUuid;
         this.missionId = missionId;
         this.missionType = missionType;

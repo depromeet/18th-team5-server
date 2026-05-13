@@ -21,14 +21,7 @@ public class MissionCompletedEventListener {
     @Async
     public void handle(MissionCompletedEvent event) {
         try {
-            MissionLogPayload payload = new MissionLogPayload(
-                    event.userUuid(),
-                    event.missionId(),
-                    event.missionType(),
-                    event.solarTermId(),
-                    event.completedAt()
-            );
-
+            MissionLogPayload payload = MissionLogPayload.from(event);
             adminClient.sendMissionLog(payload);
             outboxRepository.deleteById(event.outboxId());
 

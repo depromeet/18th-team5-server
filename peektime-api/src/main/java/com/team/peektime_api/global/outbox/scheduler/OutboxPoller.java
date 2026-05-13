@@ -24,8 +24,8 @@ public class OutboxPoller {
 
     @Scheduled(fixedDelay = 60000)  // 1분마다
     public void pollAndProcess() {
-        // 생성된 지 10초 이상 된 것만 조회 (즉시 처리 중인 것 제외)
-        LocalDateTime threshold = LocalDateTime.now().minusSeconds(10);
+        // 생성된 지 3초 이상 된 것만 조회 (즉시 처리 중인 것 제외)
+        LocalDateTime threshold = LocalDateTime.now().minusSeconds(3);
         List<OutboxEvent> events = outboxRepository.findByCreatedAtBefore(threshold);
 
         if (events.isEmpty()) {

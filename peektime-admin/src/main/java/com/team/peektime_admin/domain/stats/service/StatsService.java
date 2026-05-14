@@ -5,6 +5,7 @@ import com.team.peektime_admin.domain.stats.entity.UserMissionLog;
 import com.team.peektime_admin.domain.stats.repository.UserMissionLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,15 +26,22 @@ public class StatsService {
         LocalDate completedDate = request.completedAt().toLocalDate();
         String idempotencyKey = generateIdempotencyKey(request.userUuid(), request.missionId(), completedDate);
 
+        // 1차 방어: 존재 여부 체크 (대부분의 중복 요청 필터링)
         if (userMissionLogRepository.existsByIdempotencyKey(idempotencyKey)) {
-            log.info("이미 존재하는 미션 로그(이미 기록 완료), 무시: idempotencyKey={}", idempotencyKey);
+            log.info("이미 존재하는 미션 로그, 무시: idempotencyKey={}", idempotencyKey);
             return;
         }
 
+        // 2차 방어: UNIQUE 제약 위반 시 예외 처리 (TOCTOU 레이스 컨디션 방지)
         UserMissionLog missionLog = createMissionLogBy(request, idempotencyKey, completedDate);
 
-        userMissionLogRepository.save(missionLog);
-        log.info("미션 로그 저장 완료: idempotencyKey={}", idempotencyKey);
+        try {
+            userMissionLogRepository.save(missionLog);
+            log.info("미션 로그 저장 완료: idempotencyKey={}", idempotencyKey);
+        } catch (DataIntegrityViolationException e) {
+            log.info("중복 요청으로 인한 제약 조건 위반, 이미 저장됨: idempotencyKey={}", idempotencyKey);
+            // 멱등 성공으로 처리 (예외를 던지지 않음)
+        }
     }
 
     private static UserMissionLog createMissionLogBy(MissionLogRequest request, String idempotencyKey, LocalDate completedDate) {

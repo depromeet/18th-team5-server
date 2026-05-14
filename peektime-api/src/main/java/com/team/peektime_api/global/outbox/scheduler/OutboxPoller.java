@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,10 +24,12 @@ public class OutboxPoller {
     private final ObjectMapper objectMapper;
 
     @Scheduled(fixedDelay = 60000)  // 1분마다
+    @Transactional
     public void pollAndProcess() {
         // 생성된 지 3초 이상 된 것만 조회 (즉시 처리 중인 것 제외)
+        // SKIP LOCKED: 다른 서버가 락 건 행은 건너뜀 → 분산 환경 중복 방지
         LocalDateTime threshold = LocalDateTime.now().minusSeconds(3);
-        List<OutboxEvent> events = outboxRepository.findByCreatedAtBefore(threshold);
+        List<OutboxEvent> events = outboxRepository.findByCreatedAtBeforeWithSkipLocked(threshold);
 
         if (events.isEmpty()) {
             return;

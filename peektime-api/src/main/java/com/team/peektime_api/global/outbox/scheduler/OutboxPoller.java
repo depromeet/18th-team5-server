@@ -42,6 +42,7 @@ public class OutboxPoller {
         }
     }
 
+
     private void processEvent(OutboxEvent event) {
         try {
             MissionLogPayload payload = objectMapper.readValue(

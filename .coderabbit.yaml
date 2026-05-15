@@ -45,8 +45,8 @@ reviews:
 
   # 3. 자동화 설정 (수동 실행 위주)
   auto_review:
-    enabled: false # PR 생성 시 자동 리뷰 끔 (@coderabbitai review 입력 시 시작)
-    auto_incremental_review: false # 추가 커밋 시 자동 리뷰 끔
+    enabled: true # PR 생성 시 자동 리뷰
+    auto_incremental_review: true # 추가 커밋 시 자동 리뷰
 
 # 4. 채팅 및 지식 기반 설정
 chat:

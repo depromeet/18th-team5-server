@@ -51,6 +51,8 @@ public class JwtProvider {
             return false;
         } catch (ExpiredJwtException e) {
             return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            return false;
         }
     }
 

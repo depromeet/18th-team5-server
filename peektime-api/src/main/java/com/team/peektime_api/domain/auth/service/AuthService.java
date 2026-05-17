@@ -50,11 +50,11 @@ public class AuthService {
     public TokenRefreshResponse refresh(TokenRefreshRequest request) {
         String token = request.refreshToken();
 
-        if (!jwtProvider.isValid(token)) {
-            throw new BusinessException(ErrorCode.INVALID_TOKEN);
-        }
         if (jwtProvider.isExpired(token)) {
             throw new BusinessException(ErrorCode.EXPIRED_TOKEN);
+        }
+        if (!jwtProvider.isValid(token)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
 
         Claims claims = jwtProvider.getClaims(token);

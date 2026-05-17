@@ -29,30 +29,30 @@ public class UserOnboarding extends BaseEntity {
 
     // 1번 질문: 갑자기 쉬는 날이 생겼어요. 어떻게 보내고 싶으세요?
     @Enumerated(EnumType.STRING)
-    @Column(name = "space_type", nullable = false)
+    @Column(name = "space_type", nullable = false, columnDefinition = "VARCHAR(50)")
     private SpaceType spaceType;
 
     // 2번 질문: 계절 활동, 어떤 방식이 더 잘 맞아요?
     @Enumerated(EnumType.STRING)
-    @Column(name = "intensity_type", nullable = false)
+    @Column(name = "intensity_type", nullable = false, columnDefinition = "VARCHAR(50)")
     private IntensityType intensityType;
 
     // 3번 질문: 계절을 주로 어떻게 즐기는 편이에요? (우선순위)
     @Enumerated(EnumType.STRING)
-    @Column(name = "enjoy_type_first", nullable = false)
+    @Column(name = "enjoy_type_first", nullable = false, columnDefinition = "VARCHAR(50)")
     private EnjoyType enjoyTypeFirst;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "enjoy_type_second", nullable = false)
+    @Column(name = "enjoy_type_second", nullable = false, columnDefinition = "VARCHAR(50)")
     private EnjoyType enjoyTypeSecond;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "enjoy_type_third", nullable = false)
+    @Column(name = "enjoy_type_third", nullable = false, columnDefinition = "VARCHAR(50)")
     private EnjoyType enjoyTypeThird;
 
     // 1번 + 2번 질문 조합으로 자동 계산
     @Enumerated(EnumType.STRING)
-    @Column(name = "user_type", nullable = false)
+    @Column(name = "user_type", nullable = false, columnDefinition = "VARCHAR(50)")
     private UserType userType;
 
     @Builder

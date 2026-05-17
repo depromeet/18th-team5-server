@@ -30,22 +30,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         if (StringUtils.hasText(token)) {
-            if (jwtProvider.isExpired(token)) {
-                request.setAttribute("jwt.error", "expired");
-            } else if (!jwtProvider.isValid(token)) {
-                request.setAttribute("jwt.error", "invalid");
-            } else {
-                Claims claims = jwtProvider.getClaims(token);
-                UserPrincipal principal = UserPrincipal.from(claims);
-
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
-
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-            }
+            processToken(token, request);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void processToken(String token, HttpServletRequest request) {
+        if (jwtProvider.isExpired(token)) {
+            request.setAttribute("jwt.error", "expired");
+            return;
+        }
+        if (!jwtProvider.isValid(token)) {
+            request.setAttribute("jwt.error", "invalid");
+            return;
+        }
+        Claims claims = jwtProvider.getClaims(token);
+        UserPrincipal principal = UserPrincipal.from(claims);
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList())
+        );
     }
 
     private String resolveToken(HttpServletRequest request) {

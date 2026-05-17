@@ -11,6 +11,9 @@ public record UserMissionCompletionRequest(
         @NotNull
         MissionType missionType,
 
+        @NotNull
+        Long solarTermId,
+
         @Size(max = 500)
         String objectKey,
 

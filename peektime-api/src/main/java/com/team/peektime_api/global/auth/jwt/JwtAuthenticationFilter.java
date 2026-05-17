@@ -29,14 +29,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
-        if (StringUtils.hasText(token) && jwtProvider.isValid(token)) {
-            Claims claims = jwtProvider.getClaims(token);
-            UserPrincipal principal = UserPrincipal.from(claims);
+        if (StringUtils.hasText(token)) {
+            if (jwtProvider.isExpired(token)) {
+                request.setAttribute("jwt.error", "expired");
+            } else if (!jwtProvider.isValid(token)) {
+                request.setAttribute("jwt.error", "invalid");
+            } else {
+                Claims claims = jwtProvider.getClaims(token);
+                UserPrincipal principal = UserPrincipal.from(claims);
 
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+            }
         }
 
         filterChain.doFilter(request, response);

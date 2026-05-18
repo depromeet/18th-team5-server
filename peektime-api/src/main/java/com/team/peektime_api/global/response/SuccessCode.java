@@ -19,6 +19,7 @@ public enum SuccessCode {
 
     // 홈
     HOME_FOUND("HOME_200", "홈 화면 조회 성공"),
+    SEASONAL_RECORDS_FOUND("HOME_200", "절기 기록 조회 성공"),
 
     // 미션
     MISSION_FOUND("MISSION_200", "미션 조회 성공"),

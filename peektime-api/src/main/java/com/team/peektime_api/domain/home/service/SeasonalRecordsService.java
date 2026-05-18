@@ -4,10 +4,9 @@ import com.team.peektime_api.domain.home.dto.RecentRecordCache;
 import com.team.peektime_api.domain.home.dto.SeasonalRecordsResponse;
 import com.team.peektime_api.domain.home.dto.SeasonalRecordsResponse.RecentRecord;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
+import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
+import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
 import com.team.peektime_api.global.infra.S3.S3Service;
-import com.team.peektime_api.global.infra.admin.AdminClient;
-import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse;
-import com.team.peektime_api.global.infra.cache.DailyMissionCacheService;
 import com.team.peektime_api.global.infra.cache.RecentRecordsCacheRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -29,18 +29,18 @@ public class SeasonalRecordsService {
     private final RecentRecordsCacheRepository cacheRepository;
     private final UserMissionCompletionRepository completionRepository;
     private final S3Service s3Service;
-    private final AdminClient adminClient;
-    private final DailyMissionCacheService dailyMissionCacheService;
+    private final SolarTermRepository solarTermRepository;
 
     public SeasonalRecordsResponse getSeasonalRecords(Long userId) {
-        AdminHomeResponse adminData = getAdminData();
+        Optional<SolarTerm> solarTermOpt = solarTermRepository.findByDate(LocalDate.now());
 
-        if (adminData.solarTerm() == null) {
+        if (solarTermOpt.isEmpty()) {
             return SeasonalRecordsResponse.of(0, Collections.emptyList());
         }
 
-        LocalDateTime startDateTime = adminData.solarTerm().startDate().atStartOfDay();
-        LocalDateTime endDateTime = adminData.solarTerm().endDate().atTime(LocalTime.MAX);
+        SolarTerm solarTerm = solarTermOpt.get();
+        LocalDateTime startDateTime = solarTerm.getStartDate().atStartOfDay();
+        LocalDateTime endDateTime = solarTerm.getEndDate().atTime(LocalTime.MAX);
 
         long recordCount = completionRepository.countByUser_IdAndCompletedAtBetween(
                 userId, startDateTime, endDateTime);
@@ -81,16 +81,5 @@ public class SeasonalRecordsService {
         }
 
         return fromDb;
-    }
-
-    private AdminHomeResponse getAdminData() {
-        LocalDate today = LocalDate.now();
-        return dailyMissionCacheService.get(today)
-                .orElseGet(() -> {
-                    log.info("절기 캐시 미스 - Admin API 호출: {}", today);
-                    AdminHomeResponse data = adminClient.getHomeData(today);
-                    dailyMissionCacheService.save(today, data);
-                    return data;
-                });
     }
 }

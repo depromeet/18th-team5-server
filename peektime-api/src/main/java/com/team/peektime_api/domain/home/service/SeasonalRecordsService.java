@@ -42,7 +42,7 @@ public class SeasonalRecordsService {
         LocalDateTime startDateTime = solarTerm.getStartDate().atStartOfDay();
         LocalDateTime endDateTime = solarTerm.getEndDate().atTime(LocalTime.MAX);
 
-        long recordCount = completionRepository.countByUser_IdAndCompletedAtBetween(
+        long recordCount = completionRepository.countByUserIdAndPeriod(
                 userId, startDateTime, endDateTime);
 
         List<RecentRecordCache> recentRecords = getRecentRecordsFromCacheOrDb(userId, startDateTime, endDateTime);
@@ -70,8 +70,7 @@ public class SeasonalRecordsService {
 
         log.debug("Redis 캐시 미스, DB 조회: userId={}", userId);
         List<RecentRecordCache> fromDb = completionRepository
-                .findTop3ByUser_IdAndCompletedAtBetweenAndObjectKeyIsNotNullOrderByCompletedAtDesc(
-                        userId, startDateTime, endDateTime)
+                .findRecentRecordsWithImageByPeriod(userId, startDateTime, endDateTime)
                 .stream()
                 .map(RecentRecordCache::from)
                 .toList();

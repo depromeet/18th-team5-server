@@ -23,6 +23,12 @@ public interface DailyMissionRepository extends JpaRepository<DailyMission, Long
 
     Optional<DailyMission> findByMissionIdAndMissionDate(Long missionId, LocalDate missionDate);
 
+    @Query("SELECT dm FROM DailyMission dm " +
+           "JOIN FETCH dm.mission " +
+           "JOIN FETCH dm.solarTerm " +
+           "WHERE dm.missionDate = :date")
+    Optional<DailyMission> findByMissionDateWithDetails(@Param("date") LocalDate date);
+
     @Query("SELECT dm FROM DailyMission dm WHERE dm.solarTerm.id = :solarTermId AND dm.missionDate IS NOT NULL")
     List<DailyMission> findAssignedBySolarTermId(@Param("solarTermId") Long solarTermId);
 

@@ -6,8 +6,11 @@ import com.team.peektime_api.domain.home.dto.RecentRecordCache;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
+import com.team.peektime_api.domain.mission.entity.DailyMissionStats;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
+import com.team.peektime_api.domain.mission.repository.DailyMissionStatsRepository;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
+import com.team.peektime_api.global.common.enums.MissionType;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
 import com.team.peektime_api.global.exception.BusinessException;
@@ -33,6 +36,7 @@ import java.util.List;
 public class UserMissionCompletionService {
 
     private final UserMissionCompletionRepository userMissionCompletionRepository;
+    private final DailyMissionStatsRepository dailyMissionStatsRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final OutboxRepository outboxRepository;
@@ -58,8 +62,22 @@ public class UserMissionCompletionService {
         eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
 
         updateRecentRecordsCache(userId, completion);
+        incrementDailyMissionStats(missionId, request.missionType(), completion);
 
         return UserMissionCompletionResponse.from(completion);
+    }
+
+    private void incrementDailyMissionStats(Long missionId, MissionType missionType, UserMissionCompletion completion) {
+        if (missionType != MissionType.DAILY) {
+            return;
+        }
+
+        try {
+            dailyMissionStatsRepository.findByMissionIdAndMissionDate(missionId, completion.getCompletedAt().toLocalDate())
+                    .ifPresent(DailyMissionStats::incrementCount);
+        } catch (Exception e) {
+            log.warn("DailyMissionStats 카운트 증가 실패: missionId={}, error={}", missionId, e.getMessage());
+        }
     }
 
     private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {

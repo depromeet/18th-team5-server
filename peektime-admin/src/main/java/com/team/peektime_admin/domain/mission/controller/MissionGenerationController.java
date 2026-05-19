@@ -26,7 +26,13 @@ public class MissionGenerationController {
 
         List<GeneratedMissionDto> missions;
 
-        if (request.getSolarTermId() != null) {
+        if (request.getSolarTermId() != null && request.getUserType() != null && request.getEnjoyType() != null) {
+            missions = missionGenerationService.generateMissionsWithSolarTermAndUserTypeAndEnjoyType(
+                    request.getSolarTermId(), request.getUserType(), request.getEnjoyType(), request.getCount());
+        } else if (request.getSolarTermId() != null && request.getUserType() != null) {
+            missions = missionGenerationService.generateMissionsWithSolarTermAndUserType(
+                    request.getSolarTermId(), request.getUserType(), request.getCount());
+        } else if (request.getSolarTermId() != null) {
             missions = missionGenerationService.generateMissionsWithSolarTerm(
                     request.getSolarTermId(), request.getCount());
         } else if (request.getTheme() != null && !request.getTheme().isBlank()) {

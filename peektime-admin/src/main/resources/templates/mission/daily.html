@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>오늘의 미션</title>
+    <th:block layout:fragment="styles">
+        <style>
+            .header-controls {
+                display: flex;
+                gap: 12px;
+            }
+
+            .drag-drop-container {
+                display: grid;
+                grid-template-columns: 320px 1fr;
+                gap: 24px;
+                margin-top: 24px;
+            }
+
+            .pending-panel {
+                background: white;
+                border-radius: 12px;
+                border: 1px solid var(--gray-200);
+                padding: 20px;
+                height: fit-content;
+                position: sticky;
+                top: 32px;
+            }
+
+            .pending-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+
+            .pending-header h3 {
+                font-size: 14px;
+                color: var(--gray-600);
+            }
+
+            .pending-count {
+                background: var(--gray-100);
+                padding: 2px 8px;
+                border-radius: 10px;
+                font-size: 12px;
+                color: var(--gray-500);
+            }
+
+            .mission-card {
+                background: white;
+                border: 1px solid var(--gray-200);
+                border-radius: 8px;
+                padding: 14px;
+                margin-bottom: 10px;
+                cursor: grab;
+                transition: all 0.2s;
+            }
+
+            .mission-card:hover {
+                border-color: var(--primary);
+                box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+            }
+
+            .mission-card .drag-handle {
+                color: var(--gray-300);
+                margin-right: 8px;
+            }
+
+            .mission-card-title {
+                font-size: 14px;
+                font-weight: 500;
+                color: var(--gray-800);
+                margin-bottom: 8px;
+            }
+
+            .mission-card-tags {
+                display: flex;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            .mission-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 8px;
+            }
+
+            .back-to-pool-btn {
+                padding: 4px 8px;
+                background: none;
+                border: 1px solid var(--gray-300);
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 11px;
+                color: var(--gray-500);
+                white-space: nowrap;
+            }
+
+            .back-to-pool-btn:hover {
+                background: #FEE2E2;
+                border-color: #EF4444;
+                color: #EF4444;
+            }
+
+            .schedule-board {
+                background: white;
+                border-radius: 12px;
+                border: 1px solid var(--gray-200);
+                padding: 24px;
+            }
+
+            .schedule-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+
+            .schedule-title {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .schedule-title h3 {
+                font-size: 16px;
+                font-weight: 600;
+            }
+
+            .schedule-date {
+                color: var(--gray-500);
+                font-size: 13px;
+            }
+
+            .date-slot {
+                display: flex;
+                gap: 16px;
+                padding: 12px 0;
+                border-bottom: 1px solid var(--gray-100);
+            }
+
+            .date-slot:last-child {
+                border-bottom: none;
+            }
+
+            .date-info {
+                width: 60px;
+                text-align: right;
+                padding-top: 10px;
+            }
+
+            .date-day {
+                font-size: 20px;
+                font-weight: 600;
+                color: var(--gray-800);
+            }
+
+            .date-weekday {
+                font-size: 12px;
+                color: var(--gray-500);
+            }
+
+            .date-slot.weekend .date-day,
+            .date-slot.weekend .date-weekday {
+                color: var(--primary);
+            }
+
+            .slot-area {
+                flex: 1;
+                min-height: 60px;
+                border: 2px dashed var(--gray-200);
+                border-radius: 8px;
+                padding: 8px;
+                display: flex;
+                align-items: center;
+                transition: all 0.2s;
+            }
+
+            .slot-area:hover {
+                border-color: var(--primary);
+                background: var(--primary-light);
+            }
+
+            .slot-area.has-mission {
+                border-style: solid;
+                border-color: var(--primary);
+                background: white;
+            }
+
+            .slot-mission {
+                flex: 1;
+                padding: 8px 12px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .slot-mission .drag-handle {
+                color: var(--gray-300);
+            }
+
+            .slot-mission-content {
+                flex: 1;
+            }
+
+            .slot-mission-title {
+                font-size: 14px;
+                font-weight: 500;
+                margin-bottom: 4px;
+            }
+
+            .slot-mission-tags {
+                display: flex;
+                gap: 4px;
+                flex-wrap: wrap;
+            }
+
+            .empty-slot {
+                width: 100%;
+                text-align: center;
+                color: var(--gray-400);
+                font-size: 13px;
+            }
+
+            .sortable-ghost {
+                opacity: 0.4;
+            }
+
+            .sortable-chosen {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <th:block layout:fragment="content">
+        <div class="page-header flex-between">
+            <div>
+                <div class="breadcrumb">오늘의 미션</div>
+                <h1 class="page-title">일자별 미션 배정</h1>
+                <p class="page-description">절기를 선택하고 미션을 날짜로 드래그하여 배정하세요.</p>
+            </div>
+            <div class="header-controls">
+                <select class="form-select" id="yearSelect" style="width: 100px;">
+                    <option th:each="year : ${years}" th:value="${year}" th:text="${year}" th:selected="${year == selectedYear}">2026</option>
+                </select>
+                <select class="form-select" id="solarTermSelect" style="width: 120px; background: var(--primary-light); border-color: var(--primary); color: var(--primary);"
+                        onchange="location.href='/admin/daily-missions?solarTermId=' + this.value">
+                    <option th:each="term : ${solarTerms}" th:value="${term.id}" th:text="${term.name}" th:selected="${term.id == selectedSolarTermId}">입춘</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="drag-drop-container">
+            <!-- 배정 대기 패널 -->
+            <div class="pending-panel">
+                <div class="pending-header">
+                    <span style="color: var(--gray-400);" th:text="${currentTerm?.name}">입춘</span>
+                    <h3>배정 대기</h3>
+                    <span class="pending-count" th:text="${#lists.size(pendingMissions)}">0</span>
+                </div>
+                <p style="font-size: 12px; color: var(--gray-400); margin-bottom: 12px;">
+                    미션풀에서 "오늘의미션으로" 이동한 미션들
+                </p>
+
+                <div id="pendingList">
+                    <div th:each="dm : ${pendingMissions}" class="mission-card" draggable="true" th:data-id="${dm.id}">
+                        <div class="mission-card-header">
+                            <div class="mission-card-title">
+                                <span class="drag-handle">⋮⋮</span>
+                                <span th:text="${dm.mission.title}">미션명</span>
+                            </div>
+                            <button class="back-to-pool-btn" th:onclick="'removeFromDaily(' + ${dm.id} + ')'" title="미션풀로 되돌리기">풀로</button>
+                        </div>
+                        <div class="mission-card-tags">
+                            <span class="tag tag-gray" th:text="${dm.mission.categoryType?.label}">카테고리</span>
+                            <span class="tag tag-gray" th:text="${dm.mission.spaceType?.label}">공간</span>
+                            <span class="tag tag-gray" th:text="${dm.mission.intensityType?.label}">강도</span>
+                        </div>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(pendingMissions)}" class="text-center text-gray" style="padding: 20px;">
+                        배정 대기 중인 미션이 없습니다.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 스케줄 보드 -->
+            <div class="schedule-board">
+                <div class="schedule-header">
+                    <div class="schedule-title">
+                        <span>📅</span>
+                        <h3 th:text="${selectedYear} + '년 ' + ${currentTerm?.name} + ' 스케줄 보드'">스케줄 보드</h3>
+                    </div>
+                    <span class="schedule-date" th:if="${currentTerm != null}"
+                          th:text="${#temporals.format(currentTerm.startDate, 'yyyy-MM-dd')} + ' ~ ' + ${#temporals.format(currentTerm.endDate, 'yyyy-MM-dd')}">
+                        2026-02-04 ~ 2026-02-18
+                    </span>
+                </div>
+
+                <div id="scheduleSlots">
+                    <div th:each="slot : ${dateSlots}" class="date-slot" th:classappend="${slot.isWeekend} ? 'weekend'">
+                        <div class="date-info">
+                            <div class="date-day" th:text="${#temporals.format(slot.date, 'M.d')}">2.4</div>
+                            <div class="date-weekday" th:text="${slot.weekday}">수요일</div>
+                        </div>
+                        <div class="slot-area" th:classappend="${slot.mission != null} ? 'has-mission'" th:data-date="${slot.date}">
+                            <div th:if="${slot.mission != null}" class="slot-mission" th:data-id="${slot.dailyMissionId}">
+                                <span class="drag-handle">⋮⋮</span>
+                                <div class="slot-mission-content">
+                                    <div class="slot-mission-title" th:text="${slot.mission.title}">미션명</div>
+                                    <div class="slot-mission-tags">
+                                        <span class="tag tag-gray" th:text="${slot.mission.categoryType?.label}">카테고리</span>
+                                        <span class="tag tag-gray" th:text="${slot.mission.spaceType?.label}">공간</span>
+                                        <span class="tag tag-gray" th:text="${slot.mission.intensityType?.label}">강도</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div th:if="${slot.mission == null}" class="empty-slot">미션을 여기에 드래그하세요</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(dateSlots)}" class="text-center text-gray" style="padding: 40px;">
+                    절기를 선택해주세요.
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <th:block layout:fragment="scripts">
+        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+        <script th:inline="javascript">
+            function removeFromDaily(dailyMissionId) {
+                if (confirm('미션풀로 되돌리시겠습니까?')) {
+                    fetch('/api/admin/daily-missions/' + dailyMissionId, {
+                        method: 'DELETE'
+                    }).then(() => location.reload());
+                }
+            }
+
+            async function assignToDate(dailyMissionId, date) {
+                try {
+                    const response = await fetch('/api/admin/daily-missions/' + dailyMissionId + '/assign', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ date: date })
+                    });
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('배정 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('배정 중 오류가 발생했습니다.');
+                }
+            }
+
+            async function unassignFromDate(dailyMissionId) {
+                try {
+                    const response = await fetch('/api/admin/daily-missions/' + dailyMissionId + '/unassign', {
+                        method: 'POST'
+                    });
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        alert('배정 해제 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('배정 해제 중 오류가 발생했습니다.');
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const pendingList = document.getElementById('pendingList');
+                const slotAreas = document.querySelectorAll('.slot-area');
+
+                // 배정대기 패널을 드롭 영역으로 설정
+                if (pendingList) {
+                    new Sortable(pendingList, {
+                        group: 'missions',
+                        animation: 150,
+                        ghostClass: 'sortable-ghost',
+                        chosenClass: 'sortable-chosen',
+                        onAdd: function(evt) {
+                            // 스케줄 보드에서 배정대기로 드롭된 경우
+                            const dailyMissionId = evt.item.dataset.id;
+                            if (dailyMissionId) {
+                                unassignFromDate(dailyMissionId);
+                            }
+                        }
+                    });
+                }
+
+                // 각 날짜 슬롯을 드롭 영역으로 설정
+                slotAreas.forEach(slotArea => {
+                    new Sortable(slotArea, {
+                        group: 'missions',
+                        animation: 150,
+                        ghostClass: 'sortable-ghost',
+                        chosenClass: 'sortable-chosen',
+                        onAdd: function(evt) {
+                            const dailyMissionId = evt.item.dataset.id;
+                            const date = slotArea.dataset.date;
+
+                            if (dailyMissionId && date) {
+                                assignToDate(dailyMissionId, date);
+                            }
+                        }
+                    });
+                });
+            });
+        </script>
+    </th:block>
+</body>
+</html>

@@ -62,11 +62,17 @@ erDiagram
 
     User {
         bigint id PK
+        varchar device_uuid UK
         varchar nickname
-        varchar email
         varchar push_token
         datetime created_at
         datetime updated_at
+    }
+
+    Redis_RefreshToken {
+        string key "RT:{userId}:{deviceUuid}"
+        string value "refresh token"
+        long ttl "JWT_REFRESH_EXPIRATION"
     }
 
     UserOnboarding {
@@ -87,7 +93,7 @@ erDiagram
         bigint user_id FK
         bigint mission_id
         enum mission_type "DAILY, RECOMMENDED, SELECTED"
-        varchar image_url
+        varchar object_key "S3 object key"
         varchar memo
         datetime completed_at
         datetime created_at
@@ -105,17 +111,6 @@ erDiagram
         datetime updated_at
     }
 
-    MissionCompletionStats {
-        bigint id PK
-        bigint mission_id
-        enum mission_type
-        bigint solar_term_id
-        date reference_date
-        int completion_count
-        datetime created_at
-        datetime updated_at
-    }
-
     %% ===== 관계 =====
 
     Mission ||--o{ DailyMission : "배정"
@@ -123,6 +118,9 @@ erDiagram
 
     Mission ||--o{ RecommendedMissionPool : "추천"
     SolarTerm ||--o{ RecommendedMissionPool : "절기별"
+
+    Mission ||--o{ MissionCompletionStats : "통계"
+    SolarTerm ||--o{ MissionCompletionStats : "절기별"
 
     User ||--|| UserOnboarding : "1:1"
     User ||--o{ UserMissionCompletion : "완료기록"
@@ -149,11 +147,18 @@ erDiagram
 
 | 테이블 | 설명 |
 |--------|------|
-| `User` | 사용자 기본 정보 |
+| `User` | 사용자 기본 정보 (device_uuid 기반) |
 | `UserOnboarding` | 온보딩 답변 (1:1) |
 | `UserMissionCompletion` | 미션 완료 기록 |
-| `UserRecord` | 절기별 사용자 기록 |
-| `MissionCompletionStats` | 미션 완료 통계 (집계용) |
+| `UserRecord` | 제철 기록 탭 자유 기록 |
+
+### Redis
+
+| Key 패턴 | 설명 |
+|----------|------|
+| `RT:{userId}:{deviceUuid}` | Refresh Token (TTL: 30일) |
+
+> `MissionCompletionStats`는 peektime-admin DB에만 존재하며, peektime-api는 admin HTTP API를 호출하여 조회합니다.
 
 ---
 
@@ -166,11 +171,15 @@ erDiagram
 - `UserMissionCompletion` → `User`
 - `UserRecord` → `User`
 
+### Redis (DB 외부)
+- `RT:{userId}:{deviceUuid}` → Refresh Token (DeviceAuth 테이블 제거 후 Redis로 대체)
+
 ### 약한 결합 (ID만 저장)
 - `UserMissionCompletion.mission_id` → Mission (모듈 분리)
 - `UserRecord.solar_term_id` → SolarTerm (모듈 분리)
-- `MissionCompletionStats.mission_id` → Mission
-- `MissionCompletionStats.solar_term_id` → SolarTerm
+
+### 모듈 간 API 호출
+- `peektime-api` → `peektime-admin` HTTP API 호출로 `MissionCompletionStats` 조회
 
 ---
 

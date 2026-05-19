@@ -1,8 +1,27 @@
 // peektime-admin 개별 설정
 // 공통 설정은 루트 build.gradle의 subprojects에서 적용됨
 
+bootRun {
+    systemProperty 'spring.profiles.active', 'local'
+
+    // .env 파일에서 환경 변수 로드 (모듈별 .env)
+    def envFile = file('.env')
+    if (envFile.exists()) {
+        envFile.readLines().each { line ->
+            if (line && !line.startsWith('#') && line.contains('=')) {
+                def (key, value) = line.split('=', 2)
+                environment key.trim(), value.trim()
+            }
+        }
+    }
+}
+
+test {
+    environment 'GEMINI_API_KEY', System.getenv('GEMINI_API_KEY') ?: ''
+}
+
 dependencies {
     // Thymeleaf
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
-    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
+    implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect:4.0.0'
 }

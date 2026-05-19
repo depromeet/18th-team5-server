@@ -1,0 +1,112 @@
+name: Deploy PeekTime Admin
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'peektime-admin/**'
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: '배포할 이미지 태그 (기본: git SHA)'
+        required: false
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: peaktime-admin
+  APP_DIR: /app/peektime-admin
+
+jobs:
+  build-and-push:
+    name: Build & Push to ECR
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: AWS 자격증명 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: ECR 로그인
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 이미지 태그 설정
+        id: meta
+        run: |
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            TAG="${{ inputs.image_tag }}"
+          else
+            TAG="${{ github.sha }}"
+          fi
+          echo "tags=$TAG" >> $GITHUB_OUTPUT
+          echo "이미지 태그: $TAG"
+
+      - name: Docker 이미지 빌드 & 푸시
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./peektime-admin/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.tags }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-to: type=inline
+
+  deploy:
+    name: Deploy to EC2
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: AWS 자격증명 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: ECR 로그인
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: EC2로 파일 복사
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.ADMIN_EC2_HOST }}
+          username: ${{ secrets.ADMIN_EC2_USER }}
+          key: ${{ secrets.ADMIN_EC2_KEY }}
+          source: "peektime-admin/docker-compose.yml,peektime-admin/nginx,peektime-admin/scripts"
+          target: ${{ env.APP_DIR }}
+          strip_components: 1
+          overwrite: true
+
+      - name: 배포 실행
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+        with:
+          host: ${{ secrets.ADMIN_EC2_HOST }}
+          username: ${{ secrets.ADMIN_EC2_USER }}
+          key: ${{ secrets.ADMIN_EC2_KEY }}
+          envs: ECR_REGISTRY,IMAGE_TAG
+          script: |
+            set -e
+            echo "배포 시작"
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+              docker login --username AWS --password-stdin $ECR_REGISTRY
+            cd ${{ env.APP_DIR }}
+            chmod +x scripts/*.sh
+            export ECR_REGISTRY=$ECR_REGISTRY
+            export IMAGE_TAG=$IMAGE_TAG
+            ./scripts/deploy.sh
+            echo "배포 완료"

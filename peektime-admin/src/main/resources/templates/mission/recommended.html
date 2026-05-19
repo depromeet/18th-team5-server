@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>추천 미션</title>
+    <th:block layout:fragment="styles">
+        <style>
+            .header-controls {
+                display: flex;
+                gap: 12px;
+                align-items: center;
+            }
+
+            .user-type-tabs {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 24px;
+                border-bottom: 1px solid var(--gray-200);
+                padding-bottom: 0;
+            }
+
+            .type-tab {
+                padding: 12px 20px;
+                border: none;
+                background: none;
+                color: var(--gray-500);
+                font-size: 14px;
+                font-weight: 500;
+                cursor: pointer;
+                border-bottom: 2px solid transparent;
+                margin-bottom: -1px;
+                transition: all 0.2s;
+                text-decoration: none;
+            }
+
+            .type-tab:hover {
+                color: var(--gray-700);
+            }
+
+            .type-tab.active {
+                color: var(--primary);
+                border-bottom-color: var(--primary);
+            }
+
+            .enjoy-type-section {
+                margin-bottom: 32px;
+            }
+
+            .enjoy-type-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 16px;
+            }
+
+            .enjoy-type-title {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .enjoy-type-title h3 {
+                font-size: 16px;
+                font-weight: 600;
+            }
+
+            .mission-count {
+                background: var(--gray-100);
+                padding: 4px 10px;
+                border-radius: 12px;
+                font-size: 12px;
+                color: var(--gray-600);
+            }
+
+            .mission-list {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .mission-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 14px 16px;
+                background: white;
+                border: 1px solid var(--gray-200);
+                border-radius: 8px;
+                transition: all 0.2s;
+            }
+
+            .mission-item:hover {
+                border-color: var(--primary);
+                box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+            }
+
+            .mission-order {
+                width: 24px;
+                height: 24px;
+                background: var(--primary-light);
+                color: var(--primary);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 12px;
+                font-weight: 600;
+            }
+
+            .mission-content {
+                flex: 1;
+            }
+
+            .mission-item-title {
+                font-size: 14px;
+                font-weight: 500;
+                margin-bottom: 4px;
+            }
+
+            .mission-item-tags {
+                display: flex;
+                gap: 4px;
+                flex-wrap: wrap;
+            }
+
+            .back-to-pool-btn {
+                padding: 6px 10px;
+                background: none;
+                border: 1px solid var(--gray-300);
+                border-radius: 6px;
+                cursor: pointer;
+                color: var(--gray-500);
+                font-size: 12px;
+            }
+
+            .back-to-pool-btn:hover {
+                background: #FEE2E2;
+                border-color: #EF4444;
+                color: #EF4444;
+            }
+
+            .stats-row {
+                display: flex;
+                gap: 16px;
+                margin-bottom: 24px;
+                flex-wrap: wrap;
+            }
+
+            .stat-chip {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 16px;
+                background: white;
+                border: 1px solid var(--gray-200);
+                border-radius: 20px;
+                font-size: 13px;
+            }
+
+            .stat-chip strong {
+                color: var(--primary);
+            }
+
+            .info-banner {
+                background: #FEF3C7;
+                border: 1px solid #F59E0B;
+                border-radius: 8px;
+                padding: 16px 20px;
+                margin-bottom: 24px;
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .info-banner h4 {
+                font-size: 14px;
+                font-weight: 600;
+                color: #92400E;
+                margin-bottom: 4px;
+            }
+
+            .info-banner p {
+                font-size: 13px;
+                color: #B45309;
+            }
+
+            .empty-section {
+                padding: 40px;
+                text-align: center;
+                color: var(--gray-400);
+                background: var(--gray-50);
+                border-radius: 8px;
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+    <th:block layout:fragment="content">
+        <div class="page-header flex-between">
+            <div>
+                <div class="breadcrumb">추천 미션</div>
+                <h1 class="page-title">사용자 타입별 추천 미션 관리</h1>
+                <p class="page-description">각 사용자 타입별로 15개의 추천 미션을 관리하세요 (즐기기 타입별 5개씩)</p>
+            </div>
+            <div class="header-controls">
+                <select class="form-select" id="yearSelect" style="width: 100px;">
+                    <option th:each="year : ${years}" th:value="${year}" th:text="${year}" th:selected="${year == selectedYear}">2026</option>
+                </select>
+                <select class="form-select" id="solarTermSelect" style="width: 120px; background: var(--primary-light); border-color: var(--primary); color: var(--primary);"
+                        onchange="changeSolarTerm(this.value)">
+                    <option th:each="term : ${solarTerms}" th:value="${term.id}" th:text="${term.name}" th:selected="${term.id == selectedSolarTermId}">입춘</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 안내 -->
+        <div class="info-banner">
+            <span style="font-size: 20px;">💡</span>
+            <div>
+                <h4>미션풀에서 추천미션이 자동 분류됩니다</h4>
+                <p>미션풀 관리에서 "추천미션으로 이동" 버튼을 클릭하면, 미션의 EnjoyType/UserType 태그에 따라 이 페이지에 자동 배치됩니다.</p>
+            </div>
+        </div>
+
+        <!-- 통계 -->
+        <div class="stats-row">
+            <div class="stat-chip">
+                <span th:text="${currentTerm?.name} + ' 추천 미션'">입춘 추천 미션</span>
+                <strong th:text="${totalCount} + '개'">0개</strong>
+            </div>
+            <div class="stat-chip" th:each="stat : ${userTypeStats}">
+                <span th:text="${stat.key.label}">자연 탐험가</span>
+                <strong th:text="${stat.value} + '개'">0개</strong>
+            </div>
+        </div>
+
+        <!-- 사용자 타입 탭 -->
+        <div class="user-type-tabs">
+            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='NATURE_EXPLORER')}"
+               class="type-tab" th:classappend="${selectedUserType == 'NATURE_EXPLORER'} ? 'active'">
+                🏔️ 자연 탐험가
+            </a>
+            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='NEIGHBORHOOD_WALKER')}"
+               class="type-tab" th:classappend="${selectedUserType == 'NEIGHBORHOOD_WALKER'} ? 'active'">
+                🚶 동네 산책러
+            </a>
+            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='SEASONAL_GOURMET')}"
+               class="type-tab" th:classappend="${selectedUserType == 'SEASONAL_GOURMET'} ? 'active'">
+                🍽️ 제철 미식가
+            </a>
+            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='DAILY_OBSERVER')}"
+               class="type-tab" th:classappend="${selectedUserType == 'DAILY_OBSERVER'} ? 'active'">
+                👀 일상 관찰자
+            </a>
+        </div>
+
+        <!-- 자연/야외 활동 -->
+        <div class="enjoy-type-section">
+            <div class="enjoy-type-header">
+                <div class="enjoy-type-title">
+                    <span style="font-size: 20px;">🌲</span>
+                    <h3>자연이나 야외 활동</h3>
+                    <span class="mission-count" th:text="${#lists.size(natureOutdoorMissions)} + '개'">0개</span>
+                </div>
+            </div>
+            <div class="mission-list" th:if="${not #lists.isEmpty(natureOutdoorMissions)}">
+                <div th:each="rmp, iter : ${natureOutdoorMissions}" class="mission-item">
+                    <span class="mission-order" th:text="${iter.index + 1}">1</span>
+                    <div class="mission-content">
+                        <div class="mission-item-title" th:text="${rmp.mission.title}">미션명</div>
+                        <div class="mission-item-tags">
+                            <span class="tag tag-gray" th:text="${rmp.mission.categoryType?.label}">카테고리</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.spaceType?.label}">공간</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.intensityType?.label}">강도</span>
+                        </div>
+                    </div>
+                    <button class="back-to-pool-btn" th:onclick="'removeFromRecommended(' + ${rmp.id} + ')'" title="미션풀로 되돌리기">풀로</button>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(natureOutdoorMissions)}" class="empty-section">
+                등록된 미션이 없습니다.
+            </div>
+        </div>
+
+        <!-- 제철 음식 -->
+        <div class="enjoy-type-section">
+            <div class="enjoy-type-header">
+                <div class="enjoy-type-title">
+                    <span style="font-size: 20px;">🍲</span>
+                    <h3>제철 음식이나 요리</h3>
+                    <span class="mission-count" th:text="${#lists.size(seasonalFoodMissions)} + '개'">0개</span>
+                </div>
+            </div>
+            <div class="mission-list" th:if="${not #lists.isEmpty(seasonalFoodMissions)}">
+                <div th:each="rmp, iter : ${seasonalFoodMissions}" class="mission-item">
+                    <span class="mission-order" th:text="${iter.index + 1}">1</span>
+                    <div class="mission-content">
+                        <div class="mission-item-title" th:text="${rmp.mission.title}">미션명</div>
+                        <div class="mission-item-tags">
+                            <span class="tag tag-gray" th:text="${rmp.mission.categoryType?.label}">카테고리</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.spaceType?.label}">공간</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.intensityType?.label}">강도</span>
+                        </div>
+                    </div>
+                    <button class="back-to-pool-btn" th:onclick="'removeFromRecommended(' + ${rmp.id} + ')'" title="미션풀로 되돌리기">풀로</button>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(seasonalFoodMissions)}" class="empty-section">
+                등록된 미션이 없습니다.
+            </div>
+        </div>
+
+        <!-- 감성 콘텐츠 -->
+        <div class="enjoy-type-section">
+            <div class="enjoy-type-header">
+                <div class="enjoy-type-title">
+                    <span style="font-size: 20px;">🎨</span>
+                    <h3>감성 콘텐츠나 문화</h3>
+                    <span class="mission-count" th:text="${#lists.size(emotionalContentMissions)} + '개'">0개</span>
+                </div>
+            </div>
+            <div class="mission-list" th:if="${not #lists.isEmpty(emotionalContentMissions)}">
+                <div th:each="rmp, iter : ${emotionalContentMissions}" class="mission-item">
+                    <span class="mission-order" th:text="${iter.index + 1}">1</span>
+                    <div class="mission-content">
+                        <div class="mission-item-title" th:text="${rmp.mission.title}">미션명</div>
+                        <div class="mission-item-tags">
+                            <span class="tag tag-gray" th:text="${rmp.mission.categoryType?.label}">카테고리</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.spaceType?.label}">공간</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.intensityType?.label}">강도</span>
+                        </div>
+                    </div>
+                    <button class="back-to-pool-btn" th:onclick="'removeFromRecommended(' + ${rmp.id} + ')'" title="미션풀로 되돌리기">풀로</button>
+                </div>
+            </div>
+            <div th:if="${#lists.isEmpty(emotionalContentMissions)}" class="empty-section">
+                등록된 미션이 없습니다.
+            </div>
+        </div>
+    </th:block>
+
+    <th:block layout:fragment="scripts">
+        <script th:inline="javascript">
+            function changeSolarTerm(solarTermId) {
+                const userType = [[${selectedUserType}]];
+                location.href = '/admin/recommended-missions?solarTermId=' + solarTermId + '&userType=' + userType;
+            }
+
+            function removeFromRecommended(id) {
+                if (confirm('추천 미션에서 제거하시겠습니까?')) {
+                    fetch('/api/admin/recommended-missions/' + id, {
+                        method: 'DELETE'
+                    }).then(() => location.reload());
+                }
+            }
+        </script>
+    </th:block>
+</body>
+</html>

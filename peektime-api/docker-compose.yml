@@ -1,0 +1,64 @@
+services:
+  redis:
+    image: redis:7
+    container_name: peektime-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+    networks:
+      - peektime-network
+    restart: always
+
+  api-blue:
+    image: 976972138580.dkr.ecr.ap-northeast-2.amazonaws.com/peaktime:${IMAGE_TAG:-latest}
+    container_name: peektime-api-blue
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    env_file:
+      - .env
+    ports:
+      - "8081:8080"
+    restart: unless-stopped
+    networks:
+      - peektime-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  api-green:
+    image: 976972138580.dkr.ecr.ap-northeast-2.amazonaws.com/peaktime:${IMAGE_TAG:-latest}
+    container_name: peektime-api-green
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    env_file:
+      - .env
+    ports:
+      - "8082:8080"
+    restart: unless-stopped
+    networks:
+      - peektime-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: peektime-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
+    networks:
+      - peektime-network
+    restart: unless-stopped
+
+networks:
+  peektime-network:
+    driver: bridge

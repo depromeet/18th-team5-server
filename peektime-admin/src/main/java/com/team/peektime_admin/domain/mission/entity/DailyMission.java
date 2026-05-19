@@ -34,15 +34,11 @@ public class DailyMission extends BaseEntity {
     @Column(name = "mission_date")
     private LocalDate missionDate;
 
-    @Column(name = "display_order")
-    private Integer displayOrder;
-
     @Builder
-    public DailyMission(Mission mission, SolarTerm solarTerm, LocalDate missionDate, Integer displayOrder) {
+    public DailyMission(Mission mission, SolarTerm solarTerm, LocalDate missionDate) {
         this.mission = mission;
         this.solarTerm = solarTerm;
         this.missionDate = missionDate;
-        this.displayOrder = displayOrder;
     }
 
     public boolean isPending() {
@@ -53,17 +49,11 @@ public class DailyMission extends BaseEntity {
         return this.missionDate != null;
     }
 
-    public void assignToDate(LocalDate date, Integer order) {
+    public void assignToDate(LocalDate date) {
         this.missionDate = date;
-        this.displayOrder = order;
     }
 
     public void unassign() {
         this.missionDate = null;
-        this.displayOrder = null;
-    }
-
-    public void updateDisplayOrder(Integer order) {
-        this.displayOrder = order;
     }
 }

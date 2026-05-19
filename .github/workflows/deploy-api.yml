@@ -1,0 +1,153 @@
+name: Deploy PeekTime API
+
+# ============================================
+# 트리거 조건
+# ============================================
+on:
+  push:
+    branches: [main]
+    paths:
+      # 이 경로의 파일이 변경될 때만 배포
+      - 'peektime-api/**'
+  # 수동 실행 (GitHub UI에서 버튼 클릭)
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: '배포할 이미지 태그 (기본: git SHA)'
+        required: false
+
+# ============================================
+# 공통 환경변수
+# ============================================
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: peaktime
+  APP_DIR: /app/peektime-api
+
+jobs:
+  # ============================================
+  # Job 1: Docker 이미지 빌드 & ECR 푸시
+  # ============================================
+  build-and-push:
+    name: Build & Push to ECR
+    runs-on: ubuntu-latest
+
+    # 다음 Job에서 사용할 출력값
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4 # github 레포에서 코드 가져옴
+
+      # AWS 인증 설정
+      - name: AWS 자격증명 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ECR 로그인 (docker push 하려면 필요)
+      - name: ECR 로그인
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 이미지 태그 결정
+      # - 수동 실행 시 입력값 사용
+      # - 자동 실행 시 git commit SHA 사용
+      - name: 이미지 태그 설정
+        id: meta
+        run: |
+          if [ -n "${{ inputs.image_tag }}" ]; then
+            TAG="${{ inputs.image_tag }}"
+          else
+            TAG="${{ github.sha }}"
+          fi
+          echo "tags=$TAG" >> $GITHUB_OUTPUT
+          echo "📦 이미지 태그: $TAG"
+
+      # Docker 이미지 빌드 & ECR 푸시
+      - name: Docker 이미지 빌드 & 푸시
+        uses: docker/build-push-action@v5
+        with:
+          context: .  # 루트에서 빌드 (멀티모듈)
+          file: ./peektime-api/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ steps.meta.outputs.tags }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          # 캐시 설정 (빌드 속도 향상)
+          cache-from: type=registry,ref=${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-to: type=inline
+
+  # ============================================
+  # Job 2: EC2에 배포
+  # ============================================
+  deploy:
+    name: Deploy to EC2
+    needs: build-and-push  # build-and-push 완료 후 실행
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: AWS 자격증명 설정
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: ECR 로그인
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 설정 파일들을 EC2로 복사
+      # - docker-compose.yml: 컨테이너 구성
+      # - nginx/: Nginx 설정
+      # - scripts/: 배포 스크립트
+      - name: EC2로 파일 복사
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          source: "peektime-api/docker-compose.yml,peektime-api/nginx,peektime-api/scripts"
+          target: ${{ env.APP_DIR }}
+          strip_components: 1  # peektime-api/ 경로 제거
+          overwrite: true
+
+      # EC2에 SSH 접속해서 배포 스크립트 실행
+      - name: 배포 실행
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_KEY }}
+          envs: ECR_REGISTRY,IMAGE_TAG
+          script: |
+            set -e
+
+            echo "🚀 배포 시작"
+
+            # ECR 로그인 (이미지 pull 하려면 필요)
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+              docker login --username AWS --password-stdin $ECR_REGISTRY
+
+            # 배포 디렉토리로 이동
+            cd ${{ env.APP_DIR }}
+
+            # 스크립트 실행 권한 부여
+            chmod +x scripts/*.sh
+
+            # 환경변수 설정 후 배포 스크립트 실행
+            export ECR_REGISTRY=$ECR_REGISTRY
+            export IMAGE_TAG=$IMAGE_TAG
+            ./scripts/deploy.sh
+
+            echo "✅ 배포 완료"

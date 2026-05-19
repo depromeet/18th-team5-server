@@ -51,6 +51,7 @@ subprojects {
 
     dependencies {
         // Spring Boot 핵심
+        implementation 'org.springframework.boot:spring-boot-starter-actuator'
         implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
         implementation 'org.springframework.boot:spring-boot-starter-security'
         implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -80,6 +81,7 @@ subprojects {
     jacoco {
         toolVersion = "0.8.13"
     }
+
 
     jacocoTestReport {
         dependsOn test
@@ -114,55 +116,65 @@ tasks.register('runH2', JavaExec) {
     args = ['-tcp', '-tcpAllowOthers', '-tcpPort', "${h2Port}", '-web', '-webAllowOthers', '-webPort', '8082', '-ifNotExists']
 }
 
-// peektime-api bootRun 설정
-project(':peektime-api') {
-    afterEvaluate {
-        bootRun {
-            systemProperty 'server.port', rootProject.ext.apiPort
+// ============================================
+// 모듈별 bootRun 설정 (존재하는 모듈만 설정)
+// ============================================
+if (findProject(':peektime-api') != null) {
+    project(':peektime-api') {
+        afterEvaluate {
+            bootRun {
+                systemProperty 'server.port', rootProject.ext.apiPort
+            }
         }
     }
 }
 
-// peektime-admin bootRun 설정
-project(':peektime-admin') {
-    afterEvaluate {
-        bootRun {
-            systemProperty 'server.port', rootProject.ext.adminPort
+if (findProject(':peektime-admin') != null) {
+    project(':peektime-admin') {
+        afterEvaluate {
+            bootRun {
+                systemProperty 'server.port', rootProject.ext.adminPort
+            }
         }
     }
 }
 
-// 전체 빌드
+// ============================================
+// 전체 태스크 (존재하는 모듈만 포함)
+// ============================================
 tasks.register('buildAll') {
     description = 'Build all projects'
     group = 'build'
-    dependsOn ':peektime-api:build', ':peektime-admin:build'
+    dependsOn subprojects.collect { ":${it.name}:build" }
 }
 
-// 전체 테스트
 tasks.register('testAll') {
     description = 'Test all projects'
     group = 'verification'
-    dependsOn ':peektime-api:test', ':peektime-admin:test'
+    dependsOn subprojects.collect { ":${it.name}:test" }
 }
 
-// 전체 클린
 tasks.register('cleanAll') {
     description = 'Clean all projects'
     group = 'build'
-    dependsOn ':peektime-api:clean', ':peektime-admin:clean'
+    dependsOn subprojects.collect { ":${it.name}:clean" }
 }
 
-// API 서버 실행 (port: 8080)
-tasks.register('runApi') {
-    description = "Run peektime-api server (port: ${apiPort})"
-    group = 'servers'
-    dependsOn ':peektime-api:bootRun'
+// ============================================
+// 개별 서버 실행 (존재하는 모듈만 등록)
+// ============================================
+if (findProject(':peektime-api') != null) {
+    tasks.register('runApi') {
+        description = "Run peektime-api server (port: ${apiPort})"
+        group = 'servers'
+        dependsOn ':peektime-api:bootRun'
+    }
 }
 
-// Admin 서버 실행 (port: 8081)
-tasks.register('runAdmin') {
-    description = "Run peektime-admin server (port: ${adminPort})"
-    group = 'servers'
-    dependsOn ':peektime-admin:bootRun'
+if (findProject(':peektime-admin') != null) {
+    tasks.register('runAdmin') {
+        description = "Run peektime-admin server (port: ${adminPort})"
+        group = 'servers'
+        dependsOn ':peektime-admin:bootRun'
+    }
 }

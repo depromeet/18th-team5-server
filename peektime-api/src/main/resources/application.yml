@@ -1,17 +1,33 @@
 spring:
   application:
-    name: peektime-api
-  datasource:
-    url: jdbc:h2:tcp://localhost:9092/~/h2-data/peektime-api
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    name: peaktime-api
+  profiles:
+    active: local
   jpa:
     open-in-view: false
-    hibernate:
-      ddl-auto: create-drop
-    show-sql: true
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    com.team.peektime_api: DEBUG
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-expiration: ${JWT_ACCESS_EXPIRATION:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:2592000000}
+
+admin:
+  base-url: ${ADMIN_BASE_URL:http://localhost:8081}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+    region: ap-northeast-2

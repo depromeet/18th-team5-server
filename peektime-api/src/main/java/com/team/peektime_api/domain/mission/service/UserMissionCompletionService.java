@@ -80,10 +80,9 @@ public class UserMissionCompletionService {
     }
 
     private DailyMissionStats getDailyMissionStats(Long missionId, LocalDate completedDate) {
-        DailyMissionStats stats = dailyMissionStatsRepository
+        return dailyMissionStatsRepository
                 .findByMissionIdAndMissionDate(missionId, completedDate)
-                .orElseThrow(() -> new IllegalStateException("오늘의 미션 통계 테이블이 저장이 안된 상태입니다."));
-        return stats;
+                .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_STATS_NOT_FOUND));
     }
 
     private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {

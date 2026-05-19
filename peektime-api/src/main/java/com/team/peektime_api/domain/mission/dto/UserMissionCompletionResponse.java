@@ -17,7 +17,7 @@ public record UserMissionCompletionResponse(
                 completion.getId(),
                 completion.getMissionId(),
                 completion.getMissionType(),
-                completion.getCompletedAt().atOffset(ZoneOffset.ofHours(9))
+                completion.getCreatedAt().atOffset(ZoneOffset.ofHours(9))
         );
     }
 }

@@ -21,7 +21,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -39,7 +38,7 @@ public class UserMissionCompletionService {
     public UserMissionCompletionResponse completeMission(Long userId, Long missionId, UserMissionCompletionRequest request) {
         User user = findUser(userId);
 
-        if (userMissionCompletionRepository.existsByUser_IdAndMissionId(user.getId(), missionId)) {
+        if (userMissionCompletionRepository.existsByUserIdAndMissionId(user.getId(), missionId)) {
             throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
         }
 
@@ -47,25 +46,19 @@ public class UserMissionCompletionService {
                 UserMissionCompletion.of(user, missionId, request)
         );
 
-        MissionLogPayload payload = createMissionLogPayload(missionId, request, user, completion);
+        MissionLogPayload payload = MissionLogPayload.of(
+                user.getDeviceUuid(),
+                missionId,
+                request.missionType(),
+                request.solarTermId(),
+                completion.getCreatedAt()
+        );
 
         OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
         eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
 
         return UserMissionCompletionResponse.from(completion);
     }
-
-    private static MissionLogPayload createMissionLogPayload(Long missionId, UserMissionCompletionRequest request, User user, UserMissionCompletion completion) {
-        MissionLogPayload payload = MissionLogPayload.of(
-                user.getDeviceUuid(),
-                missionId,
-                request.missionType(),
-                request.solarTermId(),
-                completion.getCompletedAt()
-        );
-        return payload;
-    }
-
 
     private String toJson(MissionLogPayload payload) {
         try {

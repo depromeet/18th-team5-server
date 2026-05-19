@@ -23,7 +23,7 @@ public record UserMissionCompletionDetailResponse(
                 completion.getObjectKey(),
                 presignedImageUrl,
                 completion.getMemo(),
-                completion.getCompletedAt().atOffset(ZoneOffset.ofHours(9))
+                completion.getCreatedAt().atOffset(ZoneOffset.ofHours(9))
         );
     }
 }

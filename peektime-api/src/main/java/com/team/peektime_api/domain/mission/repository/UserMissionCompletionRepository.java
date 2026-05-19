@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface UserMissionCompletionRepository extends JpaRepository<UserMissionCompletion, Long> {
 
-    boolean existsByUser_IdAndMissionId(Long userId, Long missionId);
+    boolean existsByUserIdAndMissionId(Long userId, Long missionId);
 
     List<UserMissionCompletion> findByUser_IdAndMissionId(Long userId, Long missionId);
 

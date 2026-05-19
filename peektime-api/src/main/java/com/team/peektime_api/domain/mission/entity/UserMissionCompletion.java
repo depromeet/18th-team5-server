@@ -10,9 +10,11 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Entity
+@Table(name = "user_mission_completion", indexes = {
+        @Index(name = "idx_completion_user_term", columnList = "user_id, solar_term_id"),
+        @Index(name = "idx_completion_user_term_date", columnList = "user_id, solar_term_id, created_at")
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserMissionCompletion extends BaseEntity {
@@ -28,6 +30,9 @@ public class UserMissionCompletion extends BaseEntity {
     @Column(name = "mission_id", nullable = false)
     private Long missionId;
 
+    @Column(name = "solar_term_id", nullable = false)
+    private Long solarTermId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "mission_type", nullable = false)
     private MissionType missionType;
@@ -38,32 +43,25 @@ public class UserMissionCompletion extends BaseEntity {
     @Column(name = "memo", length = 200)
     private String memo;
 
-    @Column(name = "completed_at", nullable = false)
-    private LocalDateTime completedAt;
-
-    @Builder
-    public UserMissionCompletion(User user, Long missionId, MissionType missionType,
-                                  String objectKey, String memo, LocalDateTime completedAt) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private UserMissionCompletion(User user, Long missionId, Long solarTermId,
+                                  MissionType missionType, String objectKey, String memo) {
         this.user = user;
         this.missionId = missionId;
+        this.solarTermId = solarTermId;
         this.missionType = missionType;
         this.objectKey = objectKey;
         this.memo = memo;
-        this.completedAt = completedAt != null ? completedAt : LocalDateTime.now();
     }
 
     public static UserMissionCompletion of(User user, Long missionId, UserMissionCompletionRequest request) {
-        LocalDateTime completedAt = request.completedAt() != null
-                ? request.completedAt().toLocalDateTime()
-                : LocalDateTime.now();
-
         return UserMissionCompletion.builder()
                 .user(user)
                 .missionId(missionId)
+                .solarTermId(request.solarTermId())
                 .missionType(request.missionType())
                 .objectKey(request.objectKey())
                 .memo(request.memo())
-                .completedAt(completedAt)
                 .build();
     }
 }

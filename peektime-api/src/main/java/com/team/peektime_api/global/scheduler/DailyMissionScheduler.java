@@ -1,7 +1,5 @@
 package com.team.peektime_api.global.scheduler;
 
-import com.team.peektime_api.domain.mission.entity.DailyMissionStats;
-import com.team.peektime_api.domain.mission.repository.DailyMissionStatsRepository;
 import com.team.peektime_api.global.infra.admin.AdminClient;
 import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse;
 import com.team.peektime_api.global.infra.cache.DailyMissionCacheService;
@@ -19,7 +17,6 @@ public class DailyMissionScheduler {
 
     private final AdminClient adminClient;
     private final DailyMissionCacheService cacheService;
-    private final DailyMissionStatsRepository dailyMissionStatsRepository;
 
     /**
      * 매일 22시에 다음날 미션을 캐시에 저장
@@ -58,25 +55,8 @@ public class DailyMissionScheduler {
             AdminHomeResponse data = adminClient.getHomeData(date);
             cacheService.save(date, data);
             log.info("[{}] {} 미션 캐시 저장 완료", context, date);
-
-            createDailyMissionStatsIfNotExists(data, date);
         } catch (Exception e) {
             log.error("[{}] {} 미션 캐시 로드 실패: {}", context, date, e.getMessage());
-        }
-    }
-
-    private void createDailyMissionStatsIfNotExists(AdminHomeResponse data, LocalDate date) {
-        if (data.dailyMission() == null || data.solarTerm() == null) {
-            return;
-        }
-
-        Long missionId = data.dailyMission().id();
-        Long solarTermId = data.solarTerm().id();
-
-        if (!dailyMissionStatsRepository.existsByMissionIdAndMissionDate(missionId, date)) {
-            DailyMissionStats stats = DailyMissionStats.create(missionId, solarTermId, date);
-            dailyMissionStatsRepository.save(stats);
-            log.info("DailyMissionStats 생성 완료: missionId={}, date={}", missionId, date);
         }
     }
 }

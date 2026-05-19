@@ -32,12 +32,16 @@ public class DailyMission extends BaseEntity {
     @Column(name = "mission_date")
     private LocalDate missionDate;
 
+    @Column(name = "participant_count", nullable = false)
+    private Integer participantCount;
+
     @Builder(access = AccessLevel.PRIVATE)
-    private DailyMission(Long id, Mission mission, SolarTerm solarTerm, LocalDate missionDate) {
+    private DailyMission(Long id, Mission mission, SolarTerm solarTerm, LocalDate missionDate, Integer participantCount) {
         this.id = id;
         this.mission = mission;
         this.solarTerm = solarTerm;
         this.missionDate = missionDate;
+        this.participantCount = participantCount != null ? participantCount : 0;
     }
 
     public static DailyMission create(Long id, Mission mission, SolarTerm solarTerm, LocalDate missionDate) {
@@ -46,7 +50,12 @@ public class DailyMission extends BaseEntity {
                 .mission(mission)
                 .solarTerm(solarTerm)
                 .missionDate(missionDate)
+                .participantCount(0)
                 .build();
+    }
+
+    public void incrementParticipantCount() {
+        this.participantCount++;
     }
 
     public void update(Mission mission, SolarTerm solarTerm, LocalDate missionDate) {

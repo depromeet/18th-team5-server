@@ -6,11 +6,10 @@ import com.team.peektime_api.domain.home.dto.RecentRecordCache;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
-import com.team.peektime_api.domain.mission.entity.DailyMissionStats;
+import com.team.peektime_api.domain.mission.entity.DailyMission;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
-import com.team.peektime_api.domain.mission.repository.DailyMissionStatsRepository;
+import com.team.peektime_api.domain.mission.repository.DailyMissionRepository;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
-import com.team.peektime_api.global.common.enums.MissionType;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
 import com.team.peektime_api.global.exception.BusinessException;
@@ -28,7 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -37,7 +35,7 @@ import java.util.List;
 public class UserMissionCompletionService {
 
     private final UserMissionCompletionRepository userMissionCompletionRepository;
-    private final DailyMissionStatsRepository dailyMissionStatsRepository;
+    private final DailyMissionRepository dailyMissionRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final OutboxRepository outboxRepository;
@@ -46,8 +44,13 @@ public class UserMissionCompletionService {
     private final RecentRecordsCacheRepository recentRecordsCacheRepository;
 
     @Transactional
-    public UserMissionCompletionResponse completeMission(Long userId, Long missionId, UserMissionCompletionRequest request) {
+    public UserMissionCompletionResponse completeDailyMission(Long userId, Long missionId, UserMissionCompletionRequest request) {
         User user = findUser(userId);
+        LocalDate today = LocalDate.now();
+
+        DailyMission dailyMission = dailyMissionRepository
+                .findByMissionIdAndMissionDate(missionId, today)
+                .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_NOT_FOUND));
 
         if (userMissionCompletionRepository.existsByUser_IdAndMissionId(user.getId(), missionId)) {
             throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
@@ -58,31 +61,13 @@ public class UserMissionCompletionService {
         );
 
         MissionLogPayload payload = createMissionLogPayload(missionId, request, user, completion);
-
         OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
         eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
 
         updateRecentRecordsCache(userId, completion);
-
-        if (request.missionType() == MissionType.DAILY) {
-            incrementDailyMissionStats(missionId, completion);
-        }
+        dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
 
         return UserMissionCompletionResponse.from(completion);
-    }
-
-    private void incrementDailyMissionStats(Long missionId, UserMissionCompletion completion) {
-        LocalDate completedDate = completion.getCompletedAt().toLocalDate();
-
-        DailyMissionStats stats = getDailyMissionStats(missionId, completedDate);
-
-        stats.incrementCount();
-    }
-
-    private DailyMissionStats getDailyMissionStats(Long missionId, LocalDate completedDate) {
-        return dailyMissionStatsRepository
-                .findByMissionIdAndMissionDate(missionId, completedDate)
-                .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_STATS_NOT_FOUND));
     }
 
     private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {

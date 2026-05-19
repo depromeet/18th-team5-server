@@ -7,6 +7,8 @@ import com.team.peektime_api.domain.mission.repository.RecommendedMissionPoolRep
 import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
 import com.team.peektime_api.domain.sync.dto.RecommendedMissionSyncDto;
+import com.team.peektime_api.global.exception.BusinessException;
+import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,24 +29,18 @@ public class RecommendedMissionSyncService {
     public void syncRecommendedMissions(Long solarTermId, List<RecommendedMissionSyncDto> dtos) {
         log.info("추천 미션 동기화 시작: solarTermId={}, count={}", solarTermId, dtos.size());
 
-        // 기존 데이터 삭제 후 새로 삽입 (전체 교체)
         recommendedMissionPoolRepository.deleteBySolarTermId(solarTermId);
 
         SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
-                .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
 
         for (RecommendedMissionSyncDto dto : dtos) {
             Mission mission = missionRepository.findById(dto.missionId())
-                    .orElseThrow(() -> new IllegalArgumentException("미션을 찾을 수 없습니다: " + dto.missionId()));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
 
             RecommendedMissionPool recommendedMission = RecommendedMissionPool.create(
-                    dto.id(),
-                    mission,
-                    solarTerm,
-                    dto.userType(),
-                    dto.displayOrder()
+                    dto.id(), mission, solarTerm, dto.userType(), dto.displayOrder()
             );
-
             recommendedMissionPoolRepository.save(recommendedMission);
         }
 

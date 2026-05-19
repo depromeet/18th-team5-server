@@ -7,6 +7,8 @@ import com.team.peektime_api.domain.mission.repository.MissionRepository;
 import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
 import com.team.peektime_api.domain.sync.dto.DailyMissionSyncDto;
+import com.team.peektime_api.global.exception.BusinessException;
+import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,23 +29,16 @@ public class DailyMissionSyncService {
     public void syncDailyMissions(Long solarTermId, List<DailyMissionSyncDto> dtos) {
         log.info("오늘의 미션 동기화 시작: solarTermId={}, count={}", solarTermId, dtos.size());
 
-        // 기존 데이터 삭제 후 새로 삽입 (전체 교체)
         dailyMissionRepository.deleteBySolarTermId(solarTermId);
 
         SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
-                .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
+                .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
 
         for (DailyMissionSyncDto dto : dtos) {
             Mission mission = missionRepository.findById(dto.missionId())
-                    .orElseThrow(() -> new IllegalArgumentException("미션을 찾을 수 없습니다: " + dto.missionId()));
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
 
-            DailyMission dailyMission = DailyMission.create(
-                    dto.id(),
-                    mission,
-                    solarTerm,
-                    dto.missionDate()
-            );
-
+            DailyMission dailyMission = DailyMission.create(dto.id(), mission, solarTerm, dto.missionDate());
             dailyMissionRepository.save(dailyMission);
         }
 

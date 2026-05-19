@@ -24,6 +24,9 @@ public enum ErrorCode {
     MISSION_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "MISSION_400", "선택할 수 없는 미션입니다"),
     DAILY_MISSION_STATS_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "MISSION_500", "오늘의 미션 통계 데이터가 존재하지 않습니다"),
 
+    // 절기
+    SOLAR_TERM_NOT_FOUND(HttpStatus.NOT_FOUND, "SOLAR_TERM_404", "절기를 찾을 수 없습니다"),
+
     // 기록
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "RECORD_404", "기록을 찾을 수 없습니다"),
 

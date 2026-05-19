@@ -256,6 +256,9 @@
                 </p>
             </div>
             <div class="header-actions">
+                <button class="btn btn-secondary" id="syncBtn" onclick="syncMissions()">
+                    🔄 API 동기화
+                </button>
                 <button class="btn btn-primary" onclick="openModal()">
                     + 새 미션 등록
                 </button>
@@ -843,6 +846,37 @@
                 } finally {
                     generateBtn.disabled = false;
                     generateBtn.textContent = '미션 생성';
+                }
+            }
+
+            // API 동기화
+            async function syncMissions() {
+                const syncBtn = document.getElementById('syncBtn');
+
+                if (!confirm('전체 미션을 API 서버에 동기화하시겠습니까?')) {
+                    return;
+                }
+
+                syncBtn.disabled = true;
+                syncBtn.textContent = '동기화 중...';
+
+                try {
+                    const response = await fetch('/api/admin/sync/missions', {
+                        method: 'POST'
+                    });
+
+                    if (response.ok) {
+                        alert('미션 동기화가 완료되었습니다.');
+                    } else {
+                        const error = await response.json();
+                        alert(error.message || '동기화 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('동기화 중 오류가 발생했습니다.');
+                } finally {
+                    syncBtn.disabled = false;
+                    syncBtn.textContent = '🔄 API 동기화';
                 }
             }
 

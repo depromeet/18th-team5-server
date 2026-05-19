@@ -63,21 +63,27 @@ public class UserMissionCompletionService {
         eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
 
         updateRecentRecordsCache(userId, completion);
-        incrementDailyMissionStats(missionId, request.missionType(), completion);
+
+        if (request.missionType() == MissionType.DAILY) {
+            incrementDailyMissionStats(missionId, completion);
+        }
 
         return UserMissionCompletionResponse.from(completion);
     }
 
-    private void incrementDailyMissionStats(Long missionId, MissionType missionType, UserMissionCompletion completion) {
-        if (missionType != MissionType.DAILY) {
-            return;
-        }
-
+    private void incrementDailyMissionStats(Long missionId, UserMissionCompletion completion) {
         LocalDate completedDate = completion.getCompletedAt().toLocalDate();
 
-        dailyMissionStatsRepository
+        DailyMissionStats stats = getDailyMissionStats(missionId, completedDate);
+
+        stats.incrementCount();
+    }
+
+    private DailyMissionStats getDailyMissionStats(Long missionId, LocalDate completedDate) {
+        DailyMissionStats stats = dailyMissionStatsRepository
                 .findByMissionIdAndMissionDate(missionId, completedDate)
-                .ifPresent(DailyMissionStats::incrementCount);
+                .orElseThrow(() -> new IllegalStateException("오늘의 미션 통계 테이블이 저장이 안된 상태입니다."));
+        return stats;
     }
 
     private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {

@@ -2,6 +2,7 @@ package com.team.peektime_api.domain.mission.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.team.peektime_api.domain.home.dto.RecentRecordCache;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
@@ -13,10 +14,12 @@ import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.S3Service;
 import com.team.peektime_api.domain.mission.event.MissionCompletedEvent;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
+import com.team.peektime_api.global.infra.cache.RecentRecordsCacheRepository;
 import com.team.peektime_api.global.outbox.entity.OutboxEvent;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
 import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserMissionCompletionService {
@@ -34,6 +38,7 @@ public class UserMissionCompletionService {
     private final OutboxRepository outboxRepository;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final RecentRecordsCacheRepository recentRecordsCacheRepository;
 
     @Transactional
     public UserMissionCompletionResponse completeMission(Long userId, Long missionId, UserMissionCompletionRequest request) {
@@ -52,7 +57,20 @@ public class UserMissionCompletionService {
         OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
         eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
 
+        updateRecentRecordsCache(userId, completion);
+
         return UserMissionCompletionResponse.from(completion);
+    }
+
+    private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {
+        if (completion.getObjectKey() == null) {
+            return;
+        }
+        try {
+            recentRecordsCacheRepository.addRecord(userId, RecentRecordCache.from(completion));
+        } catch (Exception e) {
+            log.warn("Redis 캐시 업데이트 실패 (userId={}): {}", userId, e.getMessage());
+        }
     }
 
     private static MissionLogPayload createMissionLogPayload(Long missionId, UserMissionCompletionRequest request, User user, UserMissionCompletion completion) {

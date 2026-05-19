@@ -27,6 +27,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -72,12 +73,11 @@ public class UserMissionCompletionService {
             return;
         }
 
-        try {
-            dailyMissionStatsRepository.findByMissionIdAndMissionDate(missionId, completion.getCompletedAt().toLocalDate())
-                    .ifPresent(DailyMissionStats::incrementCount);
-        } catch (Exception e) {
-            log.warn("DailyMissionStats 카운트 증가 실패: missionId={}, error={}", missionId, e.getMessage());
-        }
+        LocalDate completedDate = completion.getCompletedAt().toLocalDate();
+
+        dailyMissionStatsRepository
+                .findByMissionIdAndMissionDate(missionId, completedDate)
+                .ifPresent(DailyMissionStats::incrementCount);
     }
 
     private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {

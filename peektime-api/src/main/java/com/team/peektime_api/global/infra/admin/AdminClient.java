@@ -2,6 +2,7 @@ package com.team.peektime_api.global.infra.admin;
 
 import com.team.peektime_api.global.infra.admin.dto.AdminApiResponse;
 import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse;
+import com.team.peektime_api.global.infra.admin.dto.AdminRecommendedMissionResponse;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,20 @@ public class AdminClient {
         } catch (Exception e) {
             log.error("Admin API 호출 실패 (date={}): {}", date, e.getMessage());
             throw new RuntimeException("홈 데이터를 가져올 수 없습니다.", e);
+        }
+    }
+
+    public AdminRecommendedMissionResponse getRecommendedMissions(
+            String userType, String enjoyTypeFirst, String enjoyTypeSecond, String enjoyTypeThird) {
+        try {
+            return adminRestClient.get()
+                    .uri("/api/missions/recommended?userType={userType}&enjoyTypeFirst={first}&enjoyTypeSecond={second}&enjoyTypeThird={third}",
+                            userType, enjoyTypeFirst, enjoyTypeSecond, enjoyTypeThird)
+                    .retrieve()
+                    .body(AdminRecommendedMissionResponse.class);
+        } catch (Exception e) {
+            log.error("추천 미션 API 호출 실패 (userType={}): {}", userType, e.getMessage());
+            throw new RuntimeException("추천 미션 데이터를 가져올 수 없습니다.", e);
         }
     }
 

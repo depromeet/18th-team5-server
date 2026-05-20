@@ -15,7 +15,7 @@ public record UserMissionCompletionResponse(
     public static UserMissionCompletionResponse from(UserMissionCompletion completion) {
         return new UserMissionCompletionResponse(
                 completion.getId(),
-                completion.getMissionId(),
+                completion.getMission().getId(),
                 completion.getMissionType(),
                 completion.getCompletedAt().atOffset(ZoneOffset.ofHours(9))
         );

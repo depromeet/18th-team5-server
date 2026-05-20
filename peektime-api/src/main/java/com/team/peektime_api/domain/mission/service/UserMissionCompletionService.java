@@ -7,6 +7,7 @@ import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailRespo
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
 import com.team.peektime_api.domain.mission.entity.DailyMission;
+import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
 import com.team.peektime_api.domain.mission.repository.DailyMissionRepository;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
@@ -51,17 +52,19 @@ public class UserMissionCompletionService {
 
         // 오늘의 미션
         DailyMission dailyMission = dailyMissionRepository
-                .findByMissionIdAndMissionDate(missionId, today)
+                .findByMission_IdAndMissionDate(missionId, today)
                 .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_NOT_FOUND));
 
+        Mission mission = dailyMission.getMission();
+
         // 같은 미션 못하게
-        if (userMissionCompletionRepository.existsByUser_IdAndMissionId(user.getId(), missionId)) {
+        if (userMissionCompletionRepository.existsByUser_IdAndMission_Id(user.getId(), missionId)) {
             throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
         }
 
         // 미션 수행 저장
         UserMissionCompletion completion = userMissionCompletionRepository.save(
-                UserMissionCompletion.of(user, missionId, request)
+                UserMissionCompletion.of(user, mission, request)
         );
 
         MissionLogPayload payload = createMissionLogPayload(missionId, request, user, completion);
@@ -109,7 +112,7 @@ public class UserMissionCompletionService {
 
     @Transactional(readOnly = true)
     public List<UserMissionCompletionDetailResponse> getMissionCompletions(Long userId, Long missionId) {
-        return userMissionCompletionRepository.findByUser_IdAndMissionId(userId, missionId)
+        return userMissionCompletionRepository.findByUser_IdAndMission_Id(userId, missionId)
                 .stream()
                 .map(this::toDetailResponse)
                 .toList();

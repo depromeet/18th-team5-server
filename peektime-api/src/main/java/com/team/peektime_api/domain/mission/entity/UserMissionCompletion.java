@@ -25,8 +25,9 @@ public class UserMissionCompletion extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "mission_id", nullable = false)
-    private Long missionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mission_id", nullable = false)
+    private Mission mission;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "mission_type", nullable = false)
@@ -42,24 +43,24 @@ public class UserMissionCompletion extends BaseEntity {
     private LocalDateTime completedAt;
 
     @Builder
-    public UserMissionCompletion(User user, Long missionId, MissionType missionType,
+    public UserMissionCompletion(User user, Mission mission, MissionType missionType,
                                   String objectKey, String memo, LocalDateTime completedAt) {
         this.user = user;
-        this.missionId = missionId;
+        this.mission = mission;
         this.missionType = missionType;
         this.objectKey = objectKey;
         this.memo = memo;
         this.completedAt = completedAt != null ? completedAt : LocalDateTime.now();
     }
 
-    public static UserMissionCompletion of(User user, Long missionId, UserMissionCompletionRequest request) {
+    public static UserMissionCompletion of(User user, Mission mission, UserMissionCompletionRequest request) {
         LocalDateTime completedAt = request.completedAt() != null
                 ? request.completedAt().toLocalDateTime()
                 : LocalDateTime.now();
 
         return UserMissionCompletion.builder()
                 .user(user)
-                .missionId(missionId)
+                .mission(mission)
                 .missionType(request.missionType())
                 .objectKey(request.objectKey())
                 .memo(request.memo())

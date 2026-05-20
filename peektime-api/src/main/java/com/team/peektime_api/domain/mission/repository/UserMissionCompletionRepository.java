@@ -10,11 +10,11 @@ import java.util.List;
 
 public interface UserMissionCompletionRepository extends JpaRepository<UserMissionCompletion, Long> {
 
-    boolean existsByUser_IdAndMissionId(Long userId, Long missionId);
+    boolean existsByUser_IdAndMission_Id(Long userId, Long missionId);
 
-    List<UserMissionCompletion> findByUser_IdAndMissionId(Long userId, Long missionId);
+    List<UserMissionCompletion> findByUser_IdAndMission_Id(Long userId, Long missionId);
 
-    long countByMissionId(Long missionId);
+    long countByMission_Id(Long missionId);
 
     @Query("SELECT c FROM UserMissionCompletion c " +
             "WHERE c.user.id = :userId AND c.objectKey IS NOT NULL " +

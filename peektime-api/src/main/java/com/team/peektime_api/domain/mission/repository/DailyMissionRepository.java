@@ -21,7 +21,7 @@ public interface DailyMissionRepository extends JpaRepository<DailyMission, Long
 
     Optional<DailyMission> findBySolarTermIdAndMissionDate(Long solarTermId, LocalDate missionDate);
 
-    Optional<DailyMission> findByMissionIdAndMissionDate(Long missionId, LocalDate missionDate);
+    Optional<DailyMission> findByMission_IdAndMissionDate(Long missionId, LocalDate missionDate);
 
     @Query("SELECT dm FROM DailyMission dm " +
            "JOIN FETCH dm.mission " +

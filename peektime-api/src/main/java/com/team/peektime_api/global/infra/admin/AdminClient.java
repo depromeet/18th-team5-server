@@ -5,21 +5,6 @@ import com.team.peektime_api.global.infra.admin.dto.AdminApiResponse;
 import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse;
 import com.team.peektime_api.global.infra.admin.dto.AdminRecommendedMissionResponse;
 >>>>>>> af89dd1 (feat: 추천 미션 조회 API 구현)
-import com.team.peektime_api.domain.mission.event.MissionLogPayload;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
-
-@Slf4j
-@Component
-@RequiredArgsConstructor
-public class AdminClient {
-
-    private final RestClient adminRestClient;
-
-<<<<<<< HEAD
     public void sendMissionLog(MissionLogPayload payload) {
         try {
             AdminApiResponse response = adminRestClient.post()

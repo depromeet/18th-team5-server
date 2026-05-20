@@ -1,6 +1,6 @@
 package com.team.peektime_api.domain.mission.entity;
 
-import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
+import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.global.common.BaseEntity;
 import com.team.peektime_api.global.common.enums.MissionType;
@@ -27,11 +27,13 @@ public class UserMissionCompletion extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "mission_id", nullable = false)
-    private Long missionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mission_id", nullable = false)
+    private Mission mission;
 
-    @Column(name = "solar_term_id", nullable = false)
-    private Long solarTermId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "solar_term_id", nullable = false)
+    private SolarTerm solarTerm;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "mission_type", nullable = false)
@@ -44,24 +46,25 @@ public class UserMissionCompletion extends BaseEntity {
     private String memo;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserMissionCompletion(User user, Long missionId, Long solarTermId,
+    private UserMissionCompletion(User user, Mission mission, SolarTerm solarTerm,
                                   MissionType missionType, String objectKey, String memo) {
         this.user = user;
-        this.missionId = missionId;
-        this.solarTermId = solarTermId;
+        this.mission = mission;
+        this.solarTerm = solarTerm;
         this.missionType = missionType;
         this.objectKey = objectKey;
         this.memo = memo;
     }
 
-    public static UserMissionCompletion of(User user, Long missionId, UserMissionCompletionRequest request) {
+    public static UserMissionCompletion create(User user, Mission mission, SolarTerm solarTerm,
+                                               MissionType missionType, String objectKey, String memo) {
         return UserMissionCompletion.builder()
                 .user(user)
-                .missionId(missionId)
-                .solarTermId(request.solarTermId())
-                .missionType(request.missionType())
-                .objectKey(request.objectKey())
-                .memo(request.memo())
+                .mission(mission)
+                .solarTerm(solarTerm)
+                .missionType(missionType)
+                .objectKey(objectKey)
+                .memo(memo)
                 .build();
     }
 }

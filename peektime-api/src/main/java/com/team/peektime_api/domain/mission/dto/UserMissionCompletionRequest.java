@@ -1,6 +1,7 @@
 package com.team.peektime_api.domain.mission.dto;
 
 import com.team.peektime_api.global.common.enums.MissionType;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -12,6 +13,7 @@ public record UserMissionCompletionRequest(
         @NotNull
         Long solarTermId,
 
+        @NotBlank(message = "사진은 필수입니다")
         @Size(max = 500)
         String objectKey,
 

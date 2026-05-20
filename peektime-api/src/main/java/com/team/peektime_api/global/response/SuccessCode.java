@@ -23,6 +23,7 @@ public enum SuccessCode {
 
     // 미션
     MISSION_FOUND("MISSION_200", "미션 조회 성공"),
+    RECOMMENDED_MISSION_FOUND("MISSION_200_REC", "추천 미션 조회 성공"),
     MISSION_COMPLETED("MISSION_200", "미션 완료 성공"),
     MISSION_SELECTED("MISSION_201", "미션 선택 성공"),
 

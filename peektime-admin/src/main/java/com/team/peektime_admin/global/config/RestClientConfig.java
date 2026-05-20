@@ -8,7 +8,7 @@ import org.springframework.web.client.RestClient;
 @Configuration
 public class RestClientConfig {
 
-    @Value("${api.base-url:http://localhost:8080}")
+    @Value("${api.base-url:http://13.124.36.181:8080}")
     private String apiBaseUrl;
 
     @Bean

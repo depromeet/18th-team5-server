@@ -18,6 +18,9 @@ spring:
       ddl-auto: create
     show-sql: false
     defer-datasource-initialization: true
+  sql:
+    init:
+      mode: never
 
 server:
   port: ${SERVER_PORT:8081}

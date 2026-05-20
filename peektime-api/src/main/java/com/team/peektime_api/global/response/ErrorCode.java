@@ -17,6 +17,7 @@ public enum ErrorCode {
     // 사용자
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "사용자를 찾을 수 없습니다"),
     USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "USER_409", "이미 존재하는 사용자입니다"),
+    ONBOARDING_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_ONBOARD", "온보딩 정보를 찾을 수 없습니다"),
 
     // 미션
     MISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "MISSION_404", "미션을 찾을 수 없습니다"),

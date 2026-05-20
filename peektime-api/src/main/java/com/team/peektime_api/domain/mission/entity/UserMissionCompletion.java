@@ -41,9 +41,9 @@ public class UserMissionCompletion extends BaseEntity {
     @Column(name = "completed_at", nullable = false)
     private LocalDateTime completedAt;
 
-    @Builder
-    public UserMissionCompletion(User user, Mission mission, MissionType missionType,
-                                  String objectKey, String memo, LocalDateTime completedAt) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private UserMissionCompletion(User user, Mission mission, MissionType missionType,
+                                   String objectKey, String memo, LocalDateTime completedAt) {
         this.user = user;
         this.mission = mission;
         this.missionType = missionType;

@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public interface DailyMissionRepository extends JpaRepository<DailyMission, Long> {
 
+    List<DailyMission> findBySolarTermId(Long solarTermId);
+
     long countBySolarTermId(Long solarTermId);
 
     long countBySolarTermIdAndMissionDateIsNotNull(Long solarTermId);

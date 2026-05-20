@@ -25,6 +25,9 @@ spring:
 server:
   port: ${SERVER_PORT:8081}
 
+api:
+  base-url: http://13.124.36.181:8080
+
 admin:
   username: ${ADMIN_USERNAME}
   password: ${ADMIN_PASSWORD}

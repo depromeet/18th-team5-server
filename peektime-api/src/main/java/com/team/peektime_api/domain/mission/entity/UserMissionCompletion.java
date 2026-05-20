@@ -1,6 +1,5 @@
 package com.team.peektime_api.domain.mission.entity;
 
-import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.global.common.BaseEntity;
 import com.team.peektime_api.global.common.enums.MissionType;
@@ -25,8 +24,9 @@ public class UserMissionCompletion extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "mission_id", nullable = false)
-    private Long missionId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mission_id", nullable = false)
+    private Mission mission;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "mission_type", nullable = false)
@@ -41,29 +41,26 @@ public class UserMissionCompletion extends BaseEntity {
     @Column(name = "completed_at", nullable = false)
     private LocalDateTime completedAt;
 
-    @Builder
-    public UserMissionCompletion(User user, Long missionId, MissionType missionType,
-                                  String objectKey, String memo, LocalDateTime completedAt) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private UserMissionCompletion(User user, Mission mission, MissionType missionType,
+                                   String objectKey, String memo, LocalDateTime completedAt) {
         this.user = user;
-        this.missionId = missionId;
+        this.mission = mission;
         this.missionType = missionType;
         this.objectKey = objectKey;
         this.memo = memo;
         this.completedAt = completedAt != null ? completedAt : LocalDateTime.now();
     }
 
-    public static UserMissionCompletion of(User user, Long missionId, UserMissionCompletionRequest request) {
-        LocalDateTime completedAt = request.completedAt() != null
-                ? request.completedAt().toLocalDateTime()
-                : LocalDateTime.now();
-
+    public static UserMissionCompletion create(User user, Mission mission, MissionType missionType,
+                                                String objectKey, String memo) {
         return UserMissionCompletion.builder()
                 .user(user)
-                .missionId(missionId)
-                .missionType(request.missionType())
-                .objectKey(request.objectKey())
-                .memo(request.memo())
-                .completedAt(completedAt)
+                .mission(mission)
+                .missionType(missionType)
+                .objectKey(objectKey)
+                .memo(memo)
+                .completedAt(LocalDateTime.now())
                 .build();
     }
 }

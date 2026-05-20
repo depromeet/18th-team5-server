@@ -1,258 +1,118 @@
-# PeekTime ERD
+# ERD (Entity Relationship Diagram)
 
-## 전체 ERD
+## 엔티티 구조
 
-![ERD](./erd.png)
+### User (사용자)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK, Auto) | 사용자 ID |
+| provider | String | OAuth 제공자 (KAKAO, APPLE) |
+| provider_id | String | OAuth 제공자 ID |
+| nickname | String | 닉네임 |
+| profile_image | String | 프로필 이미지 URL |
+| created_at | LocalDateTime | 생성일시 |
+| updated_at | LocalDateTime | 수정일시 |
 
-<details>
-<summary>Mermaid 코드 (GitHub 렌더링용)</summary>
+### UserOnboarding (사용자 온보딩)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK, Auto) | 온보딩 ID |
+| user_id | Long (FK) | 사용자 ID |
+| space_type | SpaceType | 공간 선호 (INDOOR/OUTDOOR) |
+| intensity_type | IntensityType | 강도 선호 |
+| enjoy_priorities | String | 즐기기 우선순위 (JSON) |
+| user_type | UserType | 계산된 사용자 타입 |
 
-```mermaid
-erDiagram
-    %% ===== ADMIN (미션 관리) =====
+### SolarTerm (절기)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | 절기 ID (Admin에서 동기화) |
+| name | String | 절기 이름 (입춘, 우수 등) |
+| year | Integer | 연도 |
+| start_date | LocalDate | 시작일 |
+| end_date | LocalDate | 종료일 |
+| description | String | 절기 설명 |
 
-    Mission {
-        bigint id PK
-        varchar title
-        text description
-        enum space_type "INDOOR, OUTDOOR"
-        enum intensity_type "LIGHT, MODERATE, ACTIVE"
-        enum category_type "FOOD, NATURE, RECORD, PLACE, SENSE"
-        enum companion_type "SOLO, TOGETHER"
-        enum enjoy_type "NATURE_OUTDOOR, SEASONAL_FOOD, EMOTIONAL_CONTENT"
-        enum user_type "NATURE_EXPLORER, NEIGHBORHOOD_WALKER, SEASONAL_GOURMET, DAILY_OBSERVER"
-        boolean deleted
-        datetime deleted_at
-        datetime created_at
-        datetime updated_at
-    }
+### Mission (미션)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | 미션 ID (Admin에서 동기화) |
+| title | String | 미션 제목 |
+| description | Text | 미션 설명 |
+| space_type | SpaceType | 공간 (INDOOR/OUTDOOR) |
+| intensity_type | IntensityType | 강도 (LIGHT/MODERATE/ACTIVE) |
+| category_type | CategoryType | 카테고리 |
+| companion_type | CompanionType | 동반 (SOLO/TOGETHER) |
+| enjoy_type | EnjoyType | 즐기기 타입 (nullable) |
+| user_type | UserType | 추천 사용자 타입 (nullable) |
+| deleted | Boolean | 삭제 여부 |
 
-    SolarTerm {
-        bigint id PK
-        varchar name
-        text description
-        date start_date
-        date end_date
-        int solar_year
-        datetime created_at
-        datetime updated_at
-    }
+### DailyMission (오늘의 미션)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | 오늘의 미션 ID (Admin에서 동기화) |
+| mission_id | Long (FK) | 미션 ID |
+| solar_term_id | Long (FK) | 절기 ID |
+| mission_date | LocalDate | 미션 날짜 (nullable = 배정대기) |
+| participant_count | Integer | 참여자 수 |
 
-    DailyMission {
-        bigint id PK
-        bigint mission_id FK
-        bigint solar_term_id FK
-        date mission_date "NULL=배정대기"
-        int display_order
-        datetime created_at
-        datetime updated_at
-    }
+### RecommendedMissionPool (추천 미션)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK) | 추천 미션 ID (Admin에서 동기화) |
+| mission_id | Long (FK) | 미션 ID |
+| solar_term_id | Long (FK) | 절기 ID |
+| user_type | UserType | 대상 사용자 타입 |
+| display_order | Integer | 표시 순서 |
 
-    RecommendedMissionPool {
-        bigint id PK
-        bigint mission_id FK
-        bigint solar_term_id FK
-        enum user_type
-        int display_order
-        datetime created_at
-        datetime updated_at
-    }
+### UserMissionCompletion (미션 완료 기록)
+| 컬럼 | 타입 | 설명 |
+|------|------|------|
+| id | Long (PK, Auto) | 완료 기록 ID |
+| user_id | Long (FK) | 사용자 ID |
+| mission_id | Long (FK) | 미션 ID |
+| mission_type | MissionType | 미션 타입 (DAILY/RECOMMENDED/SELECTED) |
+| object_key | String | S3 이미지 키 |
+| memo | String | 메모 (200자) |
+| completed_at | LocalDateTime | 완료 시간 |
 
-    %% ===== API (사용자 서비스) =====
+---
 
-    User {
-        bigint id PK
-        varchar device_uuid UK
-        varchar nickname
-        varchar push_token
-        datetime created_at
-        datetime updated_at
-    }
+## 관계도
 
-    Redis_RefreshToken {
-        string key "RT:{userId}:{deviceUuid}"
-        string value "refresh token"
-        long ttl "JWT_REFRESH_EXPIRATION"
-    }
-
-    UserOnboarding {
-        bigint id PK
-        bigint user_id FK "UK"
-        enum space_type
-        enum intensity_type
-        enum enjoy_type_first
-        enum enjoy_type_second
-        enum enjoy_type_third
-        enum user_type "자동계산"
-        datetime created_at
-        datetime updated_at
-    }
-
-    UserMissionCompletion {
-        bigint id PK
-        bigint user_id FK
-        bigint mission_id
-        enum mission_type "DAILY, RECOMMENDED, SELECTED"
-        varchar object_key "S3 object key"
-        varchar memo
-        datetime completed_at
-        datetime created_at
-        datetime updated_at
-    }
-
-    UserRecord {
-        bigint id PK
-        bigint user_id FK
-        bigint solar_term_id
-        date record_date
-        varchar image_url
-        varchar memo
-        datetime created_at
-        datetime updated_at
-    }
-
-    %% ===== 관계 =====
-
-    Mission ||--o{ DailyMission : "배정"
-    SolarTerm ||--o{ DailyMission : "절기별"
-
-    Mission ||--o{ RecommendedMissionPool : "추천"
-    SolarTerm ||--o{ RecommendedMissionPool : "절기별"
-
-    Mission ||--o{ MissionCompletionStats : "통계"
-    SolarTerm ||--o{ MissionCompletionStats : "절기별"
-
-    User ||--|| UserOnboarding : "1:1"
-    User ||--o{ UserMissionCompletion : "완료기록"
-    User ||--o{ UserRecord : "절기기록"
+```
+User (1) ──────── (1) UserOnboarding
+  │
+  │ (1:N)
+  ▼
+UserMissionCompletion (N) ──── (1) Mission
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+                    ▼               ▼               ▼
+              DailyMission   RecommendedMissionPool
+                    │               │
+                    └───────┬───────┘
+                            ▼
+                        SolarTerm
 ```
 
-</details>
-
 ---
 
-## 모듈별 테이블
+## 동기화 구조
 
-### peektime-admin (미션 관리)
-
-| 테이블 | 설명 |
-|--------|------|
-| `Mission` | 미션 풀 (모든 미션의 원본) |
-| `SolarTerm` | 24절기 정보 |
-| `DailyMission` | 오늘의 미션 배정 (절기 + 날짜) |
-| `RecommendedMissionPool` | 추천 미션 배정 (절기 + 사용자타입) |
-| `MissionCompletionStats` | 미션 완료 통계 |
-
-### peektime-api (사용자 서비스)
-
-| 테이블 | 설명 |
-|--------|------|
-| `User` | 사용자 기본 정보 (device_uuid 기반) |
-| `UserOnboarding` | 온보딩 답변 (1:1) |
-| `UserMissionCompletion` | 미션 완료 기록 |
-| `UserRecord` | 제철 기록 탭 자유 기록 |
-
-### Redis
-
-| Key 패턴 | 설명 |
-|----------|------|
-| `RT:{userId}:{deviceUuid}` | Refresh Token (TTL: 30일) |
-
-> `MissionCompletionStats`는 peektime-admin DB에만 존재하며, peektime-api는 admin HTTP API를 호출하여 조회합니다.
-
----
-
-## 테이블 관계
-
-### 강한 결합 (FK)
-- `DailyMission` → `Mission`, `SolarTerm`
-- `RecommendedMissionPool` → `Mission`, `SolarTerm`
-- `UserOnboarding` → `User` (1:1)
-- `UserMissionCompletion` → `User`
-- `UserRecord` → `User`
-
-### Redis (DB 외부)
-- `RT:{userId}:{deviceUuid}` → Refresh Token (DeviceAuth 테이블 제거 후 Redis로 대체)
-
-### 약한 결합 (ID만 저장)
-- `UserMissionCompletion.mission_id` → Mission (모듈 분리)
-- `UserRecord.solar_term_id` → SolarTerm (모듈 분리)
-
-### 모듈 간 API 호출
-- `peektime-api` → `peektime-admin` HTTP API 호출로 `MissionCompletionStats` 조회
-
----
-
-## Enum 타입
-
-### SpaceType (공간)
-| 값 | 설명 |
-|----|------|
-| `INDOOR` | 실내 |
-| `OUTDOOR` | 실외 |
-
-### IntensityType (강도)
-| 값 | 설명 |
-|----|------|
-| `LIGHT` | 가벼운 (5분 이내) |
-| `MODERATE` | 보통 (30분 이내) |
-| `ACTIVE` | 적극적 (1시간+) |
-
-### CategoryType (카테고리)
-| 값 | 설명 |
-|----|------|
-| `FOOD` | 음식 |
-| `NATURE` | 자연 |
-| `RECORD` | 기록 |
-| `PLACE` | 장소 |
-| `SENSE` | 감각 |
-
-### CompanionType (동반)
-| 값 | 설명 |
-|----|------|
-| `SOLO` | 혼자 |
-| `TOGETHER` | 같이 |
-
-### EnjoyType (즐김 방식)
-| 값 | 설명 |
-|----|------|
-| `NATURE_OUTDOOR` | 자연/야외 활동 |
-| `SEASONAL_FOOD` | 제철 음식/요리 |
-| `EMOTIONAL_CONTENT` | 감성 콘텐츠/문화 |
-
-### UserType (사용자 타입)
-| 값 | 공간 | 강도 | 설명 |
-|----|------|------|------|
-| `NATURE_EXPLORER` | 밖 | 적극적 | 자연 탐험가 |
-| `NEIGHBORHOOD_WALKER` | 밖 | 가벼운 | 동네 산책러 |
-| `SEASONAL_GOURMET` | 실내 | 적극적 | 제철 미식가 |
-| `DAILY_OBSERVER` | 실내 | 가벼운 | 일상 관찰자 |
-
-### MissionType (미션 제공 방식)
-| 값 | 설명 |
-|----|------|
-| `DAILY` | 오늘의 미션 |
-| `RECOMMENDED` | 추천 미션 |
-| `SELECTED` | 선택 미션 |
-
----
-
-## 선택 미션 로직
-
-선택 미션은 별도 테이블이 아닌 **쿼리 필터링**으로 처리:
-
-```sql
-SELECT * FROM mission m
-WHERE m.id NOT IN (
-    SELECT dm.mission_id FROM daily_mission dm
-    WHERE dm.solar_term_id = :currentSolarTermId
-)
-AND m.id NOT IN (
-    SELECT rmp.mission_id FROM recommended_mission_pool rmp
-    WHERE rmp.solar_term_id = :currentSolarTermId
-    AND rmp.user_type = :userType
-)
-AND m.space_type = :filterSpace
-AND m.intensity_type = :filterIntensity
--- 추가 필터 조건...
 ```
+[Admin DB]                    [API DB]
+    │                             │
+    │   POST /internal/sync/*    │
+    │ ─────────────────────────► │
+    │                             │
+  Mission ──────────────────► Mission
+  DailyMission ─────────────► DailyMission
+  RecommendedMissionPool ───► RecommendedMissionPool
+  SolarTerm ────────────────► SolarTerm
+```
+
+- Admin에서 생성된 데이터가 API로 동기화
+- ID는 Admin ID를 그대로 사용 (PK에 @GeneratedValue 없음)
+- User, UserOnboarding, UserMissionCompletion은 API에서만 생성

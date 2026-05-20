@@ -1,8 +1,8 @@
 package com.team.peektime_api.domain.home.dto;
 
+import com.team.peektime_api.domain.mission.entity.DailyMission;
+import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.global.common.enums.MissionType;
-import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse.DailyMissionData;
-import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse.SolarTermData;
 
 import java.time.LocalDate;
 
@@ -11,6 +11,13 @@ public record HomeResponse(
         DailyMissionInfo dailyMission
 ) {
 
+    public static HomeResponse from(DailyMission dailyMission) {
+        return new HomeResponse(
+                SolarTermInfo.from(dailyMission.getSolarTerm()),
+                DailyMissionInfo.from(dailyMission)
+        );
+    }
+
     public record SolarTermInfo(
             Long id,
             String name,
@@ -18,13 +25,13 @@ public record HomeResponse(
             LocalDate startDate,
             LocalDate endDate
     ) {
-        public static SolarTermInfo from(SolarTermData data) {
+        public static SolarTermInfo from(SolarTerm solarTerm) {
             return new SolarTermInfo(
-                    data.id(),
-                    data.name(),
-                    data.description(),
-                    data.startDate(),
-                    data.endDate()
+                    solarTerm.getId(),
+                    solarTerm.getName(),
+                    solarTerm.getDescription(),
+                    solarTerm.getStartDate(),
+                    solarTerm.getEndDate()
             );
         }
     }
@@ -32,14 +39,14 @@ public record HomeResponse(
     public record DailyMissionInfo(
             Long id,
             String title,
-            Long participantCount,
+            Integer participantCount,
             MissionType missionType
     ) {
-        public static DailyMissionInfo from(DailyMissionData data, Long participantCount) {
+        public static DailyMissionInfo from(DailyMission dailyMission) {
             return new DailyMissionInfo(
-                    data.id(),
-                    data.title(),
-                    participantCount,
+                    dailyMission.getMission().getId(),
+                    dailyMission.getMission().getTitle(),
+                    dailyMission.getParticipantCount(),
                     MissionType.DAILY
             );
         }

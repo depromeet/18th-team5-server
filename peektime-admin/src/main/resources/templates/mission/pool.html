@@ -256,6 +256,9 @@
                 </p>
             </div>
             <div class="header-actions">
+                <button class="btn btn-secondary" id="syncBtn" onclick="syncMissions()">
+                    🔄 API 동기화
+                </button>
                 <button class="btn btn-primary" onclick="openModal()">
                     + 새 미션 등록
                 </button>
@@ -273,10 +276,10 @@
                     <option th:each="term : ${solarTerms}" th:value="${term.id}" th:text="${term.name}">입춘</option>
                 </select>
                 <select class="form-select" id="aiUserType" style="width: 140px;">
-                    <option value="NATURE_EXPLORER">자연 탐험가</option>
-                    <option value="NEIGHBORHOOD_WALKER">동네 산책러</option>
-                    <option value="SEASONAL_GOURMET">제철 미식가</option>
-                    <option value="DAILY_OBSERVER">일상 관찰자</option>
+                    <option value="EXPLORER">탐험가</option>
+                    <option value="WALKER">산책가</option>
+                    <option value="LIFE_CREATOR">라이프 크리에이터</option>
+                    <option value="AESTHETE">감상가</option>
                 </select>
                 <select class="form-select" id="aiEnjoyType" style="width: 120px;">
                     <option value="NATURE_OUTDOOR">자연/야외</option>
@@ -363,7 +366,7 @@
                                   th:text="${mission.enjoyType.shortLabel}">즐기기</span>
                             <span th:if="${mission.userType != null}"
                                   class="tag"
-                                  th:classappend="${mission.userType.name() == 'NATURE_EXPLORER'} ? 'tag-user-explorer' : (${mission.userType.name() == 'NEIGHBORHOOD_WALKER'} ? 'tag-user-walker' : (${mission.userType.name() == 'SEASONAL_GOURMET'} ? 'tag-user-gourmet' : 'tag-user-observer'))"
+                                  th:classappend="${mission.userType.name() == 'EXPLORER'} ? 'tag-user-explorer' : (${mission.userType.name() == 'WALKER'} ? 'tag-user-walker' : (${mission.userType.name() == 'LIFE_CREATOR'} ? 'tag-user-gourmet' : 'tag-user-observer'))"
                                   th:text="${mission.userType.label}">사용자</span>
                             <span th:if="${mission.enjoyType == null && mission.userType == null}" class="text-gray text-sm">-</span>
                         </td>
@@ -541,10 +544,10 @@
                                 <label class="form-label">사용자 타입</label>
                                 <select id="userType" name="userType" class="form-select">
                                     <option value="">선택 안함</option>
-                                    <option value="NATURE_EXPLORER">자연 탐험가</option>
-                                    <option value="NEIGHBORHOOD_WALKER">동네 산책러</option>
-                                    <option value="SEASONAL_GOURMET">제철 미식가</option>
-                                    <option value="DAILY_OBSERVER">일상 관찰자</option>
+                                    <option value="EXPLORER">탐험가</option>
+                                    <option value="WALKER">산책가</option>
+                                    <option value="LIFE_CREATOR">라이프 크리에이터</option>
+                                    <option value="AESTHETE">감상가</option>
                                 </select>
                             </div>
                         </div>
@@ -843,6 +846,37 @@
                 } finally {
                     generateBtn.disabled = false;
                     generateBtn.textContent = '미션 생성';
+                }
+            }
+
+            // API 동기화
+            async function syncMissions() {
+                const syncBtn = document.getElementById('syncBtn');
+
+                if (!confirm('전체 미션을 API 서버에 동기화하시겠습니까?')) {
+                    return;
+                }
+
+                syncBtn.disabled = true;
+                syncBtn.textContent = '동기화 중...';
+
+                try {
+                    const response = await fetch('/api/admin/sync/missions', {
+                        method: 'POST'
+                    });
+
+                    if (response.ok) {
+                        alert('미션 동기화가 완료되었습니다.');
+                    } else {
+                        const error = await response.json();
+                        alert(error.message || '동기화 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('동기화 중 오류가 발생했습니다.');
+                } finally {
+                    syncBtn.disabled = false;
+                    syncBtn.textContent = '🔄 API 동기화';
                 }
             }
 

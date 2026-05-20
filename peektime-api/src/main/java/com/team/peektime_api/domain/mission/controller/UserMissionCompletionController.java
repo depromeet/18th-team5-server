@@ -24,15 +24,15 @@ public class UserMissionCompletionController {
 
     private final UserMissionCompletionService userMissionCompletionService;
 
-    @Operation(summary = "미션 완료 기록", description = "S3 업로드 완료 후 미션 완료를 기록합니다. 동일 미션 중복 완료 시 409 반환.")
-    @PostMapping("/{missionId}/complete")
-    public SuccessResponse<UserMissionCompletionResponse> completeMission(
+    @Operation(summary = "오늘의 미션 완료 기록", description = "S3 업로드 완료 후 오늘의 미션 완료를 기록합니다. 동일 미션 중복 완료 시 409 반환.")
+    @PostMapping("/{missionId}/complete/daily")
+    public SuccessResponse<UserMissionCompletionResponse> completeDailyMission(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long missionId,
             @RequestBody @Valid UserMissionCompletionRequest request
     ) {
         return SuccessResponse.of(SuccessCode.MISSION_COMPLETED,
-                userMissionCompletionService.completeMission(principal.getUserId(), missionId, request));
+                userMissionCompletionService.completeDailyMission(principal.getUserId(), missionId, request));
     }
 
 

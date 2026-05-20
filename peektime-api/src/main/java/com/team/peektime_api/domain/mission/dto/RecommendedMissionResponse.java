@@ -1,8 +1,8 @@
 package com.team.peektime_api.domain.mission.dto;
 
+import com.team.peektime_api.domain.mission.entity.RecommendedMissionPool;
 import com.team.peektime_api.global.common.enums.CategoryType;
 import com.team.peektime_api.global.common.enums.EnjoyType;
-import com.team.peektime_api.global.infra.admin.dto.AdminRecommendedMissionResponse;
 
 import java.util.List;
 
@@ -14,7 +14,14 @@ public record RecommendedMissionResponse(
     public record HeaderInfo(
             String title,
             String subtitle
-    ) {}
+    ) {
+        public static HeaderInfo of(String userTypeLabel, String solarTermName) {
+            return new HeaderInfo(
+                    userTypeLabel + " " + solarTermName + " 미션",
+                    solarTermName + "에 어떤 기록을 남겨볼까요?"
+            );
+        }
+    }
 
     public record MissionItem(
             Long id,
@@ -22,16 +29,15 @@ public record RecommendedMissionResponse(
             CategoryType categoryType,
             EnjoyType enjoyType,
             int order
-    ) {}
-
-    public static RecommendedMissionResponse from(AdminRecommendedMissionResponse adminResponse) {
-        HeaderInfo header = new HeaderInfo(
-                adminResponse.header().title(),
-                adminResponse.header().subtitle()
-        );
-        List<MissionItem> missions = adminResponse.missions().stream()
-                .map(m -> new MissionItem(m.id(), m.title(), m.categoryType(), m.enjoyType(), m.order()))
-                .toList();
-        return new RecommendedMissionResponse(header, missions);
+    ) {
+        public static MissionItem from(RecommendedMissionPool pool, int order) {
+            return new MissionItem(
+                    pool.getMission().getId(),
+                    pool.getMission().getTitle(),
+                    pool.getMission().getCategoryType(),
+                    pool.getMission().getEnjoyType(),
+                    order
+            );
+        }
     }
 }

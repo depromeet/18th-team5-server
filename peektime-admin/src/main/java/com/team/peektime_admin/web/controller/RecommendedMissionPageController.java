@@ -28,7 +28,7 @@ public class RecommendedMissionPageController {
     @GetMapping
     public String recommendedMission(
             @RequestParam(required = false) Long solarTermId,
-            @RequestParam(required = false, defaultValue = "NATURE_EXPLORER") String userType,
+            @RequestParam(required = false, defaultValue = "EXPLORER") String userType,
             Model model
     ) {
         List<SolarTerm> solarTerms = solarTermRepository.findAll();

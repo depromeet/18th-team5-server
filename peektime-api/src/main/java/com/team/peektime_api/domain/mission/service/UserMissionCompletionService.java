@@ -49,32 +49,52 @@ public class UserMissionCompletionService {
         User user = findUser(userId);
         LocalDate today = LocalDate.now();
 
-
-        // 오늘의 미션
-        DailyMission dailyMission = dailyMissionRepository
-                .findByMission_IdAndMissionDate(missionId, today)
-                .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_NOT_FOUND));
+        DailyMission dailyMission = getDailyMission(missionId, today);
 
         Mission mission = dailyMission.getMission();
 
-        // 같은 미션 못하게
-        if (userMissionCompletionRepository.existsByUser_IdAndMission_Id(user.getId(), missionId)) {
-            throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
-        }
+        validateSameMission(missionId, user);
 
-        // 미션 수행 저장
-        UserMissionCompletion completion = userMissionCompletionRepository.save(
-                UserMissionCompletion.of(user, mission, request)
-        );
+        UserMissionCompletion completion = saveMissionCompletion(request, user, mission);
+        
+        updateRecentRecordsCache(userId, completion);
+
+        dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
 
         MissionLogPayload payload = createMissionLogPayload(missionId, request, user, completion);
         OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
         eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
-
-        updateRecentRecordsCache(userId, completion);
-        dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
-
+        
         return UserMissionCompletionResponse.from(completion);
+    }
+
+    private void validateSameMission(Long missionId, User user) {
+        if (userMissionCompletionRepository.existsByUser_IdAndMission_Id(user.getId(), missionId)) {
+            throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
+        }
+    }
+
+    private DailyMission getDailyMission(Long missionId, LocalDate today) {
+        DailyMission dailyMission = dailyMissionRepository
+                .findByMission_IdAndMissionDate(missionId, today)
+                .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_NOT_FOUND));
+        return dailyMission;
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserMissionCompletionDetailResponse> getMissionCompletions(Long userId, Long missionId) {
+        return userMissionCompletionRepository.findByUser_IdAndMission_Id(userId, missionId)
+                .stream()
+                .map(this::toDetailResponse)
+                .toList();
+    }
+
+    private UserMissionCompletion saveMissionCompletion(UserMissionCompletionRequest request, User user, Mission mission) {
+        UserMissionCompletion completion = userMissionCompletionRepository.save(
+                UserMissionCompletion.create(user, mission, request.missionType(),
+                        request.objectKey(), request.memo())
+        );
+        return completion;
     }
 
     private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {
@@ -109,14 +129,6 @@ public class UserMissionCompletionService {
     }
 
 
-
-    @Transactional(readOnly = true)
-    public List<UserMissionCompletionDetailResponse> getMissionCompletions(Long userId, Long missionId) {
-        return userMissionCompletionRepository.findByUser_IdAndMission_Id(userId, missionId)
-                .stream()
-                .map(this::toDetailResponse)
-                .toList();
-    }
 
     /* 완성된 미션 세부사항 조회 */
     private UserMissionCompletionDetailResponse toDetailResponse(UserMissionCompletion completion) {

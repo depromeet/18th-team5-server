@@ -1,6 +1,5 @@
 package com.team.peektime_api.domain.mission.entity;
 
-import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.global.common.BaseEntity;
 import com.team.peektime_api.global.common.enums.MissionType;
@@ -53,18 +52,15 @@ public class UserMissionCompletion extends BaseEntity {
         this.completedAt = completedAt != null ? completedAt : LocalDateTime.now();
     }
 
-    public static UserMissionCompletion of(User user, Mission mission, UserMissionCompletionRequest request) {
-        LocalDateTime completedAt = request.completedAt() != null
-                ? request.completedAt().toLocalDateTime()
-                : LocalDateTime.now();
-
+    public static UserMissionCompletion create(User user, Mission mission, MissionType missionType,
+                                                String objectKey, String memo) {
         return UserMissionCompletion.builder()
                 .user(user)
                 .mission(mission)
-                .missionType(request.missionType())
-                .objectKey(request.objectKey())
-                .memo(request.memo())
-                .completedAt(completedAt)
+                .missionType(missionType)
+                .objectKey(objectKey)
+                .memo(memo)
+                .completedAt(LocalDateTime.now())
                 .build();
     }
 }

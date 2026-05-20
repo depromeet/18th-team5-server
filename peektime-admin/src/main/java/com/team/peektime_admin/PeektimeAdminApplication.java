@@ -8,6 +8,8 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class PeektimeAdminApplication {
 
+
+
 	public static void main(String[] args) {
 		SpringApplication.run(PeektimeAdminApplication.class, args);
 	}

@@ -4,6 +4,9 @@
 spring:
   application:
     name: peektime-admin
+  sql:
+    init:
+      mode: always
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
@@ -24,6 +27,9 @@ spring:
 
 server:
   port: ${SERVER_PORT:8081}
+
+api:
+  base-url: http://13.124.36.181:8080
 
 admin:
   username: ${ADMIN_USERNAME}

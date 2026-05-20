@@ -204,6 +204,9 @@
                 <p class="page-description">각 사용자 타입별로 15개의 추천 미션을 관리하세요 (즐기기 타입별 5개씩)</p>
             </div>
             <div class="header-controls">
+                <button class="btn btn-secondary" id="syncBtn" th:onclick="'syncRecommendedMissions(' + ${selectedSolarTermId} + ')'">
+                    🔄 API 동기화
+                </button>
                 <select class="form-select" id="yearSelect" style="width: 100px;">
                     <option th:each="year : ${years}" th:value="${year}" th:text="${year}" th:selected="${year == selectedYear}">2026</option>
                 </select>
@@ -230,27 +233,27 @@
                 <strong th:text="${totalCount} + '개'">0개</strong>
             </div>
             <div class="stat-chip" th:each="stat : ${userTypeStats}">
-                <span th:text="${stat.key.label}">자연 탐험가</span>
+                <span th:text="${stat.key.label}">제철을 쫓는 탐험가</span>
                 <strong th:text="${stat.value} + '개'">0개</strong>
             </div>
         </div>
 
         <!-- 사용자 타입 탭 -->
         <div class="user-type-tabs">
-            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='NATURE_EXPLORER')}"
-               class="type-tab" th:classappend="${selectedUserType == 'NATURE_EXPLORER'} ? 'active'">
+            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='EXPLORER')}"
+               class="type-tab" th:classappend="${selectedUserType == 'EXPLORER'} ? 'active'">
                 🏔️ 자연 탐험가
             </a>
-            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='NEIGHBORHOOD_WALKER')}"
-               class="type-tab" th:classappend="${selectedUserType == 'NEIGHBORHOOD_WALKER'} ? 'active'">
+            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='WALKER')}"
+               class="type-tab" th:classappend="${selectedUserType == 'WALKER'} ? 'active'">
                 🚶 동네 산책러
             </a>
-            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='SEASONAL_GOURMET')}"
-               class="type-tab" th:classappend="${selectedUserType == 'SEASONAL_GOURMET'} ? 'active'">
+            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='LIFE_CREATOR')}"
+               class="type-tab" th:classappend="${selectedUserType == 'LIFE_CREATOR'} ? 'active'">
                 🍽️ 제철 미식가
             </a>
-            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='DAILY_OBSERVER')}"
-               class="type-tab" th:classappend="${selectedUserType == 'DAILY_OBSERVER'} ? 'active'">
+            <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='AESTHETE')}"
+               class="type-tab" th:classappend="${selectedUserType == 'AESTHETE'} ? 'active'">
                 👀 일상 관찰자
             </a>
         </div>
@@ -342,6 +345,41 @@
 
     <th:block layout:fragment="scripts">
         <script th:inline="javascript">
+            async function syncRecommendedMissions(solarTermId) {
+                const syncBtn = document.getElementById('syncBtn');
+
+                if (!solarTermId) {
+                    alert('절기를 선택해주세요.');
+                    return;
+                }
+
+                if (!confirm('추천 미션을 API 서버에 동기화하시겠습니까?')) {
+                    return;
+                }
+
+                syncBtn.disabled = true;
+                syncBtn.textContent = '동기화 중...';
+
+                try {
+                    const response = await fetch('/api/admin/sync/recommended-missions/' + solarTermId, {
+                        method: 'POST'
+                    });
+
+                    if (response.ok) {
+                        alert('추천 미션 동기화가 완료되었습니다.');
+                    } else {
+                        const error = await response.json();
+                        alert(error.message || '동기화 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('동기화 중 오류가 발생했습니다.');
+                } finally {
+                    syncBtn.disabled = false;
+                    syncBtn.textContent = '🔄 API 동기화';
+                }
+            }
+
             function changeSolarTerm(solarTermId) {
                 const userType = [[${selectedUserType}]];
                 location.href = '/admin/recommended-missions?solarTermId=' + solarTermId + '&userType=' + userType;

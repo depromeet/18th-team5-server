@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface RecommendedMissionPoolRepository extends JpaRepository<RecommendedMissionPool, Long> {
 
+    List<RecommendedMissionPool> findBySolarTermId(Long solarTermId);
+
     long countBySolarTermId(Long solarTermId);
 
     long countBySolarTermIdAndUserType(Long solarTermId, UserType userType);

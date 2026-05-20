@@ -244,6 +244,9 @@
                 <p class="page-description">절기를 선택하고 미션을 날짜로 드래그하여 배정하세요.</p>
             </div>
             <div class="header-controls">
+                <button class="btn btn-secondary" id="syncBtn" th:onclick="'syncDailyMissions(' + ${selectedSolarTermId} + ')'">
+                    🔄 API 동기화
+                </button>
                 <select class="form-select" id="yearSelect" style="width: 100px;">
                     <option th:each="year : ${years}" th:value="${year}" th:text="${year}" th:selected="${year == selectedYear}">2026</option>
                 </select>
@@ -334,6 +337,41 @@
     <th:block layout:fragment="scripts">
         <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
         <script th:inline="javascript">
+            async function syncDailyMissions(solarTermId) {
+                const syncBtn = document.getElementById('syncBtn');
+
+                if (!solarTermId) {
+                    alert('절기를 선택해주세요.');
+                    return;
+                }
+
+                if (!confirm('오늘의 미션을 API 서버에 동기화하시겠습니까?')) {
+                    return;
+                }
+
+                syncBtn.disabled = true;
+                syncBtn.textContent = '동기화 중...';
+
+                try {
+                    const response = await fetch('/api/admin/sync/daily-missions/' + solarTermId, {
+                        method: 'POST'
+                    });
+
+                    if (response.ok) {
+                        alert('오늘의 미션 동기화가 완료되었습니다.');
+                    } else {
+                        const error = await response.json();
+                        alert(error.message || '동기화 중 오류가 발생했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('동기화 중 오류가 발생했습니다.');
+                } finally {
+                    syncBtn.disabled = false;
+                    syncBtn.textContent = '🔄 API 동기화';
+                }
+            }
+
             function removeFromDaily(dailyMissionId) {
                 if (confirm('미션풀로 되돌리시겠습니까?')) {
                     fetch('/api/admin/daily-missions/' + dailyMissionId, {

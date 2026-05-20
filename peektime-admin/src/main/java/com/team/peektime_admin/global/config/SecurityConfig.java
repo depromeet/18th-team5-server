@@ -27,10 +27,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> {})
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/login", "/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                .requestMatchers("/api/**").permitAll()
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

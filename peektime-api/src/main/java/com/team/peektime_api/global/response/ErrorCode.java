@@ -17,11 +17,16 @@ public enum ErrorCode {
     // 사용자
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404", "사용자를 찾을 수 없습니다"),
     USER_ALREADY_EXISTS(HttpStatus.CONFLICT, "USER_409", "이미 존재하는 사용자입니다"),
+    ONBOARDING_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_ONBOARD", "온보딩 정보를 찾을 수 없습니다"),
 
     // 미션
     MISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "MISSION_404", "미션을 찾을 수 없습니다"),
     MISSION_ALREADY_COMPLETED(HttpStatus.CONFLICT, "MISSION_409", "이미 완료한 미션입니다"),
     MISSION_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "MISSION_400", "선택할 수 없는 미션입니다"),
+    DAILY_MISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "MISSION_404_DAILY", "오늘의 미션을 찾을 수 없습니다"),
+
+    // 절기
+    SOLAR_TERM_NOT_FOUND(HttpStatus.NOT_FOUND, "SOLAR_TERM_404", "절기를 찾을 수 없습니다"),
 
     // 기록
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "RECORD_404", "기록을 찾을 수 없습니다"),

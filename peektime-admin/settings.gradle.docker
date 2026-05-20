@@ -1,0 +1,4 @@
+// Docker 빌드 전용 settings.gradle
+// peektime-admin 모듈만 포함 (peektime-api 제외)
+rootProject.name = 'peektime'
+include 'peektime-admin'

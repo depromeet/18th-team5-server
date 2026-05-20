@@ -2,6 +2,8 @@ package com.team.peektime_api.domain.home.service;
 
 import com.team.peektime_api.domain.home.dto.HomeResponse;
 import com.team.peektime_api.domain.mission.repository.DailyMissionRepository;
+import com.team.peektime_api.global.exception.BusinessException;
+import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,6 @@ public class HomeCardService {
 
         return dailyMissionRepository.findByMissionDateWithDetails(today)
                 .map(HomeResponse::from)
-                .orElse(new HomeResponse(null, null));
+                .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_NOT_FOUND));
     }
 }

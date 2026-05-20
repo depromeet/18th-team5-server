@@ -48,14 +48,18 @@ public class UserMissionCompletionService {
         User user = findUser(userId);
         LocalDate today = LocalDate.now();
 
+
+        // 오늘의 미션
         DailyMission dailyMission = dailyMissionRepository
                 .findByMissionIdAndMissionDate(missionId, today)
                 .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_NOT_FOUND));
 
+        // 같은 미션 못하게
         if (userMissionCompletionRepository.existsByUser_IdAndMissionId(user.getId(), missionId)) {
             throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
         }
 
+        // 미션 수행 저장
         UserMissionCompletion completion = userMissionCompletionRepository.save(
                 UserMissionCompletion.of(user, missionId, request)
         );

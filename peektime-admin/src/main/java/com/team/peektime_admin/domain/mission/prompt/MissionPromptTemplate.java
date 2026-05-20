@@ -41,10 +41,10 @@ public class MissionPromptTemplate {
             - CULTURE_CONTENT: 감성적인 콘텐츠나 문화 활동
 
             ### 6. 추천 사용자 타입 (userType)
-            - NATURE_EXPLORER: 밖에서 적극적으로 활동하는 자연 탐험가
-            - NEIGHBORHOOD_WALKER: 밖에서 가볍게 활동하는 동네 산책러
-            - SEASONAL_GOURMET: 실내에서 적극적으로 활동하는 제철 미식가
-            - DAILY_OBSERVER: 실내에서 가볍게 활동하는 일상 관찰자
+            - EXPLORER: 밖에서 적극적으로 활동하는 제철을 쫓는 탐험가
+            - WALKER: 밖에서 가볍게 활동하는 일상 속 제철 산책가
+            - LIFE_CREATOR: 실내에서 적극적으로 활동하는 제철을 채우는 라이프 크리에이터
+            - AESTHETE: 실내에서 가볍게 활동하는 제철을 음미하는 감상가
             """;
 
     private static final String OUTPUT_FORMAT = """
@@ -62,7 +62,7 @@ public class MissionPromptTemplate {
                   "companionType": "SOLO 또는 TOGETHER",
                   "categoryType": "FOOD, NATURE, RECORD, PLACE, SENSE 중 하나",
                   "enjoyType": "NATURE_OUTDOOR, SEASONAL_FOOD, CULTURE_CONTENT 중 하나",
-                  "userType": "NATURE_EXPLORER, NEIGHBORHOOD_WALKER, SEASONAL_GOURMET, DAILY_OBSERVER 중 하나"
+                  "userType": "EXPLORER, WALKER, LIFE_CREATOR, AESTHETE 중 하나"
                 }
               ]
             }

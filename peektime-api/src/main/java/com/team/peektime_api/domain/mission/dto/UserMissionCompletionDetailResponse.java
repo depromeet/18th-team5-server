@@ -18,7 +18,7 @@ public record UserMissionCompletionDetailResponse(
     public static UserMissionCompletionDetailResponse of(UserMissionCompletion completion, String presignedImageUrl) {
         return new UserMissionCompletionDetailResponse(
                 completion.getId(),
-                completion.getMissionId(),
+                completion.getMission().getId(),
                 completion.getMissionType(),
                 completion.getObjectKey(),
                 presignedImageUrl,

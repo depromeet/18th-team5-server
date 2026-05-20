@@ -1,10 +1,9 @@
 package com.team.peektime_api.domain.mission.dto;
 
 import com.team.peektime_api.global.common.enums.MissionType;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-
-import java.time.OffsetDateTime;
 
 public record UserMissionCompletionRequest(
 
@@ -14,11 +13,10 @@ public record UserMissionCompletionRequest(
         @NotNull
         Long solarTermId,
 
+        @NotBlank(message = "사진은 필수입니다")
         @Size(max = 500)
         String objectKey,
 
         @Size(max = 200)
-        String memo,
-
-        OffsetDateTime completedAt
+        String memo
 ) {}

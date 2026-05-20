@@ -6,7 +6,10 @@ import com.team.peektime_api.domain.home.dto.RecentRecordCache;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
+import com.team.peektime_api.domain.mission.entity.DailyMission;
+import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
+import com.team.peektime_api.domain.mission.repository.DailyMissionRepository;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
@@ -24,7 +27,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Slf4j
@@ -33,6 +36,7 @@ import java.util.List;
 public class UserMissionCompletionService {
 
     private final UserMissionCompletionRepository userMissionCompletionRepository;
+    private final DailyMissionRepository dailyMissionRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final OutboxRepository outboxRepository;
@@ -41,25 +45,56 @@ public class UserMissionCompletionService {
     private final RecentRecordsCacheRepository recentRecordsCacheRepository;
 
     @Transactional
-    public UserMissionCompletionResponse completeMission(Long userId, Long missionId, UserMissionCompletionRequest request) {
+    public UserMissionCompletionResponse completeDailyMission(Long userId, Long missionId, UserMissionCompletionRequest request) {
         User user = findUser(userId);
+        LocalDate today = LocalDate.now();
 
-        if (userMissionCompletionRepository.existsByUser_IdAndMissionId(user.getId(), missionId)) {
-            throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
-        }
+        DailyMission dailyMission = getDailyMission(missionId, today);
 
-        UserMissionCompletion completion = userMissionCompletionRepository.save(
-                UserMissionCompletion.of(user, missionId, request)
-        );
+        Mission mission = dailyMission.getMission();
 
-        MissionLogPayload payload = createMissionLogPayload(missionId, request, user, completion);
+        validateSameMission(missionId, user);
 
-        OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
-        eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
-
+        UserMissionCompletion completion = saveMissionCompletion(request, user, mission);
+        
         updateRecentRecordsCache(userId, completion);
 
+        dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
+
+        MissionLogPayload payload = createMissionLogPayload(missionId, request, user, completion);
+        OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
+        eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
+        
         return UserMissionCompletionResponse.from(completion);
+    }
+
+    private void validateSameMission(Long missionId, User user) {
+        if (userMissionCompletionRepository.existsByUser_IdAndMission_Id(user.getId(), missionId)) {
+            throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
+        }
+    }
+
+    private DailyMission getDailyMission(Long missionId, LocalDate today) {
+        DailyMission dailyMission = dailyMissionRepository
+                .findByMission_IdAndMissionDate(missionId, today)
+                .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_NOT_FOUND));
+        return dailyMission;
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserMissionCompletionDetailResponse> getMissionCompletions(Long userId, Long missionId) {
+        return userMissionCompletionRepository.findByUser_IdAndMission_Id(userId, missionId)
+                .stream()
+                .map(this::toDetailResponse)
+                .toList();
+    }
+
+    private UserMissionCompletion saveMissionCompletion(UserMissionCompletionRequest request, User user, Mission mission) {
+        UserMissionCompletion completion = userMissionCompletionRepository.save(
+                UserMissionCompletion.create(user, mission, request.missionType(),
+                        request.objectKey(), request.memo())
+        );
+        return completion;
     }
 
     private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {
@@ -94,14 +129,6 @@ public class UserMissionCompletionService {
     }
 
 
-
-    @Transactional(readOnly = true)
-    public List<UserMissionCompletionDetailResponse> getMissionCompletions(Long userId, Long missionId) {
-        return userMissionCompletionRepository.findByUser_IdAndMissionId(userId, missionId)
-                .stream()
-                .map(this::toDetailResponse)
-                .toList();
-    }
 
     /* 완성된 미션 세부사항 조회 */
     private UserMissionCompletionDetailResponse toDetailResponse(UserMissionCompletion completion) {

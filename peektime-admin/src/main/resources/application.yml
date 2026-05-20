@@ -1,9 +1,14 @@
 spring:
+  application:
+    name: peektime-admin
   sql:
     init:
       mode: never
   thymeleaf:
-    cache: true         # prod에서는 캐시 켜기
+    prefix: classpath:/templates/
+    suffix: .html
+    cache: true
+    encoding: UTF-8
   datasource:
     url: ${DATASOURCE_URL}
     driver-class-name: com.mysql.cj.jdbc.Driver

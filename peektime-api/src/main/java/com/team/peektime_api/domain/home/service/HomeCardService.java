@@ -6,6 +6,7 @@ import com.team.peektime_api.domain.home.dto.HomeResponse.SolarTermInfo;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
 import com.team.peektime_api.global.infra.admin.AdminClient;
 import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse;
+import com.team.peektime_api.global.infra.admin.dto.AdminHomeResponse.DailyMissionData;
 import com.team.peektime_api.global.infra.cache.DailyMissionCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class HomeCardService {
         return new HomeResponse(solarTermInfo, dailyMissionInfo);
     }
 
-    private DailyMissionInfo createDailyMissionInfo(AdminHomeResponse.DailyMissionData data) {
+    private DailyMissionInfo createDailyMissionInfo(DailyMissionData data) {
         long participantCount = userMissionCompletionRepository.countByMissionId(data.id());
         return DailyMissionInfo.from(data, participantCount);
     }
@@ -48,10 +49,12 @@ public class HomeCardService {
         LocalDate today = LocalDate.now();
 
         return cacheService.get(today)
-                .orElseGet(() -> { // fallBack : 안정 장치 용으로 Admin 쪽으로 API call();
+                .orElseGet(() -> {
                     log.info("캐시 미스 - Admin API 호출: {}", today);
                     AdminHomeResponse data = adminClient.getHomeData(today);
-                    cacheService.save(today, data);
+                    if (data.dailyMission() != null) {
+                        cacheService.save(today, data);
+                    }
                     return data;
                 });
     }

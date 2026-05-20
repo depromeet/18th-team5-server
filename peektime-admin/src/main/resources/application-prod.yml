@@ -6,7 +6,7 @@ spring:
     name: peektime-admin
   sql:
     init:
-      mode: never
+      mode: always
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
@@ -18,7 +18,7 @@ spring:
     password: ${DATASOURCE_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: false
     defer-datasource-initialization: true
 

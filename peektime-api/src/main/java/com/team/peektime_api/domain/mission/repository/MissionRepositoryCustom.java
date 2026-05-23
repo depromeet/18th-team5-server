@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface MissionRepositoryCustom {
 
-    List<Mission> findSelectedMissions(Long solarTermId, UserType userType, SelectedMissionRequest filter);
+    List<Mission> findSelectedMissions(Long userId, Long solarTermId, UserType userType, SelectedMissionRequest filter);
 }

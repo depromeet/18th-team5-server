@@ -16,6 +16,7 @@ import java.util.List;
 import static com.team.peektime_api.domain.mission.entity.QDailyMission.dailyMission;
 import static com.team.peektime_api.domain.mission.entity.QMission.mission;
 import static com.team.peektime_api.domain.mission.entity.QRecommendedMissionPool.recommendedMissionPool;
+import static com.team.peektime_api.domain.mission.entity.QUserSelectedMission.userSelectedMission;
 
 @RequiredArgsConstructor
 public class MissionRepositoryImpl implements MissionRepositoryCustom {
@@ -23,13 +24,14 @@ public class MissionRepositoryImpl implements MissionRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Mission> findSelectedMissions(Long solarTermId, UserType userType, SelectedMissionRequest filter) {
+    public List<Mission> findSelectedMissions(Long userId, Long solarTermId, UserType userType, SelectedMissionRequest filter) {
         return queryFactory
                 .selectFrom(mission)
                 .where(
                         mission.deleted.isFalse(),
                         notInDailyMissions(solarTermId),
                         notInRecommendedMissions(solarTermId, userType),
+                        notInUserSelectedMissions(userId, solarTermId),
                         eqSpaceType(filter.getSpaceType()),
                         eqIntensityType(filter.getIntensityType()),
                         eqCompanionType(filter.getCompanionType()),
@@ -55,6 +57,18 @@ public class MissionRepositoryImpl implements MissionRepositoryCustom {
                         .where(
                                 recommendedMissionPool.solarTerm.id.eq(solarTermId),
                                 recommendedMissionPool.userType.eq(userType)
+                        )
+        );
+    }
+
+    private BooleanExpression notInUserSelectedMissions(Long userId, Long solarTermId) {
+        return mission.id.notIn(
+                queryFactory
+                        .select(userSelectedMission.mission.id)
+                        .from(userSelectedMission)
+                        .where(
+                                userSelectedMission.user.id.eq(userId),
+                                userSelectedMission.solarTerm.id.eq(solarTermId)
                         )
         );
     }

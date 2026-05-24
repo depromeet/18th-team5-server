@@ -44,4 +44,15 @@ public class OutboxTransactionManager {
             log.warn("[V2] Outbox 재시도 대기: {}건", toRetry.size());
         }
     }
+
+    @Transactional
+    public int recoverStuckProcessing(LocalDateTime threshold) {
+        List<OutboxEvent> stuckEvents = outboxRepository.findStuckProcessing(threshold);
+
+        for (OutboxEvent event : stuckEvents) {
+            event.markReady();
+        }
+
+        return stuckEvents.size();
+    }
 }

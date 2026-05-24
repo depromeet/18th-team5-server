@@ -25,4 +25,8 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, Long> {
     @Query(value = "SELECT * FROM outbox_event WHERE status = 'READY' AND created_at < :threshold ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 5",
             nativeQuery = true)
     List<OutboxEvent> findReadyEventsWithSkipLocked(@Param("threshold") LocalDateTime threshold);
+
+    // stuck PROCESSING 조회 (updatedAt이 threshold 이전인 PROCESSING 상태)
+    @Query("SELECT o FROM OutboxEvent o WHERE o.status = com.team.peektime_api.global.outbox.entity.OutboxStatus.PROCESSING AND o.updatedAt < :threshold")
+    List<OutboxEvent> findStuckProcessing(@Param("threshold") LocalDateTime threshold);
 }

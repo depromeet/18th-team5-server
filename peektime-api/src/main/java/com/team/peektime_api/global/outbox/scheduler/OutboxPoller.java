@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.peektime_api.global.infra.admin.AdminClient;
 import com.team.peektime_api.global.outbox.SendResult;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
+import com.team.peektime_api.global.outbox.SendResult.AlreadyProcessed;
+import com.team.peektime_api.global.outbox.SendResult.Success;
+import com.team.peektime_api.global.outbox.SendResult.Unknown;
 import com.team.peektime_api.global.outbox.entity.OutboxEvent;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,31 +41,50 @@ public class OutboxPoller {
 
         log.info("Outbox 폴링: {}건 처리 시작", events.size());
 
+        ProcessingResult result = processAllEvents(events);
+
+
+        deleteProcessedEvents(result.toDelete());
+        logUnknownEvents(result.unknownCount());
+    }
+
+
+
+
+    private ProcessingResult processAllEvents(List<OutboxEvent> events) {
         List<Long> toDelete = new ArrayList<>();
         int unknownCount = 0;
 
         for (OutboxEvent event : events) {
             SendResult result = processEvent(event);
 
-            switch (result) {
-                case SendResult.Success s -> toDelete.add(s.eventId());
-                case SendResult.AlreadyProcessed a -> toDelete.add(a.eventId());
-                case SendResult.Unknown u -> {
-                    unknownCount++;
-                    log.warn("Outbox 결과 알 수 없음: id={}, reason={}", u.eventId(), u.reason());
-                }
+            if (result instanceof Success s) {
+                toDelete.add(s.eventId());
+            } else if (result instanceof AlreadyProcessed a) {
+                toDelete.add(a.eventId());
+            } else if (result instanceof Unknown u) {
+                unknownCount++;
+                log.warn("Outbox 결과 알 수 없음: id={}, reason={}", u.eventId(), u.reason());
             }
         }
 
-        if (!toDelete.isEmpty()) {
-            outboxRepository.deleteAllByIdInBatch(toDelete);
-            log.info("Outbox 삭제 완료: {}건", toDelete.size());
-        }
+        return new ProcessingResult(toDelete, unknownCount);
+    }
 
-        if (unknownCount > 0) {
-            log.warn("Outbox 재시도 대기: {}건", unknownCount);
+    private void deleteProcessedEvents(List<Long> ids) {
+        if (!ids.isEmpty()) {
+            outboxRepository.deleteAllByIdInBatch(ids);
+            log.info("Outbox 삭제 완료: {}건", ids.size());
         }
     }
+
+    private void logUnknownEvents(int count) {
+        if (count > 0) {
+            log.warn("Outbox 재시도 대기: {}건", count);
+        }
+    }
+
+    private record ProcessingResult(List<Long> toDelete, int unknownCount) {}
 
     private SendResult processEvent(OutboxEvent event) {
         try {
@@ -72,7 +94,7 @@ public class OutboxPoller {
             return adminClient.sendMissionLogWithResult(payload, event.getId());
 
         } catch (Exception e) {
-            return new SendResult.Unknown(event.getId(), e.getMessage());
+            return new Unknown(event.getId(), e.getMessage());
         }
     }
 

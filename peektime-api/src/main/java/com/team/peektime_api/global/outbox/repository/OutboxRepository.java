@@ -17,7 +17,7 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, Long> {
             nativeQuery = false)
     List<OutboxEvent> findByCreatedAtBeforeForUpdate(@Param("threshold") LocalDateTime threshold);
 
-    @Query(value = "SELECT * FROM outbox_event WHERE created_at < :threshold ORDER BY created_at FOR UPDATE SKIP LOCKED",
+    @Query(value = "SELECT * FROM outbox_event WHERE created_at < :threshold ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 5",
             nativeQuery = true)
     List<OutboxEvent> findByCreatedAtBeforeWithSkipLocked(@Param("threshold") LocalDateTime threshold);
 }

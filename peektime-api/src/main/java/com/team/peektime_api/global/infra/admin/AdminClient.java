@@ -5,7 +5,6 @@ import com.team.peektime_api.global.outbox.SendResult;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -46,13 +45,10 @@ public class AdminClient {
             return new SendResult.Success(eventId);
 
         } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() == HttpStatus.CONFLICT) {
-                log.info("미션 로그 이미 처리됨: missionId={}", payload.missionId());
-                return new SendResult.AlreadyProcessed(eventId);
-            }
-            log.error("미션 로그 전송 실패: {}", e.getMessage());
-            return new SendResult.Unknown(eventId, e.getMessage());
-
+            // 4xx 에러는 재시도해도 결과가 바뀌지 않음 (클라이언트 요청 문제)
+            log.warn("미션 로그 클라이언트 에러: missionId={}, status={}",
+                    payload.missionId(), e.getStatusCode());
+            return new SendResult.AlreadyProcessed(eventId);
         } catch (Exception e) {
             log.error("미션 로그 전송 실패: {}", e.getMessage());
             return new SendResult.Unknown(eventId, e.getMessage());

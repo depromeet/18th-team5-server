@@ -6,7 +6,6 @@ import com.team.peektime_api.domain.mission.dto.SelectedMissionRequest;
 import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.global.common.enums.CategoryType;
 import com.team.peektime_api.global.common.enums.CompanionType;
-import com.team.peektime_api.global.common.enums.IntensityType;
 import com.team.peektime_api.global.common.enums.SpaceType;
 import com.team.peektime_api.global.common.enums.UserType;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +32,6 @@ public class MissionRepositoryImpl implements MissionRepositoryCustom {
                         notInRecommendedMissions(solarTermId, userType),
                         notInUserSelectedMissions(userId, solarTermId),
                         eqSpaceType(filter.getSpaceType()),
-                        eqIntensityType(filter.getIntensityType()),
                         eqCompanionType(filter.getCompanionType()),
                         eqCategoryType(filter.getCategoryType())
                 )
@@ -75,10 +73,6 @@ public class MissionRepositoryImpl implements MissionRepositoryCustom {
 
     private BooleanExpression eqSpaceType(SpaceType spaceType) {
         return spaceType != null ? mission.spaceType.eq(spaceType) : null;
-    }
-
-    private BooleanExpression eqIntensityType(IntensityType intensityType) {
-        return intensityType != null ? mission.intensityType.eq(intensityType) : null;
     }
 
     private BooleanExpression eqCompanionType(CompanionType companionType) {

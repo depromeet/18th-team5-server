@@ -42,3 +42,11 @@ public class OutboxPollerV3 {
         log.info("[V3] Outbox 폴링 완료");
     }
 }
+
+
+/**
+ * Set 자료구조를 사용한 이유:
+ * -> 어떤 특정 스케줄링이 Producer 의 인스턴스가 Lock이 풀리고 실행이 되어
+ * Lock 을 소유하고 Outbox 테이블을 조회후에 Set 에 insert 를 할것이다.
+ * DB delete 를 하기전, 그리고 스케줄링이 의도치 않게, Lock이 풀리고 실행이됨.
+ */

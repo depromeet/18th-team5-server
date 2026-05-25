@@ -32,14 +32,22 @@ public class SeasonalRecordsService {
     private final SolarTermRepository solarTermRepository;
 
     public SeasonalRecordsResponse getSeasonalRecords(Long userId) {
-        Optional<SolarTerm> solarTermOpt = solarTermRepository.findByDate(LocalDate.now());
 
+        /**
+         * SolarTerm 이 없다는건 예외를 터트려야한다. 없으면 절기 정보를 화면에 뿌려 줄수 없으므로
+         * 예외를 터트려서 빠르게 인지를 해야한다.
+         */
+        Optional<SolarTerm> solarTermOpt = solarTermRepository.findByDate(LocalDate.now());
         if (solarTermOpt.isEmpty()) {
             return SeasonalRecordsResponse.of(0, Collections.emptyList());
         }
 
+        // 가독성 개선 필요. Optional 에서 get() 하는 방식은 잘 안쓴다.
         SolarTerm solarTerm = solarTermOpt.get();
+
+        //절기의 시작
         LocalDateTime startDateTime = solarTerm.getStartDate().atStartOfDay();
+        //절기의 끝
         LocalDateTime endDateTime = solarTerm.getEndDate().atTime(LocalTime.MAX);
 
         long recordCount = completionRepository.countByUserIdAndPeriod(
@@ -58,6 +66,7 @@ public class SeasonalRecordsService {
     }
 
     private List<RecentRecordCache> getRecentRecordsFromCacheOrDb(Long userId, LocalDateTime startDateTime, LocalDateTime endDateTime) {
+
         try {
             List<RecentRecordCache> cached = cacheRepository.findAll(userId);
             if (!cached.isEmpty()) {
@@ -67,6 +76,7 @@ public class SeasonalRecordsService {
         } catch (Exception e) {
             log.warn("Redis 조회 실패, DB fallback: userId={}", userId, e);
         }
+
 
         log.debug("Redis 캐시 미스, DB 조회: userId={}", userId);
         List<RecentRecordCache> fromDb = completionRepository

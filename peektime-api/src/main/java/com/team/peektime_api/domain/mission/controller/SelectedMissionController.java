@@ -25,14 +25,14 @@ public class SelectedMissionController {
 
     private final SelectedMissionService selectedMissionService;
 
-    @Operation(summary = "오늘 선택 미션 조회 여부 확인", description = "오늘 선택 미션을 조회한 적이 있는지 확인합니다.")
-    @GetMapping("/selected/status")
-    public SuccessResponse<SelectedMissionStatusResponse> getTodaySelectedStatus(
+    @Operation(summary = "오늘 선택한 미션 조회", description = "오늘 선택한 미션이 있는지 확인하고, 있으면 미션 정보를 반환합니다.")
+    @GetMapping("/selected/today")
+    public SuccessResponse<SelectedMissionStatusResponse> getTodaySelectedMission(
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         return SuccessResponse.of(
                 SuccessCode.MISSION_FOUND,
-                selectedMissionService.getTodaySelectedStatus(principal.getUserId())
+                selectedMissionService.getTodaySelectedMission(principal.getUserId())
         );
     }
 

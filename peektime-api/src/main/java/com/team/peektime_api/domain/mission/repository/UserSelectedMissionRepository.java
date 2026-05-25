@@ -11,6 +11,4 @@ public interface UserSelectedMissionRepository extends JpaRepository<UserSelecte
     Optional<UserSelectedMission> findByUserIdAndSelectedDate(Long userId, LocalDate selectedDate);
 
     Optional<UserSelectedMission> findByUserIdAndSolarTermIdAndSelectedDate(Long userId, Long solarTermId, LocalDate selectedDate);
-
-    boolean existsByUserIdAndSelectedDate(Long userId, LocalDate selectedDate);
 }

@@ -34,10 +34,11 @@ public class SelectedMissionService {
     private final UserSelectedMissionRepository userSelectedMissionRepository;
     private final SolarTermRepository solarTermRepository;
 
-    public SelectedMissionStatusResponse getTodaySelectedStatus(Long userId) {
+    public SelectedMissionStatusResponse getTodaySelectedMission(Long userId) {
         LocalDate today = LocalDate.now();
-        boolean hasSelected = userSelectedMissionRepository.existsByUserIdAndSelectedDate(userId, today);
-        return SelectedMissionStatusResponse.of(hasSelected);
+        return userSelectedMissionRepository.findByUserIdAndSelectedDate(userId, today)
+                .map(selected -> SelectedMissionStatusResponse.of(true, selected.getMission()))
+                .orElseGet(() -> SelectedMissionStatusResponse.of(false, null));
     }
 
     @Transactional

@@ -29,4 +29,8 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, Long> {
     // stuck PROCESSING 조회 (updatedAt이 threshold 이전인 PROCESSING 상태)
     @Query("SELECT o FROM OutboxEvent o WHERE o.status = com.team.peektime_api.global.outbox.entity.OutboxStatus.PROCESSING AND o.updatedAt < :threshold")
     List<OutboxEvent> findStuckProcessing(@Param("threshold") LocalDateTime threshold);
+
+    // V3: 모든 이벤트 ID 조회
+    @Query("SELECT o.id FROM OutboxEvent o ORDER BY o.createdAt")
+    List<Long> findAllIds();
 }

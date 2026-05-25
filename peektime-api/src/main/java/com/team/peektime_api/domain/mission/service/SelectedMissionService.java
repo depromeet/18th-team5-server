@@ -2,6 +2,7 @@ package com.team.peektime_api.domain.mission.service;
 
 import com.team.peektime_api.domain.mission.dto.SelectedMissionRequest;
 import com.team.peektime_api.domain.mission.dto.SelectedMissionResponse;
+import com.team.peektime_api.domain.mission.dto.SelectedMissionStatusResponse;
 import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.domain.mission.entity.UserSelectedMission;
 import com.team.peektime_api.domain.mission.repository.MissionRepository;
@@ -32,6 +33,12 @@ public class SelectedMissionService {
     private final UserOnboardingRepository userOnboardingRepository;
     private final UserSelectedMissionRepository userSelectedMissionRepository;
     private final SolarTermRepository solarTermRepository;
+
+    public SelectedMissionStatusResponse getTodaySelectedStatus(Long userId) {
+        LocalDate today = LocalDate.now();
+        boolean hasSelected = userSelectedMissionRepository.existsByUserIdAndSelectedDate(userId, today);
+        return SelectedMissionStatusResponse.of(hasSelected);
+    }
 
     @Transactional
     public SelectedMissionResponse getSelectedMission(Long userId, SelectedMissionRequest filter) {

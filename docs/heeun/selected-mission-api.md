@@ -108,7 +108,6 @@ Authorization: Bearer {accessToken}
       "title": "가까운 카페에서 제철 음료 마시기",
       "description": "계절의 맛을 느껴보세요",
       "spaceType": "INDOOR",
-      "intensityType": "LIGHT",
       "companionType": "ALONE",
       "categoryType": "FOOD"
     }
@@ -191,7 +190,6 @@ POST /api/v1/missions/selected  (필터 없이 전체에서 선택)
     "title": "창문 열고 바깥 소리 듣기",
     "description": "5분간 눈을 감고 계절의 소리에 집중해보세요",
     "spaceType": "INDOOR",
-    "intensityType": "LIGHT",
     "companionType": "ALONE",
     "categoryType": "SENSE"
   }
@@ -295,7 +293,6 @@ POST /api/v1/missions/selected  (필터 없이 전체에서 선택)
 | title | String | 미션 제목 |
 | description | String | 미션 설명 |
 | spaceType | String | 공간 타입 (INDOOR/OUTDOOR) |
-| intensityType | String | 이동거리 타입 (LIGHT/MODERATE/ACTIVE) |
 | companionType | String | 인원 타입 (ALONE/TOGETHER) |
 | categoryType | String | 카테고리 타입 (FOOD/NATURE/RECORD/PLACE/SENSE) |
 
@@ -323,10 +320,3 @@ POST /api/v1/missions/selected  (필터 없이 전체에서 선택)
 | RECORD | 기록 |
 | PLACE | 장소 |
 | SENSE | 감각 |
-
-### IntensityType
-| Value | Label |
-|-------|-------|
-| LIGHT | 가벼운 |
-| MODERATE | 보통 |
-| ACTIVE | 적극적 |

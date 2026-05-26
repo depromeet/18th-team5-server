@@ -6,7 +6,7 @@ spring:
     name: peektime-admin
   sql:
     init:
-      mode: always
+      mode: never
   thymeleaf:
     prefix: classpath:/templates/
     suffix: .html
@@ -18,15 +18,16 @@ spring:
     password: ${DATASOURCE_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: false
     defer-datasource-initialization: true
+
 
 server:
   port: ${SERVER_PORT:8081}
 
 api:
-  base-url: http://13.124.36.181:8080
+  base-url: http://13.124.36.181
 
 admin:
   username: ${ADMIN_USERNAME}

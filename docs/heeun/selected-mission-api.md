@@ -108,7 +108,7 @@ Authorization: Bearer {accessToken}
       "title": "가까운 카페에서 제철 음료 마시기",
       "description": "계절의 맛을 느껴보세요",
       "spaceType": "INDOOR",
-      "companionType": "ALONE",
+      "companionType": "SOLO",
       "categoryType": "FOOD"
     }
   }
@@ -167,12 +167,12 @@ Authorization: Bearer {accessToken}
 | Parameter | Type | Required | Description | Values |
 |-----------|------|----------|-------------|--------|
 | spaceType | String | N | 공간 필터 | `INDOOR`, `OUTDOOR` |
-| companionType | String | N | 인원 필터 | `ALONE`, `TOGETHER` |
+| companionType | String | N | 인원 필터 | `SOLO`, `TOGETHER` |
 | categoryType | String | N | 카테고리 필터 | `FOOD`, `NATURE`, `RECORD`, `PLACE`, `SENSE` |
 
 **예시**
 ```
-POST /api/v1/missions/selected?spaceType=INDOOR&companionType=ALONE
+POST /api/v1/missions/selected?spaceType=INDOOR&companionType=SOLO
 POST /api/v1/missions/selected?categoryType=FOOD
 POST /api/v1/missions/selected  (필터 없이 전체에서 선택)
 ```
@@ -190,7 +190,7 @@ POST /api/v1/missions/selected  (필터 없이 전체에서 선택)
     "title": "창문 열고 바깥 소리 듣기",
     "description": "5분간 눈을 감고 계절의 소리에 집중해보세요",
     "spaceType": "INDOOR",
-    "companionType": "ALONE",
+    "companionType": "SOLO",
     "categoryType": "SENSE"
   }
 }
@@ -293,7 +293,7 @@ POST /api/v1/missions/selected  (필터 없이 전체에서 선택)
 | title | String | 미션 제목 |
 | description | String | 미션 설명 |
 | spaceType | String | 공간 타입 (INDOOR/OUTDOOR) |
-| companionType | String | 인원 타입 (ALONE/TOGETHER) |
+| companionType | String | 인원 타입 (SOLO/TOGETHER) |
 | categoryType | String | 카테고리 타입 (FOOD/NATURE/RECORD/PLACE/SENSE) |
 
 ---
@@ -309,8 +309,8 @@ POST /api/v1/missions/selected  (필터 없이 전체에서 선택)
 ### CompanionType
 | Value | Label |
 |-------|-------|
-| ALONE | 혼자 |
-| TOGETHER | 같이 |
+| SOLO | 혼자 가능 |
+| TOGETHER | 같이하면 더 좋음 |
 
 ### CategoryType
 | Value | Label |

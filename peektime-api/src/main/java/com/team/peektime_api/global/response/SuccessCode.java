@@ -31,6 +31,11 @@ public enum SuccessCode {
     RECORD_CREATED("RECORD_201", "기록 생성 성공"),
     RECORD_FOUND("RECORD_200", "기록 조회 성공"),
 
+    // 캘린더
+    CALENDAR_SOLAR_TERM_FOUND("CALENDAR_200", "절기 캘린더 조회 성공"),
+    CALENDAR_DAY_FOUND("CALENDAR_200", "날짜 기록 조회 성공"),
+    CALENDAR_RECORD_CREATED("CALENDAR_201", "자유 기록 생성 성공"),
+
     // 인증
     LOGIN_SUCCESS("AUTH_200", "로그인 성공"),
     TOKEN_REFRESHED("AUTH_200_REFRESH", "Access Token 재발급 성공"),

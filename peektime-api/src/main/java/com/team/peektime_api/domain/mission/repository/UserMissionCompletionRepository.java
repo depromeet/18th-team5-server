@@ -37,4 +37,12 @@ public interface UserMissionCompletionRepository extends JpaRepository<UserMissi
             @Param("userId") Long userId,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT c FROM UserMissionCompletion c " +
+            "WHERE c.user.id = :userId AND c.createdAt BETWEEN :start AND :end " +
+            "ORDER BY c.createdAt ASC")
+    List<UserMissionCompletion> findByUserIdAndDateRange(
+            @Param("userId") Long userId,
+            @Param("start") LocalDateTime start,
+            @Param("end") LocalDateTime end);
 }

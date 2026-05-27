@@ -24,21 +24,13 @@
 3. Google Analytics 설정 (선택사항, 비활성화 가능)
 4. **"프로젝트 만들기"** 클릭
 
-### 1-3. 앱 추가 (iOS/Android)
+### 1-3. iOS 앱 추가
 
-#### iOS 앱 추가
 1. 프로젝트 개요 > **iOS 아이콘** 클릭
 2. iOS 번들 ID 입력: `com.team.peektime` (실제 번들 ID)
 3. 앱 닉네임 입력: `PeekTime iOS`
 4. **"앱 등록"** 클릭
 5. `GoogleService-Info.plist` 다운로드 → iOS 프로젝트에 추가
-
-#### Android 앱 추가
-1. 프로젝트 개요 > **Android 아이콘** 클릭
-2. Android 패키지 이름 입력: `com.team.peektime`
-3. 앱 닉네임 입력: `PeekTime Android`
-4. **"앱 등록"** 클릭
-5. `google-services.json` 다운로드 → Android 프로젝트에 추가
 
 ---
 
@@ -293,8 +285,7 @@ public class DeviceToken extends BaseEntity {
 package com.team.peektime_api.domain.notification.entity;
 
 public enum DeviceType {
-    IOS,
-    ANDROID
+    IOS
 }
 ```
 
@@ -613,13 +604,6 @@ public class FcmService {
                                 .setSound("default")
                                 .build())
                         .build())
-                // Android 설정
-                .setAndroidConfig(AndroidConfig.builder()
-                        .setPriority(AndroidConfig.Priority.HIGH)
-                        .setNotification(AndroidNotification.builder()
-                                .setSound("default")
-                                .build())
-                        .build())
                 .build();
 
         try {
@@ -769,9 +753,8 @@ public class MissionService {
 
 ## 8. 테스트 방법
 
-### 8-1. FCM 토큰 얻기 (클라이언트)
+### 8-1. FCM 토큰 얻기 (iOS)
 
-#### iOS (Swift)
 ```swift
 import FirebaseMessaging
 
@@ -780,14 +763,6 @@ Messaging.messaging().token { token, error in
         print("FCM Token: \(token)")
         // 서버에 토큰 등록 API 호출
     }
-}
-```
-
-#### Android (Kotlin)
-```kotlin
-FirebaseMessaging.getInstance().token.addOnSuccessListener { token ->
-    Log.d("FCM", "Token: $token")
-    // 서버에 토큰 등록 API 호출
 }
 ```
 
@@ -825,7 +800,7 @@ curl -X POST "http://localhost:8080/api/v1/notifications/test?token=FCM_DEVICE_T
 ## 체크리스트
 
 - [ ] Firebase 프로젝트 생성
-- [ ] iOS/Android 앱 등록
+- [ ] iOS 앱 등록
 - [ ] 서비스 계정 키 발급 및 저장
 - [ ] .gitignore에 키 파일 제외 추가
 - [ ] Firebase Admin SDK 의존성 추가

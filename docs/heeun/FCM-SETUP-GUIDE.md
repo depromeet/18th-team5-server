@@ -202,165 +202,92 @@ public class FcmConfig {
 
 ---
 
-## 5. 디바이스 토큰 관리
+## 5. FCM 토큰 관리
 
-### 5-1. 토큰 저장 방식 결정
+### 5-1. PeekTime 토큰 관리 전략
+
+**디바이스 = 계정** 구조이므로 별도 테이블 없이 **User 엔티티에 fcmToken 필드 추가**
 
 | 방식 | 장점 | 단점 |
 |------|------|------|
-| User 엔티티에 필드 추가 | 간단함 | 멀티 디바이스 미지원 |
+| **User 엔티티에 필드 추가 ✅** | 간단함, 1:1 관계에 적합 | 멀티 디바이스 미지원 |
 | 별도 테이블 (DeviceToken) | 멀티 디바이스 지원 | 테이블 추가 필요 |
-| Redis | 빠름, TTL 관리 용이 | 영속성 이슈 |
 
-**권장: 별도 테이블 (DeviceToken)**
+### 5-2. iOS에서 FCM 토큰 등록 시점
 
-### 5-2. DeviceToken 엔티티
+```
+앱 실행
+   ↓
+알림 권한 체크
+   ├─ 이미 권한 있음 → FCM 토큰 서버에 전송
+   └─ 권한 없음 → 권한 요청 → 승인 시 FCM 토큰 서버에 전송
+```
+
+### 5-3. 토큰 처리 로직
+
+| 상황 | 처리 |
+|------|------|
+| 같은 토큰이 들어옴 | 무시 (이미 등록됨) |
+| 새 토큰이 들어옴 | 덮어씌우기 (갱신) |
+
+### 5-4. User 엔티티 수정
 
 ```java
-// src/main/java/com/team/peektime_api/domain/notification/entity/DeviceToken.java
-
-package com.team.peektime_api.domain.notification.entity;
-
-import com.team.peektime_api.domain.user.entity.User;
-import com.team.peektime_api.global.common.BaseEntity;
-import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+// src/main/java/com/team/peektime_api/domain/user/entity/User.java
 
 @Entity
 @Getter
-@Table(name = "device_token",
-       indexes = @Index(name = "idx_device_token_user", columnList = "user_id"))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class DeviceToken extends BaseEntity {
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @Column(unique = true, nullable = false)
+    private String deviceUuid;
 
-    @Column(nullable = false, length = 500)
-    private String token;
+    @Column(length = 500)
+    private String fcmToken;  // FCM 토큰 추가
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private DeviceType deviceType;  // IOS, ANDROID
+    // ... 기존 필드들
 
-    @Column
-    private String deviceId;  // 디바이스 고유 식별자 (선택)
-
-    @Builder(access = AccessLevel.PRIVATE)
-    private DeviceToken(User user, String token, DeviceType deviceType, String deviceId) {
-        this.user = user;
-        this.token = token;
-        this.deviceType = deviceType;
-        this.deviceId = deviceId;
-    }
-
-    public static DeviceToken create(User user, String token, DeviceType deviceType, String deviceId) {
-        return DeviceToken.builder()
-                .user(user)
-                .token(token)
-                .deviceType(deviceType)
-                .deviceId(deviceId)
-                .build();
-    }
-
-    public void updateToken(String newToken) {
-        this.token = newToken;
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
     }
 }
 ```
 
-### 5-3. DeviceType Enum
+### 5-5. FCM 토큰 등록 API
 
 ```java
-// src/main/java/com/team/peektime_api/domain/notification/entity/DeviceType.java
-
-package com.team.peektime_api.domain.notification.entity;
-
-public enum DeviceType {
-    IOS
-}
-```
-
-### 5-4. Repository
-
-```java
-// src/main/java/com/team/peektime_api/domain/notification/repository/DeviceTokenRepository.java
-
-package com.team.peektime_api.domain.notification.repository;
-
-import com.team.peektime_api.domain.notification.entity.DeviceToken;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-
-import java.util.List;
-import java.util.Optional;
-
-public interface DeviceTokenRepository extends JpaRepository<DeviceToken, Long> {
-
-    List<DeviceToken> findByUserId(Long userId);
-
-    Optional<DeviceToken> findByToken(String token);
-
-    Optional<DeviceToken> findByUserIdAndDeviceId(Long userId, String deviceId);
-
-    @Modifying
-    @Query("DELETE FROM DeviceToken dt WHERE dt.token = :token")
-    void deleteByToken(String token);
-
-    @Modifying
-    @Query("DELETE FROM DeviceToken dt WHERE dt.user.id = :userId")
-    void deleteAllByUserId(Long userId);
-}
-```
-
-### 5-5. 토큰 등록 API
-
-```java
-// src/main/java/com/team/peektime_api/domain/notification/dto/DeviceTokenRequest.java
+// src/main/java/com/team/peektime_api/domain/notification/dto/FcmTokenRequest.java
 
 package com.team.peektime_api.domain.notification.dto;
 
-import com.team.peektime_api.domain.notification.entity.DeviceType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-@Schema(description = "디바이스 토큰 등록 요청")
+@Schema(description = "FCM 토큰 등록 요청")
 @Getter
 @Setter
-public class DeviceTokenRequest {
+public class FcmTokenRequest {
 
     @Schema(description = "FCM 토큰", example = "dGVzdF90b2tlbi4uLg==")
     @NotBlank(message = "토큰은 필수입니다")
     private String token;
-
-    @Schema(description = "디바이스 타입", example = "IOS")
-    @NotNull(message = "디바이스 타입은 필수입니다")
-    private DeviceType deviceType;
-
-    @Schema(description = "디바이스 ID (선택)", example = "device-uuid-1234")
-    private String deviceId;
 }
 ```
 
 ```java
-// src/main/java/com/team/peektime_api/domain/notification/controller/DeviceTokenController.java
+// src/main/java/com/team/peektime_api/domain/notification/controller/FcmTokenController.java
 
 package com.team.peektime_api.domain.notification.controller;
 
-import com.team.peektime_api.domain.notification.dto.DeviceTokenRequest;
-import com.team.peektime_api.domain.notification.service.DeviceTokenService;
+import com.team.peektime_api.domain.notification.dto.FcmTokenRequest;
+import com.team.peektime_api.domain.notification.service.FcmTokenService;
 import com.team.peektime_api.global.common.SuccessResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -370,113 +297,70 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Device Token", description = "FCM 디바이스 토큰 관리 API")
+@Tag(name = "FCM Token", description = "FCM 토큰 관리 API")
 @RestController
-@RequestMapping("/api/v1/device-tokens")
+@RequestMapping("/api/v1/fcm-token")
 @RequiredArgsConstructor
-public class DeviceTokenController {
+public class FcmTokenController {
 
-    private final DeviceTokenService deviceTokenService;
+    private final FcmTokenService fcmTokenService;
 
-    @Operation(summary = "디바이스 토큰 등록/갱신")
+    @Operation(summary = "FCM 토큰 등록/갱신", description = "같은 토큰이면 무시, 새 토큰이면 덮어씌움")
     @PostMapping
     public ResponseEntity<SuccessResponse<Void>> registerToken(
             @AuthenticationPrincipal Long userId,
-            @Valid @RequestBody DeviceTokenRequest request) {
+            @Valid @RequestBody FcmTokenRequest request) {
 
-        deviceTokenService.registerToken(userId, request);
-        return ResponseEntity.ok(SuccessResponse.of(null));
-    }
-
-    @Operation(summary = "디바이스 토큰 삭제 (로그아웃 시)")
-    @DeleteMapping
-    public ResponseEntity<SuccessResponse<Void>> deleteToken(
-            @AuthenticationPrincipal Long userId,
-            @RequestParam String token) {
-
-        deviceTokenService.deleteToken(userId, token);
+        fcmTokenService.registerToken(userId, request.getToken());
         return ResponseEntity.ok(SuccessResponse.of(null));
     }
 }
 ```
 
-### 5-6. 토큰 서비스
+### 5-6. FCM 토큰 서비스
 
 ```java
-// src/main/java/com/team/peektime_api/domain/notification/service/DeviceTokenService.java
+// src/main/java/com/team/peektime_api/domain/notification/service/FcmTokenService.java
 
 package com.team.peektime_api.domain.notification.service;
 
-import com.team.peektime_api.domain.notification.dto.DeviceTokenRequest;
-import com.team.peektime_api.domain.notification.entity.DeviceToken;
-import com.team.peektime_api.domain.notification.repository.DeviceTokenRepository;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-
-import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DeviceTokenService {
+public class FcmTokenService {
 
-    private final DeviceTokenRepository deviceTokenRepository;
     private final UserRepository userRepository;
 
     @Transactional
-    public void registerToken(Long userId, DeviceTokenRequest request) {
+    public void registerToken(Long userId, String fcmToken) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        // 기존 토큰이 있으면 업데이트, 없으면 생성
-        if (StringUtils.hasText(request.getDeviceId())) {
-            // deviceId로 기존 토큰 찾기
-            deviceTokenRepository.findByUserIdAndDeviceId(userId, request.getDeviceId())
-                    .ifPresentOrElse(
-                            existing -> existing.updateToken(request.getToken()),
-                            () -> saveNewToken(user, request)
-                    );
-        } else {
-            // deviceId 없으면 토큰으로 찾기
-            deviceTokenRepository.findByToken(request.getToken())
-                    .ifPresentOrElse(
-                            existing -> log.debug("이미 등록된 토큰: {}", request.getToken()),
-                            () -> saveNewToken(user, request)
-                    );
+        // 같은 토큰이면 무시
+        if (fcmToken.equals(user.getFcmToken())) {
+            log.debug("이미 등록된 FCM 토큰: userId={}", userId);
+            return;
         }
-    }
 
-    private void saveNewToken(User user, DeviceTokenRequest request) {
-        DeviceToken deviceToken = DeviceToken.create(
-                user,
-                request.getToken(),
-                request.getDeviceType(),
-                request.getDeviceId()
-        );
-        deviceTokenRepository.save(deviceToken);
-        log.info("새 디바이스 토큰 등록: userId={}, deviceType={}", user.getId(), request.getDeviceType());
-    }
-
-    @Transactional
-    public void deleteToken(Long userId, String token) {
-        deviceTokenRepository.deleteByToken(token);
-        log.info("디바이스 토큰 삭제: userId={}", userId);
+        // 새 토큰이면 덮어씌우기
+        user.updateFcmToken(fcmToken);
+        log.info("FCM 토큰 갱신: userId={}", userId);
     }
 
     @Transactional(readOnly = true)
-    public List<String> getTokensByUserId(Long userId) {
-        return deviceTokenRepository.findByUserId(userId)
-                .stream()
-                .map(DeviceToken::getToken)
-                .toList();
+    public String getTokenByUserId(Long userId) {
+        return userRepository.findById(userId)
+                .map(User::getFcmToken)
+                .orElse(null);
     }
 }
-```
 
 ---
 
@@ -523,44 +407,50 @@ package com.team.peektime_api.domain.notification.service;
 
 import com.google.firebase.messaging.*;
 import com.team.peektime_api.domain.notification.dto.PushNotificationRequest;
+import com.team.peektime_api.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FcmService {
 
-    private final DeviceTokenService deviceTokenService;
+    private final UserRepository userRepository;
 
     /**
      * 단일 사용자에게 알림 전송
      */
     public void sendToUser(Long userId, PushNotificationRequest request) {
-        List<String> tokens = deviceTokenService.getTokensByUserId(userId);
+        String token = userRepository.findById(userId)
+                .map(user -> user.getFcmToken())
+                .orElse(null);
 
-        if (tokens.isEmpty()) {
-            log.warn("등록된 디바이스 토큰 없음: userId={}", userId);
+        if (!StringUtils.hasText(token)) {
+            log.warn("등록된 FCM 토큰 없음: userId={}", userId);
             return;
         }
 
-        sendMulticast(tokens, request);
+        sendToToken(token, request);
     }
 
     /**
      * 여러 사용자에게 알림 전송
      */
     public void sendToUsers(List<Long> userIds, PushNotificationRequest request) {
-        List<String> tokens = userIds.stream()
-                .flatMap(userId -> deviceTokenService.getTokensByUserId(userId).stream())
+        List<String> tokens = userRepository.findAllById(userIds).stream()
+                .map(user -> user.getFcmToken())
+                .filter(StringUtils::hasText)
                 .toList();
 
         if (tokens.isEmpty()) {
-            log.warn("등록된 디바이스 토큰 없음");
+            log.warn("등록된 FCM 토큰 없음");
             return;
         }
 
@@ -568,7 +458,7 @@ public class FcmService {
     }
 
     /**
-     * 단일 토큰으로 전송 (테스트용)
+     * 단일 토큰으로 전송
      */
     public void sendToToken(String token, PushNotificationRequest request) {
         try {
@@ -584,7 +474,6 @@ public class FcmService {
      * 멀티캐스트 전송 (최대 500개 토큰)
      */
     private void sendMulticast(List<String> tokens, PushNotificationRequest request) {
-        // FCM은 한 번에 최대 500개 토큰만 지원
         int batchSize = 500;
 
         for (int i = 0; i < tokens.size(); i += batchSize) {
@@ -611,7 +500,6 @@ public class FcmService {
             log.info("FCM 멀티캐스트 전송: 성공={}, 실패={}",
                     response.getSuccessCount(), response.getFailureCount());
 
-            // 실패한 토큰 처리
             handleFailedTokens(tokens, response);
 
         } catch (FirebaseMessagingException e) {
@@ -622,7 +510,13 @@ public class FcmService {
     private Message buildMessage(String token, PushNotificationRequest request) {
         Message.Builder builder = Message.builder()
                 .setToken(token)
-                .setNotification(buildNotification(request));
+                .setNotification(buildNotification(request))
+                // iOS 설정
+                .setApnsConfig(ApnsConfig.builder()
+                        .setAps(Aps.builder()
+                                .setSound("default")
+                                .build())
+                        .build());
 
         if (request.getData() != null) {
             builder.putAllData(request.getData());
@@ -768,19 +662,18 @@ Messaging.messaging().token { token, error in
 
 ### 8-2. Swagger에서 테스트
 
-1. `/api/v1/device-tokens` - 토큰 등록
+1. `/api/v1/fcm-token` - FCM 토큰 등록
 2. `/api/v1/notifications/test` - 테스트 알림 전송
 
 ### 8-3. cURL로 테스트
 
 ```bash
-# 토큰 등록
-curl -X POST http://localhost:8080/api/v1/device-tokens \
+# FCM 토큰 등록
+curl -X POST http://localhost:8080/api/v1/fcm-token \
   -H "Authorization: Bearer {JWT_TOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
-    "token": "FCM_DEVICE_TOKEN",
-    "deviceType": "IOS"
+    "token": "FCM_DEVICE_TOKEN"
   }'
 
 # 테스트 알림 전송
@@ -805,8 +698,8 @@ curl -X POST "http://localhost:8080/api/v1/notifications/test?token=FCM_DEVICE_T
 - [ ] .gitignore에 키 파일 제외 추가
 - [ ] Firebase Admin SDK 의존성 추가
 - [ ] FcmConfig 설정 클래스 구현
-- [ ] DeviceToken 엔티티 및 Repository 구현
-- [ ] 토큰 등록/삭제 API 구현
+- [ ] User 엔티티에 fcmToken 필드 추가
+- [ ] FCM 토큰 등록 API 구현
 - [ ] FcmService 구현
 - [ ] 테스트 알림 전송 확인
 

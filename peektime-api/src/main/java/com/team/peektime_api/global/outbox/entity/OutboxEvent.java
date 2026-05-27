@@ -9,7 +9,8 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "outbox_event", indexes = {
-        @Index(name = "idx_outbox_created_at", columnList = "created_at")
+        @Index(name = "idx_outbox_created_at", columnList = "created_at"),
+        @Index(name = "idx_outbox_status", columnList = "status")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -22,8 +23,21 @@ public class OutboxEvent extends BaseEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String payload;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private OutboxStatus status = OutboxStatus.READY;
+
     @Builder
     public OutboxEvent(String payload) {
         this.payload = payload;
+        this.status = OutboxStatus.READY;
+    }
+
+    public void markProcessing() {
+        this.status = OutboxStatus.PROCESSING;
+    }
+
+    public void markReady() {
+        this.status = OutboxStatus.READY;
     }
 }

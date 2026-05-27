@@ -17,8 +17,8 @@ public record RecommendedMissionResponse(
     ) {
         public static HeaderInfo of(String userTypeLabel, String solarTermName) {
             return new HeaderInfo(
-                    userTypeLabel + " " + solarTermName + " 미션",
-                    solarTermName + "에 어떤 기록을 남겨볼까요?"
+                    userTypeLabel + "님을 위한",
+                    solarTermName + " 미션을 기록해볼까요?"
             );
         }
     }
@@ -28,15 +28,17 @@ public record RecommendedMissionResponse(
             String title,
             CategoryType categoryType,
             EnjoyType enjoyType,
-            int order
+            int order,
+            boolean isCompleted
     ) {
-        public static MissionItem from(RecommendedMissionPool pool, int order) {
+        public static MissionItem from(RecommendedMissionPool pool, int order, boolean isCompleted) {
             return new MissionItem(
                     pool.getMission().getId(),
                     pool.getMission().getTitle(),
                     pool.getMission().getCategoryType(),
                     pool.getMission().getEnjoyType(),
-                    order
+                    order,
+                    isCompleted
             );
         }
     }

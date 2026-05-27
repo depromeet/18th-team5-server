@@ -5,10 +5,36 @@
 2. [서비스 계정 키 발급](#2-서비스-계정-키-발급)
 3. [Spring Boot 의존성 추가](#3-spring-boot-의존성-추가)
 4. [FCM 설정 클래스 구현](#4-fcm-설정-클래스-구현)
-5. [디바이스 토큰 관리](#5-디바이스-토큰-관리)
-6. [FCM 서비스 구현](#6-fcm-서비스-구현)
-7. [푸시 알림 전송 API](#7-푸시-알림-전송-api)
-8. [테스트 방법](#8-테스트-방법)
+5. [Topic 기반 알림 구현](#5-topic-기반-알림-구현)
+6. [푸시 알림 전송 API](#6-푸시-알림-전송-api)
+7. [테스트 방법](#7-테스트-방법)
+
+---
+
+## PeekTime FCM 구조
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        PeekTime FCM                         │
+├─────────────────────────────────────────────────────────────┤
+│  특징: 전체 알림만 존재 (개인 알림 없음)                       │
+│  방식: Topic 구독 방식                                       │
+│  토큰 저장: 서버에 저장 안함 (Firebase가 관리)                 │
+└─────────────────────────────────────────────────────────────┘
+
+iOS 앱                          Firebase                    서버
+  │                                │                         │
+  ├─ 알림 권한 승인                  │                         │
+  ├─ 토픽 구독 ("all_users") ──────→│                         │
+  │                                │ (토큰-토픽 매핑 저장)      │
+  │                                │                         │
+  │                                │←─────── 토픽으로 전송 ────┤
+  │←─────── 알림 전달 ──────────────│                         │
+  ▼
+알림 수신!
+
+서버는 토큰을 몰라도 됨!
+```
 
 ---
 
@@ -202,171 +228,43 @@ public class FcmConfig {
 
 ---
 
-## 5. FCM 토큰 관리
+## 5. Topic 기반 알림 구현
 
-### 5-1. PeekTime 토큰 관리 전략
+### 5-1. Topic 구조
 
-**디바이스 = 계정** 구조이므로 별도 테이블 없이 **User 엔티티에 fcmToken 필드 추가**
+| Topic | 설명 | 대상 |
+|-------|------|------|
+| `all_users` | 전체 알림 | 알림 허용한 모든 사용자 |
 
-| 방식 | 장점 | 단점 |
-|------|------|------|
-| **User 엔티티에 필드 추가 ✅** | 간단함, 1:1 관계에 적합 | 멀티 디바이스 미지원 |
-| 별도 테이블 (DeviceToken) | 멀티 디바이스 지원 | 테이블 추가 필요 |
+### 5-2. iOS에서 Topic 구독 (클라이언트)
 
-### 5-2. iOS에서 FCM 토큰 등록 시점
+```swift
+import FirebaseMessaging
 
-```
-앱 실행
-   ↓
-알림 권한 체크
-   ├─ 이미 권한 있음 → FCM 토큰 서버에 전송
-   └─ 권한 없음 → 권한 요청 → 승인 시 FCM 토큰 서버에 전송
-```
-
-### 5-3. 토큰 처리 로직
-
-| 상황 | 처리 |
-|------|------|
-| 같은 토큰이 들어옴 | 무시 (이미 등록됨) |
-| 새 토큰이 들어옴 | 덮어씌우기 (갱신) |
-
-### 5-4. User 엔티티 수정
-
-```java
-// src/main/java/com/team/peektime_api/domain/user/entity/User.java
-
-@Entity
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(unique = true, nullable = false)
-    private String deviceUuid;
-
-    @Column(length = 500)
-    private String fcmToken;  // FCM 토큰 추가
-
-    // ... 기존 필드들
-
-    public void updateFcmToken(String fcmToken) {
-        this.fcmToken = fcmToken;
-    }
-}
-```
-
-### 5-5. FCM 토큰 등록 API
-
-```java
-// src/main/java/com/team/peektime_api/domain/notification/dto/FcmTokenRequest.java
-
-package com.team.peektime_api.domain.notification.dto;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import lombok.Getter;
-import lombok.Setter;
-
-@Schema(description = "FCM 토큰 등록 요청")
-@Getter
-@Setter
-public class FcmTokenRequest {
-
-    @Schema(description = "FCM 토큰", example = "dGVzdF90b2tlbi4uLg==")
-    @NotBlank(message = "토큰은 필수입니다")
-    private String token;
-}
-```
-
-```java
-// src/main/java/com/team/peektime_api/domain/notification/controller/FcmTokenController.java
-
-package com.team.peektime_api.domain.notification.controller;
-
-import com.team.peektime_api.domain.notification.dto.FcmTokenRequest;
-import com.team.peektime_api.domain.notification.service.FcmTokenService;
-import com.team.peektime_api.global.common.SuccessResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-
-@Tag(name = "FCM Token", description = "FCM 토큰 관리 API")
-@RestController
-@RequestMapping("/api/v1/fcm-token")
-@RequiredArgsConstructor
-public class FcmTokenController {
-
-    private final FcmTokenService fcmTokenService;
-
-    @Operation(summary = "FCM 토큰 등록/갱신", description = "같은 토큰이면 무시, 새 토큰이면 덮어씌움")
-    @PostMapping
-    public ResponseEntity<SuccessResponse<Void>> registerToken(
-            @AuthenticationPrincipal Long userId,
-            @Valid @RequestBody FcmTokenRequest request) {
-
-        fcmTokenService.registerToken(userId, request.getToken());
-        return ResponseEntity.ok(SuccessResponse.of(null));
-    }
-}
-```
-
-### 5-6. FCM 토큰 서비스
-
-```java
-// src/main/java/com/team/peektime_api/domain/notification/service/FcmTokenService.java
-
-package com.team.peektime_api.domain.notification.service;
-
-import com.team.peektime_api.domain.user.entity.User;
-import com.team.peektime_api.domain.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-@Slf4j
-@Service
-@RequiredArgsConstructor
-public class FcmTokenService {
-
-    private final UserRepository userRepository;
-
-    @Transactional
-    public void registerToken(Long userId, String fcmToken) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-
-        // 같은 토큰이면 무시
-        if (fcmToken.equals(user.getFcmToken())) {
-            log.debug("이미 등록된 FCM 토큰: userId={}", userId);
-            return;
+// 알림 권한 승인 후 토픽 구독
+func subscribeToTopic() {
+    Messaging.messaging().subscribe(toTopic: "all_users") { error in
+        if let error = error {
+            print("토픽 구독 실패: \(error)")
+            return
         }
-
-        // 새 토큰이면 덮어씌우기
-        user.updateFcmToken(fcmToken);
-        log.info("FCM 토큰 갱신: userId={}", userId);
-    }
-
-    @Transactional(readOnly = true)
-    public String getTokenByUserId(Long userId) {
-        return userRepository.findById(userId)
-                .map(User::getFcmToken)
-                .orElse(null);
+        print("all_users 토픽 구독 성공")
     }
 }
 
----
+// 알림 권한 해제 시 토픽 구독 해제
+func unsubscribeFromTopic() {
+    Messaging.messaging().unsubscribe(fromTopic: "all_users") { error in
+        if let error = error {
+            print("토픽 구독 해제 실패: \(error)")
+            return
+        }
+        print("all_users 토픽 구독 해제")
+    }
+}
+```
 
-## 6. FCM 서비스 구현
-
-### 6-1. 알림 요청 DTO
+### 5-3. 알림 요청 DTO
 
 ```java
 // src/main/java/com/team/peektime_api/domain/notification/dto/PushNotificationRequest.java
@@ -398,7 +296,7 @@ public class PushNotificationRequest {
 }
 ```
 
-### 6-2. FCM 서비스
+### 5-4. FCM 서비스 (Topic 전송)
 
 ```java
 // src/main/java/com/team/peektime_api/domain/notification/service/FcmService.java
@@ -407,109 +305,42 @@ package com.team.peektime_api.domain.notification.service;
 
 import com.google.firebase.messaging.*;
 import com.team.peektime_api.domain.notification.dto.PushNotificationRequest;
-import com.team.peektime_api.domain.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class FcmService {
 
-    private final UserRepository userRepository;
+    private static final String TOPIC_ALL_USERS = "all_users";
 
     /**
-     * 단일 사용자에게 알림 전송
+     * 전체 사용자에게 알림 전송 (Topic 방식)
      */
-    public void sendToUser(Long userId, PushNotificationRequest request) {
-        String token = userRepository.findById(userId)
-                .map(user -> user.getFcmToken())
-                .orElse(null);
-
-        if (!StringUtils.hasText(token)) {
-            log.warn("등록된 FCM 토큰 없음: userId={}", userId);
-            return;
-        }
-
-        sendToToken(token, request);
+    public void sendToAll(PushNotificationRequest request) {
+        sendToTopic(TOPIC_ALL_USERS, request);
     }
 
     /**
-     * 여러 사용자에게 알림 전송
+     * 특정 Topic으로 알림 전송
      */
-    public void sendToUsers(List<Long> userIds, PushNotificationRequest request) {
-        List<String> tokens = userRepository.findAllById(userIds).stream()
-                .map(user -> user.getFcmToken())
-                .filter(StringUtils::hasText)
-                .toList();
-
-        if (tokens.isEmpty()) {
-            log.warn("등록된 FCM 토큰 없음");
-            return;
-        }
-
-        sendMulticast(tokens, request);
-    }
-
-    /**
-     * 단일 토큰으로 전송
-     */
-    public void sendToToken(String token, PushNotificationRequest request) {
+    public void sendToTopic(String topic, PushNotificationRequest request) {
         try {
-            Message message = buildMessage(token, request);
+            Message message = buildTopicMessage(topic, request);
             String response = FirebaseMessaging.getInstance().send(message);
-            log.info("FCM 전송 성공: {}", response);
+            log.info("FCM Topic 전송 성공: topic={}, response={}", topic, response);
         } catch (FirebaseMessagingException e) {
-            handleFcmException(token, e);
+            log.error("FCM Topic 전송 실패: topic={}", topic, e);
+            throw new RuntimeException("푸시 알림 전송 실패", e);
         }
     }
 
-    /**
-     * 멀티캐스트 전송 (최대 500개 토큰)
-     */
-    private void sendMulticast(List<String> tokens, PushNotificationRequest request) {
-        int batchSize = 500;
-
-        for (int i = 0; i < tokens.size(); i += batchSize) {
-            List<String> batch = tokens.subList(i, Math.min(i + batchSize, tokens.size()));
-            sendBatch(batch, request);
-        }
-    }
-
-    private void sendBatch(List<String> tokens, PushNotificationRequest request) {
-        MulticastMessage message = MulticastMessage.builder()
-                .setNotification(buildNotification(request))
-                .putAllData(request.getData() != null ? request.getData() : Map.of())
-                .addAllTokens(tokens)
-                // iOS 설정
-                .setApnsConfig(ApnsConfig.builder()
-                        .setAps(Aps.builder()
-                                .setSound("default")
-                                .build())
-                        .build())
-                .build();
-
-        try {
-            BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
-            log.info("FCM 멀티캐스트 전송: 성공={}, 실패={}",
-                    response.getSuccessCount(), response.getFailureCount());
-
-            handleFailedTokens(tokens, response);
-
-        } catch (FirebaseMessagingException e) {
-            log.error("FCM 멀티캐스트 전송 실패", e);
-        }
-    }
-
-    private Message buildMessage(String token, PushNotificationRequest request) {
+    private Message buildTopicMessage(String topic, PushNotificationRequest request) {
         Message.Builder builder = Message.builder()
-                .setToken(token)
+                .setTopic(topic)
                 .setNotification(buildNotification(request))
                 // iOS 설정
                 .setApnsConfig(ApnsConfig.builder()
@@ -536,44 +367,14 @@ public class FcmService {
 
         return builder.build();
     }
-
-    private void handleFailedTokens(List<String> tokens, BatchResponse response) {
-        List<SendResponse> responses = response.getResponses();
-
-        for (int i = 0; i < responses.size(); i++) {
-            SendResponse sendResponse = responses.get(i);
-
-            if (!sendResponse.isSuccessful()) {
-                String failedToken = tokens.get(i);
-                FirebaseMessagingException exception = sendResponse.getException();
-
-                if (exception != null) {
-                    handleFcmException(failedToken, exception);
-                }
-            }
-        }
-    }
-
-    private void handleFcmException(String token, FirebaseMessagingException e) {
-        MessagingErrorCode errorCode = e.getMessagingErrorCode();
-
-        // 유효하지 않은 토큰 삭제
-        if (errorCode == MessagingErrorCode.UNREGISTERED ||
-            errorCode == MessagingErrorCode.INVALID_ARGUMENT) {
-            log.warn("유효하지 않은 FCM 토큰 삭제: {}", token);
-            // deviceTokenRepository.deleteByToken(token);  // 주석 해제하여 사용
-        }
-
-        log.error("FCM 전송 실패: errorCode={}, token={}", errorCode, token, e);
-    }
 }
 ```
 
 ---
 
-## 7. 푸시 알림 전송 API
+## 6. 푸시 알림 전송 API
 
-### 7-1. 알림 컨트롤러 (테스트/관리용)
+### 6-1. 알림 컨트롤러
 
 ```java
 // src/main/java/com/team/peektime_api/domain/notification/controller/NotificationController.java
@@ -597,10 +398,9 @@ public class NotificationController {
 
     private final FcmService fcmService;
 
-    @Operation(summary = "테스트 알림 전송 (토큰 직접 지정)")
-    @PostMapping("/test")
-    public ResponseEntity<SuccessResponse<Void>> sendTestNotification(
-            @RequestParam String token,
+    @Operation(summary = "전체 사용자에게 알림 전송")
+    @PostMapping("/all")
+    public ResponseEntity<SuccessResponse<Void>> sendToAll(
             @RequestParam String title,
             @RequestParam String body) {
 
@@ -609,83 +409,56 @@ public class NotificationController {
                 .body(body)
                 .build();
 
-        fcmService.sendToToken(token, request);
+        fcmService.sendToAll(request);
         return ResponseEntity.ok(SuccessResponse.of(null));
     }
 }
 ```
 
-### 7-2. 비즈니스 로직에서 사용 예시
+### 6-2. 스케줄러에서 사용 예시
 
 ```java
-// 미션 완료 시 알림 전송 예시
-@Service
+// 특정 시간에 전체 알림 전송 예시
+@Component
 @RequiredArgsConstructor
-public class MissionService {
+public class NotificationScheduler {
 
     private final FcmService fcmService;
 
-    public void completeMission(Long userId, Long missionId) {
-        // ... 미션 완료 로직
-
-        // 푸시 알림 전송
+    @Scheduled(cron = "0 0 9 * * *")  // 매일 오전 9시
+    public void sendDailyMissionNotification() {
         PushNotificationRequest notification = PushNotificationRequest.builder()
-                .title("미션 완료!")
-                .body("오늘의 미션을 완료했습니다. 수고했어요!")
-                .data(Map.of(
-                        "type", "MISSION_COMPLETE",
-                        "missionId", String.valueOf(missionId)
-                ))
+                .title("오늘의 미션이 도착했어요!")
+                .body("지금 바로 확인해보세요")
+                .data(Map.of("type", "DAILY_MISSION"))
                 .build();
 
-        fcmService.sendToUser(userId, notification);
+        fcmService.sendToAll(notification);
     }
 }
 ```
 
 ---
 
-## 8. 테스트 방법
+## 7. 테스트 방법
 
-### 8-1. FCM 토큰 얻기 (iOS)
+### 7-1. Swagger에서 테스트
 
-```swift
-import FirebaseMessaging
+`/api/v1/notifications/all` - 전체 알림 전송
 
-Messaging.messaging().token { token, error in
-    if let token = token {
-        print("FCM Token: \(token)")
-        // 서버에 토큰 등록 API 호출
-    }
-}
-```
-
-### 8-2. Swagger에서 테스트
-
-1. `/api/v1/fcm-token` - FCM 토큰 등록
-2. `/api/v1/notifications/test` - 테스트 알림 전송
-
-### 8-3. cURL로 테스트
+### 7-2. cURL로 테스트
 
 ```bash
-# FCM 토큰 등록
-curl -X POST http://localhost:8080/api/v1/fcm-token \
-  -H "Authorization: Bearer {JWT_TOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "token": "FCM_DEVICE_TOKEN"
-  }'
-
-# 테스트 알림 전송
-curl -X POST "http://localhost:8080/api/v1/notifications/test?token=FCM_DEVICE_TOKEN&title=테스트&body=알림입니다"
+# 전체 알림 전송
+curl -X POST "http://localhost:8080/api/v1/notifications/all?title=테스트&body=알림입니다"
 ```
 
-### 8-4. Firebase Console에서 테스트
+### 7-3. Firebase Console에서 테스트
 
 1. Firebase Console > **Cloud Messaging** 메뉴
 2. **"새 알림"** 클릭
 3. 알림 제목/내용 입력
-4. 타겟: 단일 기기 선택 후 FCM 토큰 입력
+4. 타겟: **Topic** 선택 → `all_users` 입력
 5. 전송
 
 ---
@@ -698,9 +471,8 @@ curl -X POST "http://localhost:8080/api/v1/notifications/test?token=FCM_DEVICE_T
 - [ ] .gitignore에 키 파일 제외 추가
 - [ ] Firebase Admin SDK 의존성 추가
 - [ ] FcmConfig 설정 클래스 구현
-- [ ] User 엔티티에 fcmToken 필드 추가
-- [ ] FCM 토큰 등록 API 구현
-- [ ] FcmService 구현
+- [ ] FcmService 구현 (Topic 전송)
+- [ ] iOS에서 Topic 구독 구현
 - [ ] 테스트 알림 전송 확인
 
 ---
@@ -708,5 +480,5 @@ curl -X POST "http://localhost:8080/api/v1/notifications/test?token=FCM_DEVICE_T
 ## 참고 자료
 
 - [Firebase Admin SDK 문서](https://firebase.google.com/docs/admin/setup)
+- [FCM Topic 메시징](https://firebase.google.com/docs/cloud-messaging/topic-messaging)
 - [FCM 서버 가이드](https://firebase.google.com/docs/cloud-messaging/server)
-- [FCM HTTP v1 API](https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages)

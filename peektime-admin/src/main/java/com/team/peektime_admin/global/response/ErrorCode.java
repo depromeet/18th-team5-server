@@ -19,7 +19,10 @@ public enum ErrorCode {
     MISSION_ALREADY_ASSIGNED(HttpStatus.CONFLICT, "MISSION_409", "이미 배정된 미션입니다"),
 
     // 절기
-    SOLAR_TERM_NOT_FOUND(HttpStatus.NOT_FOUND, "SOLAR_TERM_404", "절기를 찾을 수 없습니다");
+    SOLAR_TERM_NOT_FOUND(HttpStatus.NOT_FOUND, "SOLAR_TERM_404", "절기를 찾을 수 없습니다"),
+
+    // 통계
+    DUPLICATE_MISSION_LOG(HttpStatus.CONFLICT, "STATS_409", "이미 존재하는 미션 로그입니다");
 
     private final HttpStatus httpStatus;
     private final String code;

@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.peektime_api.global.infra.admin.AdminClient;
 import com.team.peektime_api.global.outbox.SendResult;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
-import com.team.peektime_api.global.outbox.SendResult.AlreadyProcessed;
+import com.team.peektime_api.global.outbox.SendResult.PermanentFailure;
 import com.team.peektime_api.global.outbox.SendResult.Success;
-import com.team.peektime_api.global.outbox.SendResult.Unknown;
+import com.team.peektime_api.global.outbox.SendResult.TransientFailure;
 import com.team.peektime_api.global.outbox.entity.OutboxEvent;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
@@ -61,11 +61,12 @@ public class OutboxPoller {
 
             if (result instanceof Success s) {
                 toDelete.add(s.eventId());
-            } else if (result instanceof AlreadyProcessed a) {
-                toDelete.add(a.eventId());
-            } else if (result instanceof Unknown u) {
+            } else if (result instanceof PermanentFailure pf) {
+                toDelete.add(pf.eventId());
+                log.warn("Outbox 영구 실패 (삭제): id={}, reason={}", pf.eventId(), pf.reason());
+            } else if (result instanceof TransientFailure tf) {
                 unknownCount++;
-                log.warn("Outbox 결과 알 수 없음: id={}, reason={}", u.eventId(), u.reason());
+                log.warn("Outbox 일시 실패 (재시도 대기): id={}, reason={}", tf.eventId(), tf.reason());
             }
         }
 
@@ -95,7 +96,8 @@ public class OutboxPoller {
             return adminClient.sendMissionLogWithResult(payload, event.getId());
 
         } catch (Exception e) {
-            return new Unknown(event.getId(), e.getMessage());
+            // 파싱 실패 등은 영구 실패로 처리
+            return new PermanentFailure(event.getId(), e.getMessage());
         }
     }
 

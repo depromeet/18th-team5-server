@@ -1,5 +1,6 @@
 package com.team.peektime_api.global.outbox.scheduler.v3;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import com.team.peektime_api.global.infra.admin.AdminClient;
@@ -73,9 +74,12 @@ public class OutboxConsumer {
 
         return switch (result) {
             case SendResult.Success s -> deleteEvent(s.eventId());
-            case SendResult.AlreadyProcessed a -> deleteEvent(a.eventId());
-            case SendResult.Unknown u -> {
-                log.warn("[V3] 재시도 대기: id={}, reason={}", u.eventId(), u.reason());
+            case SendResult.PermanentFailure pf -> {
+                log.warn("[V3] 영구 실패 (삭제): id={}, reason={}", pf.eventId(), pf.reason());
+                yield deleteEvent(pf.eventId());
+            }
+            case SendResult.TransientFailure tf -> {
+                log.warn("[V3] 일시 실패 (재시도 대기): id={}, reason={}", tf.eventId(), tf.reason());
                 yield false;
             }
         };
@@ -88,9 +92,10 @@ public class OutboxConsumer {
 
             return adminClient.sendMissionLogWithResult(payload, event.getId());
 
-        } catch (Exception e) {
-            log.error("[V3] payload 파싱 실패: id={}", event.getId());
-            return new SendResult.AlreadyProcessed(event.getId());
+        } catch (JsonProcessingException e) {
+            // 파싱 실패는 재시도해도 같은 결과 → 영구 실패
+            log.error("[V3] payload 파싱 실패 (영구 실패): id={}, error={}", event.getId(), e.getMessage());
+            return new SendResult.PermanentFailure(event.getId(), "payload 파싱 실패");
         }
     }
 

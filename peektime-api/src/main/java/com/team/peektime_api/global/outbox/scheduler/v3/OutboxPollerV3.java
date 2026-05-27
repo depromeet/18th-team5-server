@@ -33,10 +33,10 @@ public class OutboxPollerV3 {
     public void poll() {
         log.info("[V3] Outbox 폴링 시작");
 
-        // 1. 장전 (락 잡은 인스턴스만 실행)
-        producer.loadEventsToRedis();
+        // 1. 장전 (Producer면 장전, 아니면 대기)
+        producer.loadEventsToRedisWithSync();
 
-        // 2. 소비 (모든 인스턴스가 병렬 처리)
+        // 2. 소비 (모든 인스턴스가 동시에 병렬 처리)
         consumer.consumeAll();
 
         log.info("[V3] Outbox 폴링 완료");

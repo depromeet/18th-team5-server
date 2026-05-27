@@ -5,6 +5,7 @@ import com.team.peektime_api.domain.mission.dto.RecommendedMissionResponse.Heade
 import com.team.peektime_api.domain.mission.dto.RecommendedMissionResponse.MissionItem;
 import com.team.peektime_api.domain.mission.entity.RecommendedMissionPool;
 import com.team.peektime_api.domain.mission.repository.RecommendedMissionPoolRepository;
+import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
 import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
 import com.team.peektime_api.domain.user.entity.UserOnboarding;
@@ -30,6 +31,7 @@ public class RecommendedMissionService {
     private final UserOnboardingRepository userOnboardingRepository;
     private final SolarTermRepository solarTermRepository;
     private final RecommendedMissionPoolRepository recommendedMissionPoolRepository;
+    private final UserMissionCompletionRepository userMissionCompletionRepository;
 
     public RecommendedMissionResponse getRecommendedMissions(Long userId) {
         UserOnboarding onboarding = userOnboardingRepository.findByUserId(userId)
@@ -55,7 +57,7 @@ public class RecommendedMissionService {
                 onboarding.getEnjoyTypeThird()
         );
 
-        List<MissionItem> missions = sortByPriority(pools, priority);
+        List<MissionItem> missions = sortByPriority(pools, priority, userId);
 
         HeaderInfo header = HeaderInfo.of(
                 onboarding.getUserType().getLabel(),
@@ -65,7 +67,7 @@ public class RecommendedMissionService {
         return new RecommendedMissionResponse(header, missions);
     }
 
-    private List<MissionItem> sortByPriority(List<RecommendedMissionPool> pools, List<EnjoyType> priority) {
+    private List<MissionItem> sortByPriority(List<RecommendedMissionPool> pools, List<EnjoyType> priority, Long userId) {
         Map<EnjoyType, List<RecommendedMissionPool>> grouped = new LinkedHashMap<>();
         for (RecommendedMissionPool pool : pools) {
             grouped.computeIfAbsent(pool.getMission().getEnjoyType(), k -> new ArrayList<>()).add(pool);
@@ -76,7 +78,9 @@ public class RecommendedMissionService {
 
         for (EnjoyType enjoyType : priority) {
             for (RecommendedMissionPool pool : grouped.getOrDefault(enjoyType, List.of())) {
-                result.add(MissionItem.from(pool, order++));
+                boolean isCompleted = userMissionCompletionRepository
+                        .existsByUser_IdAndMission_Id(userId, pool.getMission().getId());
+                result.add(MissionItem.from(pool, order++, isCompleted));
             }
         }
 

@@ -34,4 +34,28 @@ public class NotificationController {
         fcmService.sendToAll(request);
         return ResponseEntity.ok(SuccessResponse.ok());
     }
+
+    @Operation(summary = "오늘의 미션 알림 전송 (daily_mission 토픽 구독자에게만)")
+    @PostMapping("/daily-mission")
+    public ResponseEntity<SuccessResponse<Void>> sendDailyMissionNotification() {
+        fcmService.sendDailyMissionNotification();
+        return ResponseEntity.ok(SuccessResponse.ok());
+    }
+
+    @Operation(summary = "절기 마지막 날 알림 전송 (solar_term_end 토픽 구독자에게만)")
+    @PostMapping("/solar-term-end")
+    public ResponseEntity<SuccessResponse<Void>> sendSolarTermEndNotification(
+            @RequestParam String solarTermName) {
+        fcmService.sendSolarTermEndNotification(solarTermName);
+        return ResponseEntity.ok(SuccessResponse.ok());
+    }
+
+    @Operation(summary = "절기 변경 알림 전송 (solar_term_change 토픽 구독자에게만)")
+    @PostMapping("/solar-term-change")
+    public ResponseEntity<SuccessResponse<Void>> sendSolarTermChangeNotification(
+            @RequestParam String solarTermName,
+            @RequestParam(required = false, defaultValue = "새로운 절기가 시작되었어요") String description) {
+        fcmService.sendSolarTermChangeNotification(solarTermName, description);
+        return ResponseEntity.ok(SuccessResponse.ok());
+    }
 }

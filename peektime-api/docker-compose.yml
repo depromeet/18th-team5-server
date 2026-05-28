@@ -1,25 +1,4 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: peektime-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "3306:3306"
-    volumes:
-      - ./mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    networks:
-      - peektime-network
-    restart: always
-
   redis:
     image: redis:7
     container_name: peektime-redis
@@ -37,7 +16,7 @@ services:
     restart: always
 
   api-blue:
-    image: ${ECR_REGISTRY}/peaktime:${IMAGE_TAG:-latest}
+    image: 976972138580.dkr.ecr.ap-northeast-2.amazonaws.com/peaktime:${IMAGE_TAG:-latest}
     container_name: peektime-api-blue
     environment:
       - SPRING_PROFILES_ACTIVE=prod
@@ -51,11 +30,9 @@ services:
     depends_on:
       redis:
         condition: service_healthy
-      mysql:
-        condition: service_healthy
 
   api-green:
-    image: ${ECR_REGISTRY}/peaktime:${IMAGE_TAG:-latest}
+    image: 976972138580.dkr.ecr.ap-northeast-2.amazonaws.com/peaktime:${IMAGE_TAG:-latest}
     container_name: peektime-api-green
     environment:
       - SPRING_PROFILES_ACTIVE=prod
@@ -68,8 +45,6 @@ services:
       - peektime-network
     depends_on:
       redis:
-        condition: service_healthy
-      mysql:
         condition: service_healthy
 
   nginx:

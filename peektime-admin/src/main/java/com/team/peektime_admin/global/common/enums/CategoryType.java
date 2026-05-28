@@ -15,3 +15,13 @@ public enum CategoryType {
     private final String label;
     private final String description;
 }
+
+
+/**
+ *
+ * 기록 -> 컨텐츠: ENUM 이름도 바껴야함
+ * 감각 -> 음악 : ENUM 이름도 바껴야한다.
+ * LLM 한테 요청 받을때도 전부 수정해줘야한다.
+ * 수정된 ENUM 으로 받도록 수정해야한다.
+ *
+ */

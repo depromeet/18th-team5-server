@@ -27,7 +27,7 @@ server:
   port: ${SERVER_PORT:8081}
 
 api:
-  base-url: http://13.124.36.181
+  base-url: ${API_BASE_URL}
 
 admin:
   username: ${ADMIN_USERNAME}

@@ -1,6 +1,6 @@
 services:
   admin-blue:
-    image: 976972138580.dkr.ecr.ap-northeast-2.amazonaws.com/peaktime-admin:${IMAGE_TAG:-latest}
+    image: ${ECR_REGISTRY}/peaktime-admin:${IMAGE_TAG:-latest}
     container_name: peektime-admin-blue
     environment:
       - SPRING_PROFILES_ACTIVE=prod
@@ -13,7 +13,7 @@ services:
       - peektime-admin-network
 
   admin-green:
-    image: 976972138580.dkr.ecr.ap-northeast-2.amazonaws.com/peaktime-admin:${IMAGE_TAG:-latest}
+    image: ${ECR_REGISTRY}/peaktime-admin:${IMAGE_TAG:-latest}
     container_name: peektime-admin-green
     environment:
       - SPRING_PROFILES_ACTIVE=prod

@@ -37,7 +37,7 @@ class MissionGenerationServiceTest {
             assertThat(mission.getTitle()).isNotBlank();
             assertThat(mission.getSpaceType()).isIn("INDOOR", "OUTDOOR");
             assertThat(mission.getCompanionType()).isIn("SOLO", "TOGETHER");
-            assertThat(mission.getCategoryType()).isIn("FOOD", "NATURE", "RECORD", "PLACE", "SENSE");
+            assertThat(mission.getCategoryType()).isIn("FOOD", "NATURE", "CONTENT", "PLACE", "MUSIC");
         });
     }
 }

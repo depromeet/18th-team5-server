@@ -26,9 +26,9 @@ public class MissionPromptTemplate {
             ### 3. 카테고리 (categoryType)
             - FOOD: 음식 관련 미션
             - NATURE: 자연 관련 미션
-            - RECORD: 기록 관련 미션
+            - CONTENT: 사진, 일기 등 기록/콘텐츠 관련 미션
             - PLACE: 장소 관련 미션
-            - SENSE: 감각 관련 미션
+            - MUSIC: 음악 관련 미션
 
             ### 4. 즐기는 방식 (enjoyType)
             - NATURE_OUTDOOR: 자연이나 야외에서 즐기는 활동
@@ -54,7 +54,7 @@ public class MissionPromptTemplate {
                   "description": "미션 설명 (50자 이내)",
                   "spaceType": "INDOOR 또는 OUTDOOR",
                   "companionType": "SOLO 또는 TOGETHER",
-                  "categoryType": "FOOD, NATURE, RECORD, PLACE, SENSE 중 하나",
+                  "categoryType": "FOOD, NATURE, CONTENT, PLACE, MUSIC 중 하나",
                   "enjoyType": "NATURE_OUTDOOR, SEASONAL_FOOD, CULTURE_CONTENT 중 하나",
                   "userType": "EXPLORER, WALKER, LIFE_CREATOR, AESTHETE 중 하나"
                 }

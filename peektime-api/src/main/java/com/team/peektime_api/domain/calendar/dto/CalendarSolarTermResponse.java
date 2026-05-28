@@ -6,6 +6,7 @@ import java.util.List;
 public record CalendarSolarTermResponse(
 
         List<SolarTermEntry> solarTerms,
+        Long prevSolarTermId,
         Long nextSolarTermId
 ) {
 

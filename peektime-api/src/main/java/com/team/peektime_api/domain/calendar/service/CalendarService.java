@@ -75,12 +75,17 @@ public class CalendarService {
                 })
                 .toList();
 
+        Long firstId = solarTerms.get(0).getId();
         Long lastId = solarTerms.get(solarTerms.size() - 1).getId();
+
+        Long prevSolarTermId = solarTermRepository.findPrevBefore(firstId)
+                .map(SolarTerm::getId)
+                .orElse(null);
         Long nextSolarTermId = solarTermRepository.findNextAfter(lastId)
                 .map(SolarTerm::getId)
                 .orElse(null);
 
-        return new CalendarSolarTermResponse(entries, nextSolarTermId);
+        return new CalendarSolarTermResponse(entries, prevSolarTermId, nextSolarTermId);
     }
 
     @Transactional(readOnly = true)
@@ -116,14 +121,6 @@ public class CalendarService {
         long freeCount = userRecordRepository.countByUser_IdAndRecordDate(userId, date);
         if (freeCount >= CalendarCardPolicy.MAX_FREE) {
             throw new BusinessException(ErrorCode.CALENDAR_FREE_RECORD_LIMIT_EXCEEDED);
-        }
-
-        long completionCount = completionRepository.findByUserIdAndDateRange(
-                userId, date.atStartOfDay(), date.atTime(23, 59, 59)
-        ).size();
-
-        if (completionCount + freeCount >= CalendarCardPolicy.MAX_TOTAL) {
-            throw new BusinessException(ErrorCode.CALENDAR_TOTAL_CARD_LIMIT_EXCEEDED);
         }
 
         UserRecord saved = userRecordRepository.save(

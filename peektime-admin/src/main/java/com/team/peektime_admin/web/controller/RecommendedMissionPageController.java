@@ -52,6 +52,13 @@ public class RecommendedMissionPageController {
         UserType selectedUserType = UserType.valueOf(userType);
         model.addAttribute("selectedUserType", userType);
 
+        // 기본값 설정 (null 방지)
+        model.addAttribute("natureOutdoorMissions", Collections.emptyList());
+        model.addAttribute("seasonalFoodMissions", Collections.emptyList());
+        model.addAttribute("emotionalContentMissions", Collections.emptyList());
+        model.addAttribute("totalCount", 0L);
+        model.addAttribute("userTypeStats", Collections.emptyMap());
+
         if (currentTerm != null) {
             model.addAttribute("currentTerm", currentTerm);
             model.addAttribute("selectedSolarTermId", currentTerm.getId());

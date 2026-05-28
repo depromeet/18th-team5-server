@@ -32,7 +32,13 @@ public class MissionBulkService {
         List<Mission> missions = missionRepository.findAllById(missionIds);
 
         for (Mission mission : missions) {
-            // 이미 해당 절기에 오늘의 미션으로 등록되어 있는지 확인
+            // 추천미션으로 이미 배정된 경우 오늘의 미션 배정 불가
+            boolean isInRecommendedMission = recommendedMissionPoolRepository.existsByMissionId(mission.getId());
+            if (isInRecommendedMission) {
+                continue;
+            }
+
+            // 이미 오늘의 미션으로 등록되어 있는지 확인
             boolean alreadyExists = dailyMissionRepository.existsByMissionId(mission.getId());
             if (!alreadyExists) {
                 DailyMission dailyMission = DailyMission.builder()
@@ -54,7 +60,13 @@ public class MissionBulkService {
         List<Mission> missions = missionRepository.findAllById(missionIds);
 
         for (Mission mission : missions) {
-            // 이미 해당 절기+사용자타입에 추천 미션으로 등록되어 있는지 확인
+            // 오늘의 미션으로 이미 배정된 경우 추천미션 배정 불가
+            boolean isInDailyMission = dailyMissionRepository.existsByMissionId(mission.getId());
+            if (isInDailyMission) {
+                continue;
+            }
+
+            // 이미 추천 미션으로 등록되어 있는지 확인
             boolean alreadyExists = recommendedMissionPoolRepository.existsByMissionId(mission.getId());
             if (!alreadyExists) {
                 RecommendedMissionPool recommendedMission = RecommendedMissionPool.builder()

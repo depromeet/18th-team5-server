@@ -242,19 +242,19 @@
         <div class="user-type-tabs">
             <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='EXPLORER')}"
                class="type-tab" th:classappend="${selectedUserType == 'EXPLORER'} ? 'active'">
-                🏔️ 자연 탐험가
+                🏔️ 제철을 쫓는 탐험가
             </a>
             <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='WALKER')}"
                class="type-tab" th:classappend="${selectedUserType == 'WALKER'} ? 'active'">
-                🚶 동네 산책러
+                🚶 일상 속 제철 산책가
             </a>
             <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='LIFE_CREATOR')}"
                class="type-tab" th:classappend="${selectedUserType == 'LIFE_CREATOR'} ? 'active'">
-                🍽️ 제철 미식가
+                🎨 제철을 채우는 라이프 크리에이터
             </a>
             <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='AESTHETE')}"
                class="type-tab" th:classappend="${selectedUserType == 'AESTHETE'} ? 'active'">
-                👀 일상 관찰자
+                ☕ 제철을 음미하는 감상가
             </a>
         </div>
 

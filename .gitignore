@@ -49,3 +49,8 @@ peektime-admin/src/test/resources/application.yml
 ### H2 Database ###
 *.mv.db
 *.trace.db
+
+### Firebase ###
+**/firebase/*.json
+**/firebase-service-account.json
+*firebase-adminsdk*.json

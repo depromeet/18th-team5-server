@@ -52,6 +52,10 @@ public class DailyMissionPageController {
                     .orElse(solarTerms.get(0));
         }
 
+        // 기본값 설정 (null 방지)
+        model.addAttribute("pendingMissions", Collections.emptyList());
+        model.addAttribute("dateSlots", Collections.emptyList());
+
         if (currentTerm != null) {
             model.addAttribute("currentTerm", currentTerm);
             model.addAttribute("selectedSolarTermId", currentTerm.getId());

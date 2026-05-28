@@ -25,16 +25,24 @@ public class MissionBulkController {
     @PostMapping("/bulk/daily")
     public ResponseEntity<Map<String, String>> moveToDailyMission(
             @RequestBody BulkDailyMissionRequest request) {
-        missionBulkService.moveToDailyMission(request.getMissionIds(), request.getSolarTermId());
-        return ResponseEntity.ok(Map.of("message", "오늘의미션으로 이동되었습니다."));
+        try {
+            missionBulkService.moveToDailyMission(request.getMissionIds(), request.getSolarTermId());
+            return ResponseEntity.ok(Map.of("message", "오늘의미션으로 이동되었습니다."));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PostMapping("/bulk/recommended")
     public ResponseEntity<Map<String, String>> moveToRecommendedMission(
             @RequestBody BulkRecommendedMissionRequest request) {
-        missionBulkService.moveToRecommendedMission(
-                request.getMissionIds(), request.getSolarTermId(), request.getUserType());
-        return ResponseEntity.ok(Map.of("message", "추천미션으로 이동되었습니다."));
+        try {
+            missionBulkService.moveToRecommendedMission(
+                    request.getMissionIds(), request.getSolarTermId(), request.getUserType());
+            return ResponseEntity.ok(Map.of("message", "추천미션으로 이동되었습니다."));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PostMapping("/bulk/delete")
@@ -76,7 +84,6 @@ public class MissionBulkController {
                 request.getTitle(),
                 request.getDescription(),
                 request.getSpaceType(),
-                request.getIntensityType(),
                 request.getCategoryType(),
                 request.getCompanionType(),
                 request.getEnjoyType(),

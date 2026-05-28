@@ -49,7 +49,7 @@ public class CalendarController {
                 calendarService.getSolarTermCalendar(principal.getUserId(), solarTermId));
     }
 
-    @Operation(summary = "날짜별 기록 조회", description = "특정 날짜의 모든 기록 카드를 반환합니다. date는 yyyy-MM-dd 형식으로 전달합니다. (예: 2026-05-26) 최대 5개이며 DAILY > RECOMMENDED > SELECTED > FREE 순으로 정렬됩니다.")
+    @Operation(summary = "날짜별 기록 조회", description = "특정 날짜의 모든 기록 카드를 반환합니다. date는 yyyy-MM-dd 형식으로 전달합니다. (예: 2026-05-26) 타입별 최대 개수: DAILY 1개, SELECTED 1개, FREE 1개, RECOMMENDED 3개 (총 최대 6개). DAILY > RECOMMENDED > SELECTED > FREE 순으로 정렬됩니다.")
     @GetMapping("/records/{date}")
     public SuccessResponse<List<CalendarCardResponse>> getDayRecords(
             @AuthenticationPrincipal UserPrincipal principal,
@@ -59,7 +59,7 @@ public class CalendarController {
                 calendarService.getDayRecords(principal.getUserId(), date));
     }
 
-    @Operation(summary = "자유 기록 추가", description = "특정 날짜에 자유 기록을 추가합니다. 하루 1개 제한, 전체 5개 초과 시 409 반환.")
+    @Operation(summary = "자유 기록 추가", description = "특정 날짜에 자유 기록을 추가합니다. 하루 1개 제한, 초과 시 409 반환.")
     @PostMapping("/records")
     public SuccessResponse<CalendarRecordCreateResponse> createFreeRecord(
             @AuthenticationPrincipal UserPrincipal principal,

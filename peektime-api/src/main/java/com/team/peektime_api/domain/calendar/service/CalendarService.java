@@ -118,14 +118,6 @@ public class CalendarService {
             throw new BusinessException(ErrorCode.CALENDAR_FREE_RECORD_LIMIT_EXCEEDED);
         }
 
-        long completionCount = completionRepository.findByUserIdAndDateRange(
-                userId, date.atStartOfDay(), date.atTime(23, 59, 59)
-        ).size();
-
-        if (completionCount + freeCount >= CalendarCardPolicy.MAX_TOTAL) {
-            throw new BusinessException(ErrorCode.CALENDAR_TOTAL_CARD_LIMIT_EXCEEDED);
-        }
-
         UserRecord saved = userRecordRepository.save(
                 UserRecord.create(user, date, request.objectKey(), request.memo())
         );

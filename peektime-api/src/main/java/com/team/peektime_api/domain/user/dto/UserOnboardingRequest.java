@@ -5,8 +5,10 @@ import com.team.peektime_api.global.common.enums.ActivityStyleType;
 import com.team.peektime_api.global.common.enums.SpaceType;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
+@Setter
 public class UserOnboardingRequest {
 
     @NotNull

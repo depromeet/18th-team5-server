@@ -1,8 +1,8 @@
 package com.team.peektime_api.domain.user.entity;
 
 import com.team.peektime_api.global.common.BaseEntity;
+import com.team.peektime_api.global.common.enums.ActivityStyleType;
 import com.team.peektime_api.global.common.enums.EnjoyType;
-import com.team.peektime_api.global.common.enums.IntensityType;
 import com.team.peektime_api.global.common.enums.SpaceType;
 import com.team.peektime_api.global.common.enums.UserType;
 import jakarta.persistence.*;
@@ -32,10 +32,10 @@ public class UserOnboarding extends BaseEntity {
     @Column(name = "space_type", nullable = false, columnDefinition = "VARCHAR(50)")
     private SpaceType spaceType;
 
-    // 2번 질문: 계절 활동, 어떤 방식이 더 잘 맞아요?
+    // 2번 질문: 시간내서 적극적으로 vs 일상 안에서 부담없이
     @Enumerated(EnumType.STRING)
-    @Column(name = "intensity_type", nullable = false, columnDefinition = "VARCHAR(50)")
-    private IntensityType intensityType;
+    @Column(name = "activity_style_type", nullable = false, columnDefinition = "VARCHAR(50)")
+    private ActivityStyleType activityStyleType;
 
     // 3번 질문: 계절을 주로 어떻게 즐기는 편이에요? (우선순위)
     @Enumerated(EnumType.STRING)
@@ -56,36 +56,36 @@ public class UserOnboarding extends BaseEntity {
     private UserType userType;
 
     @Builder
-    public UserOnboarding(User user, SpaceType spaceType, IntensityType intensityType,
+    public UserOnboarding(User user, SpaceType spaceType, ActivityStyleType activityStyleType,
                           EnjoyType enjoyTypeFirst, EnjoyType enjoyTypeSecond, EnjoyType enjoyTypeThird) {
         this.user = user;
         this.spaceType = spaceType;
-        this.intensityType = intensityType;
+        this.activityStyleType = activityStyleType;
         this.enjoyTypeFirst = enjoyTypeFirst;
         this.enjoyTypeSecond = enjoyTypeSecond;
         this.enjoyTypeThird = enjoyTypeThird;
-        this.userType = determineUserType(spaceType, intensityType);
+        this.userType = determineUserType(spaceType, activityStyleType);
     }
 
-    private UserType determineUserType(SpaceType space, IntensityType intensity) {
-        if (space == SpaceType.OUTDOOR && intensity == IntensityType.ACTIVE) {
+    private UserType determineUserType(SpaceType space, ActivityStyleType activityStyle) {
+        if (space == SpaceType.OUTDOOR && activityStyle == ActivityStyleType.ACTIVE) {
             return UserType.EXPLORER;
         } else if (space == SpaceType.OUTDOOR) {
             return UserType.WALKER;
-        } else if (intensity == IntensityType.ACTIVE) {
+        } else if (activityStyle == ActivityStyleType.ACTIVE) {
             return UserType.LIFE_CREATOR;
         } else {
             return UserType.AESTHETE;
         }
     }
 
-    public void update(SpaceType spaceType, IntensityType intensityType,
+    public void update(SpaceType spaceType, ActivityStyleType activityStyleType,
                        EnjoyType enjoyTypeFirst, EnjoyType enjoyTypeSecond, EnjoyType enjoyTypeThird) {
         this.spaceType = spaceType;
-        this.intensityType = intensityType;
+        this.activityStyleType = activityStyleType;
         this.enjoyTypeFirst = enjoyTypeFirst;
         this.enjoyTypeSecond = enjoyTypeSecond;
         this.enjoyTypeThird = enjoyTypeThird;
-        this.userType = determineUserType(spaceType, intensityType);
+        this.userType = determineUserType(spaceType, activityStyleType);
     }
 }

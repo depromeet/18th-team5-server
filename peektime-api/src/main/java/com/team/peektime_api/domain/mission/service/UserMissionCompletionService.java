@@ -9,14 +9,16 @@ import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
 import com.team.peektime_api.domain.mission.entity.DailyMission;
 import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
+import com.team.peektime_api.domain.mission.event.MissionCompletedEvent;
+import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import com.team.peektime_api.domain.mission.repository.DailyMissionRepository;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
+import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
+import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.S3Service;
-import com.team.peektime_api.domain.mission.event.MissionCompletedEvent;
-import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import com.team.peektime_api.global.infra.cache.RecentRecordsCacheRepository;
 import com.team.peektime_api.global.outbox.entity.OutboxEvent;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
@@ -37,6 +39,7 @@ public class UserMissionCompletionService {
 
     private final UserMissionCompletionRepository userMissionCompletionRepository;
     private final DailyMissionRepository dailyMissionRepository;
+    private final SolarTermRepository solarTermRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
     private final OutboxRepository outboxRepository;
@@ -50,21 +53,29 @@ public class UserMissionCompletionService {
         LocalDate today = LocalDate.now();
 
         DailyMission dailyMission = getDailyMission(missionId, today);
-
         Mission mission = dailyMission.getMission();
 
         validateSameMission(missionId, user);
 
-        UserMissionCompletion completion = saveMissionCompletion(request, user, mission);
-        
+        SolarTerm solarTerm = solarTermRepository.findById(request.solarTermId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
+
+        UserMissionCompletion completion = saveMissionCompletion(request, user, mission, solarTerm);
+
         updateRecentRecordsCache(userId, completion);
 
         dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
 
-        MissionLogPayload payload = createMissionLogPayload(missionId, request, user, completion);
+        MissionLogPayload payload = MissionLogPayload.of(
+                user.getDeviceUuid(),
+                missionId,
+                request.missionType(),
+                solarTerm.getId(),
+                completion.getCreatedAt()
+        );
         OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
         eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
-        
+
         return UserMissionCompletionResponse.from(completion);
     }
 
@@ -75,10 +86,9 @@ public class UserMissionCompletionService {
     }
 
     private DailyMission getDailyMission(Long missionId, LocalDate today) {
-        DailyMission dailyMission = dailyMissionRepository
+        return dailyMissionRepository
                 .findByMission_IdAndMissionDate(missionId, today)
                 .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_NOT_FOUND));
-        return dailyMission;
     }
 
     @Transactional(readOnly = true)
@@ -89,12 +99,12 @@ public class UserMissionCompletionService {
                 .toList();
     }
 
-    private UserMissionCompletion saveMissionCompletion(UserMissionCompletionRequest request, User user, Mission mission) {
-        UserMissionCompletion completion = userMissionCompletionRepository.save(
-                UserMissionCompletion.create(user, mission, request.missionType(),
+    private UserMissionCompletion saveMissionCompletion(UserMissionCompletionRequest request, User user,
+                                                        Mission mission, SolarTerm solarTerm) {
+        return userMissionCompletionRepository.save(
+                UserMissionCompletion.create(user, mission, solarTerm, request.missionType(),
                         request.objectKey(), request.memo())
         );
-        return completion;
     }
 
     private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {
@@ -108,18 +118,6 @@ public class UserMissionCompletionService {
         }
     }
 
-    private static MissionLogPayload createMissionLogPayload(Long missionId, UserMissionCompletionRequest request, User user, UserMissionCompletion completion) {
-        MissionLogPayload payload = MissionLogPayload.of(
-                user.getDeviceUuid(),
-                missionId,
-                request.missionType(),
-                request.solarTermId(),
-                completion.getCompletedAt()
-        );
-        return payload;
-    }
-
-
     private String toJson(MissionLogPayload payload) {
         try {
             return objectMapper.writeValueAsString(payload);
@@ -128,9 +126,6 @@ public class UserMissionCompletionService {
         }
     }
 
-
-
-    /* 완성된 미션 세부사항 조회 */
     private UserMissionCompletionDetailResponse toDetailResponse(UserMissionCompletion completion) {
         String presignedUrl = completion.getObjectKey() != null
                 ? s3Service.generatePresignedViewUrl(completion.getObjectKey())
@@ -144,4 +139,3 @@ public class UserMissionCompletionService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
     }
 }
-

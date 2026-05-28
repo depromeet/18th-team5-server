@@ -7,7 +7,10 @@ import com.team.peektime_admin.domain.mission.repository.DailyMissionRepository;
 import com.team.peektime_admin.domain.mission.repository.MissionRepository;
 import com.team.peektime_admin.domain.mission.repository.RecommendedMissionPoolRepository;
 import com.team.peektime_admin.domain.solarterm.repository.SolarTermRepository;
+import com.team.peektime_admin.global.common.enums.CategoryType;
+import com.team.peektime_admin.global.common.enums.EnjoyType;
 import com.team.peektime_admin.global.common.enums.MissionType;
+import com.team.peektime_admin.global.common.enums.SpaceType;
 import com.team.peektime_admin.global.common.enums.UserType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -38,15 +41,23 @@ public class MissionPageController {
 
     @GetMapping
     public String missionPool(
-            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String spaceType,
             @RequestParam(required = false) String categoryType,
+            @RequestParam(required = false) String enjoyType,
+            @RequestParam(required = false) String userType,
             @RequestParam(defaultValue = "0") int page,
             Model model
     ) {
         Pageable pageable = PageRequest.of(page, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
 
-        Page<Mission> missionPage = missionRepository.findAllByDeletedFalse(pageable);
+        // Enum 변환
+        SpaceType spaceTypeEnum = parseEnum(spaceType, SpaceType.class);
+        CategoryType categoryTypeEnum = parseEnum(categoryType, CategoryType.class);
+        EnjoyType enjoyTypeEnum = parseEnum(enjoyType, EnjoyType.class);
+        UserType userTypeEnum = parseEnum(userType, UserType.class);
+
+        Page<Mission> missionPage = missionRepository.findAllWithFilters(
+                spaceTypeEnum, categoryTypeEnum, enjoyTypeEnum, userTypeEnum, pageable);
         List<Mission> missions = missionPage.getContent();
 
         // 배정 상태 조회
@@ -59,15 +70,28 @@ public class MissionPageController {
         model.addAttribute("totalPages", missionPage.getTotalPages());
         model.addAttribute("currentPage", page);
 
-        model.addAttribute("keyword", keyword);
         model.addAttribute("spaceType", spaceType);
         model.addAttribute("categoryType", categoryType);
+        model.addAttribute("enjoyType", enjoyType);
+        model.addAttribute("userType", userType);
 
         model.addAttribute("solarTerms", solarTermRepository.findAll());
         model.addAttribute("userTypes", UserType.values());
+        model.addAttribute("enjoyTypes", EnjoyType.values());
         model.addAttribute("menu", "mission-pool");
 
         return "mission/pool";
+    }
+
+    private <T extends Enum<T>> T parseEnum(String value, Class<T> enumClass) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Enum.valueOf(enumClass, value);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private Map<Long, MissionType> getAssignmentMap(List<Long> missionIds) {

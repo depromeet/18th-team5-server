@@ -32,16 +32,15 @@ Authorization: Bearer {accessToken}
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| header | Object | 화면 상단 헤더 정보 |
-| header.title | String | 페이지 제목 (예: "제철을 쫓는 탐험가 입하 미션") |
-| header.subtitle | String | 페이지 부제목 (예: "입하에 어떤 기록을 남겨볼까요?") |
+| userType | String | 사용자 타입 (Enum) |
+| solarTerm | String | 현재 절기 이름 (예: "소만") |
 | missions | Array | 추천 미션 목록 (최대 15개, EnjoyType 우선순위 순 정렬) |
 | missions[].id | Long | 미션 ID |
 | missions[].title | String | 미션 제목 (~하기 형식) |
-| missions[].description | String | 미션 설명 (20자 이내) |
 | missions[].categoryType | String | 카테고리 타입 (Enum, 클라이언트 필터링용) |
 | missions[].enjoyType | String | EnjoyType (Enum) |
 | missions[].order | Int | 우선순위 기반 표시 순서 (1부터 시작) |
+| missions[].isCompleted | Boolean | 미션 완료 여부 |
 
 ### Response 예시
 
@@ -50,34 +49,32 @@ Authorization: Bearer {accessToken}
   "code": "MISSION_200_REC",
   "message": "추천 미션 조회 성공",
   "result": {
-    "header": {
-      "title": "제철을 쫓는 탐험가 입하 미션",
-      "subtitle": "입하에 어떤 기록을 남겨볼까요?"
-    },
+    "userType": "EXPLORER",
+    "solarTerm": "소만",
     "missions": [
       {
         "id": 12,
         "title": "나만의 여름 음료 만들기",
-        "description": "제철 과일로 음료 만들기",
         "categoryType": "FOOD",
         "enjoyType": "SEASONAL_FOOD",
-        "order": 1
+        "order": 1,
+        "isCompleted": false
       },
       {
         "id": 15,
         "title": "여름 플레이리스트 만들기",
-        "description": "계절에 어울리는 음악 모음",
         "categoryType": "MUSIC",
         "enjoyType": "CULTURE_CONTENT",
-        "order": 2
+        "order": 2,
+        "isCompleted": true
       },
       {
         "id": 18,
         "title": "초록빛 풍경 사진 찍기",
-        "description": "싱그러운 자연 담아보기",
         "categoryType": "CONTENT",
         "enjoyType": "NATURE_OUTDOOR",
-        "order": 3
+        "order": 3,
+        "isCompleted": false
       }
     ]
   }

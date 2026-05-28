@@ -24,6 +24,9 @@ public class Mission extends BaseEntity {
     @Column(name = "title", nullable = false, length = 100)
     private String title;
 
+
+
+    // 20자 이내로 받아야한다.
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
@@ -32,9 +35,15 @@ public class Mission extends BaseEntity {
     @Column(name = "space_type", nullable = false)
     private SpaceType spaceType;
 
+
+    /**
+     * 이 ENUM 은 제거되었다. LLM 한테 태그 받을때도 필요없다. 타임리프에서도 제거해야한다. 모든곳에서 제거바람.
+     */
     @Enumerated(EnumType.STRING)
     @Column(name = "intensity_type", nullable = false)
     private IntensityType intensityType;
+
+
 
     @Enumerated(EnumType.STRING)
     @Column(name = "category_type", nullable = false)
@@ -42,7 +51,7 @@ public class Mission extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "companion_type", nullable = false)
-    private CompanionType companionType = CompanionType.SOLO;
+    private CompanionType companionType;
 
     // 추천미션 분류용 태그
     @Enumerated(EnumType.STRING)

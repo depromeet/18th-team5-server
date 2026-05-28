@@ -1,7 +1,6 @@
 package com.team.peektime_api.domain.mission.service;
 
 import com.team.peektime_api.domain.mission.dto.RecommendedMissionResponse;
-import com.team.peektime_api.domain.mission.dto.RecommendedMissionResponse.HeaderInfo;
 import com.team.peektime_api.domain.mission.dto.RecommendedMissionResponse.MissionItem;
 import com.team.peektime_api.domain.mission.entity.RecommendedMissionPool;
 import com.team.peektime_api.domain.mission.repository.RecommendedMissionPoolRepository;
@@ -41,11 +40,7 @@ public class RecommendedMissionService {
                 .orElse(null);
 
         if (currentSolarTerm == null) {
-            HeaderInfo header = new HeaderInfo(
-                    onboarding.getUserType().getLabel() + " 미션",
-                    "지금 어떤 기록을 남겨볼까요?"
-            );
-            return new RecommendedMissionResponse(header, List.of());
+            return RecommendedMissionResponse.of(onboarding.getUserType(), null, List.of());
         }
 
         List<RecommendedMissionPool> pools = recommendedMissionPoolRepository
@@ -59,12 +54,7 @@ public class RecommendedMissionService {
 
         List<MissionItem> missions = sortByPriority(pools, priority, userId);
 
-        HeaderInfo header = HeaderInfo.of(
-                onboarding.getUserType().getLabel(),
-                currentSolarTerm.getName()
-        );
-
-        return new RecommendedMissionResponse(header, missions);
+        return RecommendedMissionResponse.of(onboarding.getUserType(), currentSolarTerm, missions);
     }
 
     private List<MissionItem> sortByPriority(List<RecommendedMissionPool> pools, List<EnjoyType> priority, Long userId) {

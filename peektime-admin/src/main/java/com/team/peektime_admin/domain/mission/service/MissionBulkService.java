@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -31,14 +32,21 @@ public class MissionBulkService {
 
         List<Mission> missions = missionRepository.findAllById(missionIds);
 
+        // 먼저 추천미션에 이미 배정된 미션이 있는지 확인
+        List<String> conflictingMissions = new ArrayList<>();
         for (Mission mission : missions) {
-            // 추천미션으로 이미 배정된 경우 오늘의 미션 배정 불가
-            boolean isInRecommendedMission = recommendedMissionPoolRepository.existsByMissionId(mission.getId());
-            if (isInRecommendedMission) {
-                continue;
+            if (recommendedMissionPoolRepository.existsByMissionId(mission.getId())) {
+                conflictingMissions.add(mission.getTitle());
             }
+        }
 
-            // 이미 오늘의 미션으로 등록되어 있는지 확인
+        if (!conflictingMissions.isEmpty()) {
+            throw new IllegalStateException(
+                    "다음 미션이 이미 추천미션으로 배정되어 있습니다: " + String.join(", ", conflictingMissions));
+        }
+
+        // 모든 검증 통과 후 배정 진행
+        for (Mission mission : missions) {
             boolean alreadyExists = dailyMissionRepository.existsByMissionId(mission.getId());
             if (!alreadyExists) {
                 DailyMission dailyMission = DailyMission.builder()
@@ -59,14 +67,21 @@ public class MissionBulkService {
 
         List<Mission> missions = missionRepository.findAllById(missionIds);
 
+        // 먼저 오늘의 미션에 이미 배정된 미션이 있는지 확인
+        List<String> conflictingMissions = new ArrayList<>();
         for (Mission mission : missions) {
-            // 오늘의 미션으로 이미 배정된 경우 추천미션 배정 불가
-            boolean isInDailyMission = dailyMissionRepository.existsByMissionId(mission.getId());
-            if (isInDailyMission) {
-                continue;
+            if (dailyMissionRepository.existsByMissionId(mission.getId())) {
+                conflictingMissions.add(mission.getTitle());
             }
+        }
 
-            // 이미 추천 미션으로 등록되어 있는지 확인
+        if (!conflictingMissions.isEmpty()) {
+            throw new IllegalStateException(
+                    "다음 미션이 이미 오늘의 미션으로 배정되어 있습니다: " + String.join(", ", conflictingMissions));
+        }
+
+        // 모든 검증 통과 후 배정 진행
+        for (Mission mission : missions) {
             boolean alreadyExists = recommendedMissionPoolRepository.existsByMissionId(mission.getId());
             if (!alreadyExists) {
                 RecommendedMissionPool recommendedMission = RecommendedMissionPool.builder()

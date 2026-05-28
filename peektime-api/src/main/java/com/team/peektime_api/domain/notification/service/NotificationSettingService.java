@@ -20,7 +20,6 @@ public class NotificationSettingService {
     private final NotificationSettingRepository notificationSettingRepository;
     private final UserRepository userRepository;
 
-    @Transactional(readOnly = true)
     public NotificationSettingResponse getSettings(Long userId) {
         NotificationSetting setting = notificationSettingRepository.findByUserId(userId)
                 .orElseGet(() -> createDefaultSetting(userId));

@@ -7,16 +7,15 @@ import com.team.peektime_api.global.common.enums.EnjoyType;
 import com.team.peektime_api.global.common.enums.UserType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.LocalDate;
 import java.util.List;
 
 @Schema(description = "추천 미션 응답")
 public record RecommendedMissionResponse(
-        @Schema(description = "사용자 타입")
+        @Schema(description = "사용자 타입", example = "EXPLORER")
         UserType userType,
 
-        @Schema(description = "현재 절기 정보")
-        SolarTermInfo solarTerm,
+        @Schema(description = "현재 절기 이름", example = "소만")
+        String solarTerm,
 
         @Schema(description = "추천 미션 목록")
         List<MissionItem> missions
@@ -25,37 +24,9 @@ public record RecommendedMissionResponse(
     public static RecommendedMissionResponse of(UserType userType, SolarTerm solarTerm, List<MissionItem> missions) {
         return new RecommendedMissionResponse(
                 userType,
-                solarTerm != null ? SolarTermInfo.from(solarTerm) : null,
+                solarTerm != null ? solarTerm.getName() : null,
                 missions
         );
-    }
-
-    @Schema(description = "절기 정보")
-    public record SolarTermInfo(
-            @Schema(description = "절기 ID")
-            Long id,
-
-            @Schema(description = "절기 이름")
-            String name,
-
-            @Schema(description = "절기 설명")
-            String description,
-
-            @Schema(description = "시작일")
-            LocalDate startDate,
-
-            @Schema(description = "종료일")
-            LocalDate endDate
-    ) {
-        public static SolarTermInfo from(SolarTerm solarTerm) {
-            return new SolarTermInfo(
-                    solarTerm.getId(),
-                    solarTerm.getName(),
-                    solarTerm.getDescription(),
-                    solarTerm.getStartDate(),
-                    solarTerm.getEndDate()
-            );
-        }
     }
 
     @Schema(description = "미션 항목")

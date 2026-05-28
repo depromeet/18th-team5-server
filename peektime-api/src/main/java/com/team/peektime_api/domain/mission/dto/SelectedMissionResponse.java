@@ -3,7 +3,6 @@ package com.team.peektime_api.domain.mission.dto;
 import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.global.common.enums.CategoryType;
 import com.team.peektime_api.global.common.enums.CompanionType;
-import com.team.peektime_api.global.common.enums.IntensityType;
 import com.team.peektime_api.global.common.enums.SpaceType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -26,9 +25,6 @@ public class SelectedMissionResponse {
     @Schema(description = "공간 타입")
     private SpaceType spaceType;
 
-    @Schema(description = "이동거리 타입")
-    private IntensityType intensityType;
-
     @Schema(description = "인원 타입")
     private CompanionType companionType;
 
@@ -41,7 +37,6 @@ public class SelectedMissionResponse {
                 .title(mission.getTitle())
                 .description(mission.getDescription())
                 .spaceType(mission.getSpaceType())
-                .intensityType(mission.getIntensityType())
                 .companionType(mission.getCompanionType())
                 .categoryType(mission.getCategoryType())
                 .build();

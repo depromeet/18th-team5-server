@@ -73,6 +73,12 @@
                 color: var(--gray-600);
             }
 
+            .mission-count.full {
+                background: #DCFCE7;
+                color: #16A34A;
+                font-weight: 600;
+            }
+
             .mission-list {
                 display: flex;
                 flex-direction: column;
@@ -242,19 +248,19 @@
         <div class="user-type-tabs">
             <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='EXPLORER')}"
                class="type-tab" th:classappend="${selectedUserType == 'EXPLORER'} ? 'active'">
-                🏔️ 자연 탐험가
+                🏔️ 제철을 쫓는 탐험가
             </a>
             <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='WALKER')}"
                class="type-tab" th:classappend="${selectedUserType == 'WALKER'} ? 'active'">
-                🚶 동네 산책러
+                🚶 일상 속 제철 산책가
             </a>
             <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='LIFE_CREATOR')}"
                class="type-tab" th:classappend="${selectedUserType == 'LIFE_CREATOR'} ? 'active'">
-                🍽️ 제철 미식가
+                🎨 제철을 채우는 라이프 크리에이터
             </a>
             <a th:href="@{/admin/recommended-missions(solarTermId=${selectedSolarTermId}, userType='AESTHETE')}"
                class="type-tab" th:classappend="${selectedUserType == 'AESTHETE'} ? 'active'">
-                👀 일상 관찰자
+                ☕ 제철을 음미하는 감상가
             </a>
         </div>
 
@@ -263,8 +269,10 @@
             <div class="enjoy-type-header">
                 <div class="enjoy-type-title">
                     <span style="font-size: 20px;">🌲</span>
-                    <h3>자연이나 야외 활동</h3>
-                    <span class="mission-count" th:text="${#lists.size(natureOutdoorMissions)} + '개'">0개</span>
+                    <h3>자연/야외 활동</h3>
+                    <span class="mission-count"
+                          th:classappend="${#lists.size(natureOutdoorMissions) >= 5} ? 'full'"
+                          th:text="${#lists.size(natureOutdoorMissions)} + ' / 5'">0 / 5</span>
                 </div>
             </div>
             <div class="mission-list" th:if="${not #lists.isEmpty(natureOutdoorMissions)}">
@@ -275,7 +283,7 @@
                         <div class="mission-item-tags">
                             <span class="tag tag-gray" th:text="${rmp.mission.categoryType?.label}">카테고리</span>
                             <span class="tag tag-gray" th:text="${rmp.mission.spaceType?.label}">공간</span>
-                            <span class="tag tag-gray" th:text="${rmp.mission.intensityType?.label}">강도</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.companionType?.shortLabel}">강도</span>
                         </div>
                     </div>
                     <button class="back-to-pool-btn" th:onclick="'removeFromRecommended(' + ${rmp.id} + ')'" title="미션풀로 되돌리기">풀로</button>
@@ -291,8 +299,10 @@
             <div class="enjoy-type-header">
                 <div class="enjoy-type-title">
                     <span style="font-size: 20px;">🍲</span>
-                    <h3>제철 음식이나 요리</h3>
-                    <span class="mission-count" th:text="${#lists.size(seasonalFoodMissions)} + '개'">0개</span>
+                    <h3>제철 음식/요리</h3>
+                    <span class="mission-count"
+                          th:classappend="${#lists.size(seasonalFoodMissions) >= 5} ? 'full'"
+                          th:text="${#lists.size(seasonalFoodMissions)} + ' / 5'">0 / 5</span>
                 </div>
             </div>
             <div class="mission-list" th:if="${not #lists.isEmpty(seasonalFoodMissions)}">
@@ -303,7 +313,7 @@
                         <div class="mission-item-tags">
                             <span class="tag tag-gray" th:text="${rmp.mission.categoryType?.label}">카테고리</span>
                             <span class="tag tag-gray" th:text="${rmp.mission.spaceType?.label}">공간</span>
-                            <span class="tag tag-gray" th:text="${rmp.mission.intensityType?.label}">강도</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.companionType?.shortLabel}">강도</span>
                         </div>
                     </div>
                     <button class="back-to-pool-btn" th:onclick="'removeFromRecommended(' + ${rmp.id} + ')'" title="미션풀로 되돌리기">풀로</button>
@@ -319,8 +329,10 @@
             <div class="enjoy-type-header">
                 <div class="enjoy-type-title">
                     <span style="font-size: 20px;">🎨</span>
-                    <h3>감성 콘텐츠나 문화</h3>
-                    <span class="mission-count" th:text="${#lists.size(emotionalContentMissions)} + '개'">0개</span>
+                    <h3>감성 콘텐츠/문화</h3>
+                    <span class="mission-count"
+                          th:classappend="${#lists.size(emotionalContentMissions) >= 5} ? 'full'"
+                          th:text="${#lists.size(emotionalContentMissions)} + ' / 5'">0 / 5</span>
                 </div>
             </div>
             <div class="mission-list" th:if="${not #lists.isEmpty(emotionalContentMissions)}">
@@ -331,7 +343,7 @@
                         <div class="mission-item-tags">
                             <span class="tag tag-gray" th:text="${rmp.mission.categoryType?.label}">카테고리</span>
                             <span class="tag tag-gray" th:text="${rmp.mission.spaceType?.label}">공간</span>
-                            <span class="tag tag-gray" th:text="${rmp.mission.intensityType?.label}">강도</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.companionType?.shortLabel}">강도</span>
                         </div>
                     </div>
                     <button class="back-to-pool-btn" th:onclick="'removeFromRecommended(' + ${rmp.id} + ')'" title="미션풀로 되돌리기">풀로</button>

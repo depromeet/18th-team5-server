@@ -7,7 +7,7 @@ spring:
     password: ${DB_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: false
   data:
     redis:
@@ -16,3 +16,6 @@ spring:
 
 admin:
   base-url: ${PROD_ADMIN_BASE_URL}
+
+firebase:
+  credentials: ${FIREBASE_CREDENTIALS}

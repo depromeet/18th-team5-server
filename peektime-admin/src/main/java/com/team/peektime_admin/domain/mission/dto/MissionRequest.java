@@ -14,7 +14,6 @@ public class MissionRequest {
     private String title;
     private String description;
     private SpaceType spaceType;
-    private IntensityType intensityType;
     private CompanionType companionType;
     private CategoryType categoryType;
     private EnjoyType enjoyType;

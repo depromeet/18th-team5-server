@@ -7,7 +7,6 @@ public record MissionSyncDto(
         String title,
         String description,
         SpaceType spaceType,
-        IntensityType intensityType,
         CategoryType categoryType,
         CompanionType companionType,
         EnjoyType enjoyType,

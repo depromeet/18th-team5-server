@@ -34,14 +34,14 @@ public class UserService {
 
         UserOnboarding onboarding = userOnboardingRepository.findByUserId(userId)
                 .map(existing -> {
-                    existing.update(request.getSpaceType(), request.getIntensityType(),
+                    existing.update(request.getSpaceType(), request.getActivityStyleType(),
                             request.getEnjoyTypeFirst(), request.getEnjoyTypeSecond(), request.getEnjoyTypeThird());
                     return existing;
                 })
                 .orElseGet(() -> userOnboardingRepository.save(UserOnboarding.builder()
                         .user(user)
                         .spaceType(request.getSpaceType())
-                        .intensityType(request.getIntensityType())
+                        .activityStyleType(request.getActivityStyleType())
                         .enjoyTypeFirst(request.getEnjoyTypeFirst())
                         .enjoyTypeSecond(request.getEnjoyTypeSecond())
                         .enjoyTypeThird(request.getEnjoyTypeThird())

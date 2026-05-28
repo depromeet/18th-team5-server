@@ -40,9 +40,17 @@ peektime-api/.env
 *.env
 **/application-local.yml
 peektime-admin/src/test/resources/application.yml
+
+### Firebase ###
+**/firebase/*.json
 ### Claude ###
 .claude/settings.local.json
 
 ### H2 Database ###
 *.mv.db
 *.trace.db
+
+### Firebase ###
+**/firebase/*.json
+**/firebase-service-account.json
+*firebase-adminsdk*.json

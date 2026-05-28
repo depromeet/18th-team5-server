@@ -1,5 +1,5 @@
 -- 2026년 24절기 데이터
-INSERT INTO solar_term (name, description, start_date, end_date, solar_year, created_at, updated_at) VALUES
+INSERT IGNORE INTO solar_term (name, description, start_date, end_date, solar_year, created_at, updated_at) VALUES
 ('소한', '작은 추위가 시작되는 시기', '2026-01-05', '2026-01-19', 2026, NOW(), NOW()),
 ('대한', '가장 추운 시기', '2026-01-20', '2026-02-03', 2026, NOW(), NOW()),
 ('입춘', '봄이 시작되는 시기', '2026-02-04', '2026-02-18', 2026, NOW(), NOW()),

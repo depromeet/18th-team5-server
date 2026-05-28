@@ -317,12 +317,6 @@
                     <option value="INDOOR" th:selected="${spaceType == 'INDOOR'}">실내</option>
                     <option value="OUTDOOR" th:selected="${spaceType == 'OUTDOOR'}">실외</option>
                 </select>
-                <select name="intensityType" class="form-select filter-select">
-                    <option value="">강도 전체</option>
-                    <option value="LIGHT" th:selected="${intensityType == 'LIGHT'}">5분이내</option>
-                    <option value="MODERATE" th:selected="${intensityType == 'MODERATE'}">30분이내</option>
-                    <option value="ACTIVE" th:selected="${intensityType == 'ACTIVE'}">1시간+</option>
-                </select>
                 <select name="categoryType" class="form-select filter-select">
                     <option value="">카테고리 전체</option>
                     <option value="FOOD" th:selected="${categoryType == 'FOOD'}">음식</option>
@@ -356,7 +350,6 @@
                         <td class="tags-cell">
                             <span class="tag tag-gray" th:text="${mission.categoryType?.label}">카테고리</span>
                             <span class="tag tag-gray" th:text="${mission.spaceType?.label}">공간</span>
-                            <span class="tag tag-gray" th:text="${mission.intensityType?.shortLabel}">강도</span>
                             <span class="tag tag-gray" th:text="${mission.companionType?.shortLabel}">동반</span>
                         </td>
                         <td class="tags-cell">
@@ -486,24 +479,13 @@
 
                         <h4 style="font-size: 14px; margin: 20px 0 12px; color: var(--gray-700);">필터링용 태그</h4>
 
-                        <div class="grid-2">
-                            <div class="form-group">
-                                <label class="form-label">공간 *</label>
-                                <select id="spaceType" name="spaceType" class="form-select" required>
-                                    <option value="">선택하세요</option>
-                                    <option value="INDOOR">실내</option>
-                                    <option value="OUTDOOR">실외</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">강도 *</label>
-                                <select id="intensityType" name="intensityType" class="form-select" required>
-                                    <option value="">선택하세요</option>
-                                    <option value="LIGHT">5분이내</option>
-                                    <option value="MODERATE">30분이내</option>
-                                    <option value="ACTIVE">1시간+</option>
-                                </select>
-                            </div>
+                        <div class="form-group">
+                            <label class="form-label">공간 *</label>
+                            <select id="spaceType" name="spaceType" class="form-select" required>
+                                <option value="">선택하세요</option>
+                                <option value="INDOOR">실내</option>
+                                <option value="OUTDOOR">실외</option>
+                            </select>
                         </div>
 
                         <div class="grid-2">
@@ -586,7 +568,6 @@
                     document.getElementById('missionTitle').value = mission.title || '';
                     document.getElementById('missionDescription').value = mission.description || '';
                     document.getElementById('spaceType').value = mission.spaceType || '';
-                    document.getElementById('intensityType').value = mission.intensityType || '';
                     document.getElementById('companionType').value = mission.companionType || '';
                     document.getElementById('categoryType').value = mission.categoryType || '';
                     document.getElementById('enjoyType').value = mission.enjoyType || '';
@@ -608,7 +589,6 @@
                     title: document.getElementById('missionTitle').value,
                     description: document.getElementById('missionDescription').value,
                     spaceType: document.getElementById('spaceType').value,
-                    intensityType: document.getElementById('intensityType').value,
                     companionType: document.getElementById('companionType').value,
                     categoryType: document.getElementById('categoryType').value,
                     enjoyType: document.getElementById('enjoyType').value || null,

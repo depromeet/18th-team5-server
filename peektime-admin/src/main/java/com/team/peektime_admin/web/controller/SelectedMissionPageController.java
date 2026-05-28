@@ -21,7 +21,6 @@ public class SelectedMissionPageController {
     @GetMapping
     public String selectedMission(
             @RequestParam(required = false) String spaceType,
-            @RequestParam(required = false) String intensityType,
             @RequestParam(required = false) String categoryType,
             @RequestParam(required = false) String companionType,
             Model model
@@ -34,7 +33,6 @@ public class SelectedMissionPageController {
         model.addAttribute("totalMissions", missions.size());
 
         model.addAttribute("spaceType", spaceType);
-        model.addAttribute("intensityType", intensityType);
         model.addAttribute("categoryType", categoryType);
         model.addAttribute("companionType", companionType);
 

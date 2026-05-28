@@ -30,14 +30,12 @@ class MissionGenerationServiceTest {
             System.out.println("제목: " + mission.getTitle());
             System.out.println("설명: " + mission.getDescription());
             System.out.println("공간: " + mission.getSpaceType());
-            System.out.println("강도: " + mission.getIntensityType());
             System.out.println("동반: " + mission.getCompanionType());
             System.out.println("카테고리: " + mission.getCategoryType());
             System.out.println("---");
 
             assertThat(mission.getTitle()).isNotBlank();
             assertThat(mission.getSpaceType()).isIn("INDOOR", "OUTDOOR");
-            assertThat(mission.getIntensityType()).isIn("LIGHT", "MODERATE", "ACTIVE");
             assertThat(mission.getCompanionType()).isIn("SOLO", "TOGETHER");
             assertThat(mission.getCategoryType()).isIn("FOOD", "NATURE", "RECORD", "PLACE", "SENSE");
         });

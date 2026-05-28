@@ -76,7 +76,6 @@ public class MissionBulkController {
                 request.getTitle(),
                 request.getDescription(),
                 request.getSpaceType(),
-                request.getIntensityType(),
                 request.getCategoryType(),
                 request.getCompanionType(),
                 request.getEnjoyType(),

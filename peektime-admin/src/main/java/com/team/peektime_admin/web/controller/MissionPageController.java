@@ -40,7 +40,6 @@ public class MissionPageController {
     public String missionPool(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String spaceType,
-            @RequestParam(required = false) String intensityType,
             @RequestParam(required = false) String categoryType,
             @RequestParam(defaultValue = "0") int page,
             Model model
@@ -62,7 +61,6 @@ public class MissionPageController {
 
         model.addAttribute("keyword", keyword);
         model.addAttribute("spaceType", spaceType);
-        model.addAttribute("intensityType", intensityType);
         model.addAttribute("categoryType", categoryType);
 
         model.addAttribute("solarTerms", solarTermRepository.findAll());

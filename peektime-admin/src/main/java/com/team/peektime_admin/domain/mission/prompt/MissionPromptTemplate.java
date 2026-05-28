@@ -19,28 +19,23 @@ public class MissionPromptTemplate {
             - INDOOR: 실내에서 수행하는 미션
             - OUTDOOR: 실외에서 수행하는 미션
 
-            ### 2. 강도 (intensityType)
-            - LIGHT: 이동 없음, 5분 이내로 할 수 있는 가벼운 미션
-            - MODERATE: 동네 범위, 30분 이내로 할 수 있는 보통 미션
-            - ACTIVE: 이동 필요, 1시간 이상 소요되는 적극적인 미션
-
-            ### 3. 동반 (companionType)
+            ### 2. 동반 (companionType)
             - SOLO: 혼자서 할 수 있는 미션
             - TOGETHER: 다른 사람과 함께하면 더 좋은 미션
 
-            ### 4. 카테고리 (categoryType)
+            ### 3. 카테고리 (categoryType)
             - FOOD: 음식 관련 미션
             - NATURE: 자연 관련 미션
             - RECORD: 기록 관련 미션
             - PLACE: 장소 관련 미션
             - SENSE: 감각 관련 미션
 
-            ### 5. 즐기는 방식 (enjoyType)
+            ### 4. 즐기는 방식 (enjoyType)
             - NATURE_OUTDOOR: 자연이나 야외에서 즐기는 활동
             - SEASONAL_FOOD: 제철 음식을 맛보거나 요리하는 활동
             - CULTURE_CONTENT: 감성적인 콘텐츠나 문화 활동
 
-            ### 6. 추천 사용자 타입 (userType)
+            ### 5. 추천 사용자 타입 (userType)
             - EXPLORER: 밖에서 적극적으로 활동하는 제철을 쫓는 탐험가
             - WALKER: 밖에서 가볍게 활동하는 일상 속 제철 산책가
             - LIFE_CREATOR: 실내에서 적극적으로 활동하는 제철을 채우는 라이프 크리에이터
@@ -58,7 +53,6 @@ public class MissionPromptTemplate {
                   "title": "미션 제목 (20자 이내)",
                   "description": "미션 설명 (50자 이내)",
                   "spaceType": "INDOOR 또는 OUTDOOR",
-                  "intensityType": "LIGHT, MODERATE, ACTIVE 중 하나",
                   "companionType": "SOLO 또는 TOGETHER",
                   "categoryType": "FOOD, NATURE, RECORD, PLACE, SENSE 중 하나",
                   "enjoyType": "NATURE_OUTDOOR, SEASONAL_FOOD, CULTURE_CONTENT 중 하나",

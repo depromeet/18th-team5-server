@@ -129,15 +129,6 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>강도</label>
-                    <select name="intensityType" class="form-select">
-                        <option value="">전체</option>
-                        <option value="LIGHT" th:selected="${intensityType == 'LIGHT'}">5분이내</option>
-                        <option value="MODERATE" th:selected="${intensityType == 'MODERATE'}">30분이내</option>
-                        <option value="ACTIVE" th:selected="${intensityType == 'ACTIVE'}">1시간+</option>
-                    </select>
-                </div>
-                <div class="filter-group">
                     <label>카테고리</label>
                     <select name="categoryType" class="form-select">
                         <option value="">전체</option>
@@ -179,7 +170,6 @@
                 <div class="mission-item-tags">
                     <span class="tag tag-gray" th:text="${mission.categoryType?.label}">카테고리</span>
                     <span class="tag tag-gray" th:text="${mission.spaceType?.label}">공간</span>
-                    <span class="tag tag-gray" th:text="${mission.intensityType?.label}">강도</span>
                     <span class="tag tag-gray" th:text="${mission.companionType?.label}">동반</span>
                 </div>
             </div>

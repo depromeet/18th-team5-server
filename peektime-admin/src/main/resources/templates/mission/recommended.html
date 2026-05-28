@@ -275,7 +275,7 @@
                         <div class="mission-item-tags">
                             <span class="tag tag-gray" th:text="${rmp.mission.categoryType?.label}">카테고리</span>
                             <span class="tag tag-gray" th:text="${rmp.mission.spaceType?.label}">공간</span>
-                            <span class="tag tag-gray" th:text="${rmp.mission.intensityType?.label}">강도</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.companionType?.shortLabel}">강도</span>
                         </div>
                     </div>
                     <button class="back-to-pool-btn" th:onclick="'removeFromRecommended(' + ${rmp.id} + ')'" title="미션풀로 되돌리기">풀로</button>
@@ -303,7 +303,7 @@
                         <div class="mission-item-tags">
                             <span class="tag tag-gray" th:text="${rmp.mission.categoryType?.label}">카테고리</span>
                             <span class="tag tag-gray" th:text="${rmp.mission.spaceType?.label}">공간</span>
-                            <span class="tag tag-gray" th:text="${rmp.mission.intensityType?.label}">강도</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.companionType?.shortLabel}">강도</span>
                         </div>
                     </div>
                     <button class="back-to-pool-btn" th:onclick="'removeFromRecommended(' + ${rmp.id} + ')'" title="미션풀로 되돌리기">풀로</button>
@@ -331,7 +331,7 @@
                         <div class="mission-item-tags">
                             <span class="tag tag-gray" th:text="${rmp.mission.categoryType?.label}">카테고리</span>
                             <span class="tag tag-gray" th:text="${rmp.mission.spaceType?.label}">공간</span>
-                            <span class="tag tag-gray" th:text="${rmp.mission.intensityType?.label}">강도</span>
+                            <span class="tag tag-gray" th:text="${rmp.mission.companionType?.shortLabel}">강도</span>
                         </div>
                     </div>
                     <button class="back-to-pool-btn" th:onclick="'removeFromRecommended(' + ${rmp.id} + ')'" title="미션풀로 되돌리기">풀로</button>

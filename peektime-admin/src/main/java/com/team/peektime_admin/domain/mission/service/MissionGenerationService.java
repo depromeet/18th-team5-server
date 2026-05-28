@@ -91,7 +91,6 @@ public class MissionGenerationService {
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .spaceType(parseEnum(SpaceType.class, dto.getSpaceType()))
-                .intensityType(parseEnum(IntensityType.class, dto.getIntensityType()))
                 .companionType(parseEnum(CompanionType.class, dto.getCompanionType()))
                 .categoryType(parseEnum(CategoryType.class, dto.getCategoryType()))
                 .enjoyType(parseEnumOrNull(EnjoyType.class, dto.getEnjoyType()))

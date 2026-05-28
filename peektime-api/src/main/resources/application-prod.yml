@@ -16,3 +16,6 @@ spring:
 
 admin:
   base-url: ${PROD_ADMIN_BASE_URL}
+
+firebase:
+  credentials: ${FIREBASE_CREDENTIALS}

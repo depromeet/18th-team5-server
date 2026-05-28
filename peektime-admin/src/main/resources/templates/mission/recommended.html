@@ -73,6 +73,12 @@
                 color: var(--gray-600);
             }
 
+            .mission-count.full {
+                background: #DCFCE7;
+                color: #16A34A;
+                font-weight: 600;
+            }
+
             .mission-list {
                 display: flex;
                 flex-direction: column;
@@ -263,8 +269,10 @@
             <div class="enjoy-type-header">
                 <div class="enjoy-type-title">
                     <span style="font-size: 20px;">🌲</span>
-                    <h3>자연이나 야외 활동</h3>
-                    <span class="mission-count" th:text="${#lists.size(natureOutdoorMissions)} + '개'">0개</span>
+                    <h3>자연/야외 활동</h3>
+                    <span class="mission-count"
+                          th:classappend="${#lists.size(natureOutdoorMissions) >= 5} ? 'full'"
+                          th:text="${#lists.size(natureOutdoorMissions)} + ' / 5'">0 / 5</span>
                 </div>
             </div>
             <div class="mission-list" th:if="${not #lists.isEmpty(natureOutdoorMissions)}">
@@ -291,8 +299,10 @@
             <div class="enjoy-type-header">
                 <div class="enjoy-type-title">
                     <span style="font-size: 20px;">🍲</span>
-                    <h3>제철 음식이나 요리</h3>
-                    <span class="mission-count" th:text="${#lists.size(seasonalFoodMissions)} + '개'">0개</span>
+                    <h3>제철 음식/요리</h3>
+                    <span class="mission-count"
+                          th:classappend="${#lists.size(seasonalFoodMissions) >= 5} ? 'full'"
+                          th:text="${#lists.size(seasonalFoodMissions)} + ' / 5'">0 / 5</span>
                 </div>
             </div>
             <div class="mission-list" th:if="${not #lists.isEmpty(seasonalFoodMissions)}">
@@ -319,8 +329,10 @@
             <div class="enjoy-type-header">
                 <div class="enjoy-type-title">
                     <span style="font-size: 20px;">🎨</span>
-                    <h3>감성 콘텐츠나 문화</h3>
-                    <span class="mission-count" th:text="${#lists.size(emotionalContentMissions)} + '개'">0개</span>
+                    <h3>감성 콘텐츠/문화</h3>
+                    <span class="mission-count"
+                          th:classappend="${#lists.size(emotionalContentMissions) >= 5} ? 'full'"
+                          th:text="${#lists.size(emotionalContentMissions)} + ' / 5'">0 / 5</span>
                 </div>
             </div>
             <div class="mission-list" th:if="${not #lists.isEmpty(emotionalContentMissions)}">

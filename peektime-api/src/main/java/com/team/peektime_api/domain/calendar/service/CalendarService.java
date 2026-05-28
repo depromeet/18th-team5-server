@@ -75,12 +75,17 @@ public class CalendarService {
                 })
                 .toList();
 
+        Long firstId = solarTerms.get(0).getId();
         Long lastId = solarTerms.get(solarTerms.size() - 1).getId();
+
+        Long prevSolarTermId = solarTermRepository.findPrevBefore(firstId)
+                .map(SolarTerm::getId)
+                .orElse(null);
         Long nextSolarTermId = solarTermRepository.findNextAfter(lastId)
                 .map(SolarTerm::getId)
                 .orElse(null);
 
-        return new CalendarSolarTermResponse(entries, nextSolarTermId);
+        return new CalendarSolarTermResponse(entries, prevSolarTermId, nextSolarTermId);
     }
 
     @Transactional(readOnly = true)

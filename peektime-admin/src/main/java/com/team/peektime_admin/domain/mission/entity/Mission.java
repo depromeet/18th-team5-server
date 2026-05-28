@@ -35,16 +35,6 @@ public class Mission extends BaseEntity {
     @Column(name = "space_type", nullable = false)
     private SpaceType spaceType;
 
-
-    /**
-     * 이 ENUM 은 제거되었다. LLM 한테 태그 받을때도 필요없다. 타임리프에서도 제거해야한다. 모든곳에서 제거바람.
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "intensity_type", nullable = false)
-    private IntensityType intensityType;
-
-
-
     @Enumerated(EnumType.STRING)
     @Column(name = "category_type", nullable = false)
     private CategoryType categoryType;
@@ -71,13 +61,11 @@ public class Mission extends BaseEntity {
 
     @Builder
     private Mission(String title, String description, SpaceType spaceType,
-                   IntensityType intensityType, CategoryType categoryType,
-                   CompanionType companionType, EnjoyType enjoyType,
-                   UserType userType) {
+                   CategoryType categoryType, CompanionType companionType,
+                   EnjoyType enjoyType, UserType userType) {
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;
-        this.intensityType = intensityType;
         this.categoryType = categoryType;
         this.companionType = companionType != null ? companionType : CompanionType.SOLO;
         this.enjoyType = enjoyType;
@@ -89,7 +77,6 @@ public class Mission extends BaseEntity {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .spaceType(request.getSpaceType())
-                .intensityType(request.getIntensityType())
                 .companionType(request.getCompanionType())
                 .categoryType(request.getCategoryType())
                 .enjoyType(request.getEnjoyType())
@@ -108,13 +95,11 @@ public class Mission extends BaseEntity {
     }
 
     public void update(String title, String description, SpaceType spaceType,
-                       IntensityType intensityType, CategoryType categoryType,
-                       CompanionType companionType, EnjoyType enjoyType,
-                       UserType userType) {
+                       CategoryType categoryType, CompanionType companionType,
+                       EnjoyType enjoyType, UserType userType) {
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;
-        this.intensityType = intensityType;
         this.categoryType = categoryType;
         this.companionType = companionType != null ? companionType : CompanionType.SOLO;
         this.enjoyType = enjoyType;

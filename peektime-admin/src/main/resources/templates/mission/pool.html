@@ -11,20 +11,37 @@
                 gap: 12px;
             }
 
-            .filter-bar {
-                display: flex;
-                gap: 12px;
+            .filter-section {
+                background: white;
+                border: 1px solid var(--gray-200);
+                border-radius: 8px;
+                padding: 16px;
                 margin-bottom: 16px;
-                flex-wrap: wrap;
             }
 
-            .search-input {
-                flex: 1;
-                min-width: 200px;
+            .filter-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 12px;
+                align-items: end;
             }
 
-            .filter-select {
-                min-width: 120px;
+            .filter-group {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+
+            .filter-group label {
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--gray-600);
+            }
+
+            .filter-actions {
+                display: flex;
+                justify-content: flex-end;
+                margin-top: 12px;
             }
 
             .bulk-actions {
@@ -309,29 +326,51 @@
         </div>
 
         <div class="card">
-            <!-- Filter Bar -->
-            <form th:action="@{/admin/missions}" method="get" class="filter-bar">
-                <input type="text" name="keyword" th:value="${keyword}" class="form-input search-input" placeholder="미션 검색...">
-                <select name="spaceType" class="form-select filter-select">
-                    <option value="">공간 전체</option>
-                    <option value="INDOOR" th:selected="${spaceType == 'INDOOR'}">실내</option>
-                    <option value="OUTDOOR" th:selected="${spaceType == 'OUTDOOR'}">실외</option>
-                </select>
-                <select name="intensityType" class="form-select filter-select">
-                    <option value="">강도 전체</option>
-                    <option value="LIGHT" th:selected="${intensityType == 'LIGHT'}">5분이내</option>
-                    <option value="MODERATE" th:selected="${intensityType == 'MODERATE'}">30분이내</option>
-                    <option value="ACTIVE" th:selected="${intensityType == 'ACTIVE'}">1시간+</option>
-                </select>
-                <select name="categoryType" class="form-select filter-select">
-                    <option value="">카테고리 전체</option>
-                    <option value="FOOD" th:selected="${categoryType == 'FOOD'}">음식</option>
-                    <option value="NATURE" th:selected="${categoryType == 'NATURE'}">자연</option>
-                    <option value="RECORD" th:selected="${categoryType == 'RECORD'}">기록</option>
-                    <option value="PLACE" th:selected="${categoryType == 'PLACE'}">장소</option>
-                    <option value="SENSE" th:selected="${categoryType == 'SENSE'}">감각</option>
-                </select>
-                <button type="submit" class="btn btn-secondary">검색</button>
+            <!-- Filter Section -->
+            <form th:action="@{/admin/missions}" method="get" class="filter-section">
+                <div class="filter-grid">
+                    <div class="filter-group">
+                        <label>공간</label>
+                        <select name="spaceType" class="form-select">
+                            <option value="">전체</option>
+                            <option value="INDOOR" th:selected="${spaceType == 'INDOOR'}">실내</option>
+                            <option value="OUTDOOR" th:selected="${spaceType == 'OUTDOOR'}">실외</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>카테고리</label>
+                        <select name="categoryType" class="form-select">
+                            <option value="">전체</option>
+                            <option value="FOOD" th:selected="${categoryType == 'FOOD'}">음식</option>
+                            <option value="NATURE" th:selected="${categoryType == 'NATURE'}">자연</option>
+                            <option value="CONTENT" th:selected="${categoryType == 'CONTENT'}">컨텐츠</option>
+                            <option value="PLACE" th:selected="${categoryType == 'PLACE'}">장소</option>
+                            <option value="MUSIC" th:selected="${categoryType == 'MUSIC'}">음악</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>즐기기 타입</label>
+                        <select name="enjoyType" class="form-select">
+                            <option value="">전체</option>
+                            <option value="NATURE_OUTDOOR" th:selected="${enjoyType == 'NATURE_OUTDOOR'}">자연/야외</option>
+                            <option value="SEASONAL_FOOD" th:selected="${enjoyType == 'SEASONAL_FOOD'}">제철음식</option>
+                            <option value="CULTURE_CONTENT" th:selected="${enjoyType == 'CULTURE_CONTENT'}">감성콘텐츠</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>유저 타입</label>
+                        <select name="userType" class="form-select">
+                            <option value="">전체</option>
+                            <option value="EXPLORER" th:selected="${userType == 'EXPLORER'}">제철을 쫓는 탐험가</option>
+                            <option value="WALKER" th:selected="${userType == 'WALKER'}">일상 속 제철 산책가</option>
+                            <option value="LIFE_CREATOR" th:selected="${userType == 'LIFE_CREATOR'}">제철을 채우는 라이프 크리에이터</option>
+                            <option value="AESTHETE" th:selected="${userType == 'AESTHETE'}">제철을 음미하는 감상가</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="btn btn-primary">필터 적용</button>
+                </div>
             </form>
 
             <!-- Table -->
@@ -356,7 +395,6 @@
                         <td class="tags-cell">
                             <span class="tag tag-gray" th:text="${mission.categoryType?.label}">카테고리</span>
                             <span class="tag tag-gray" th:text="${mission.spaceType?.label}">공간</span>
-                            <span class="tag tag-gray" th:text="${mission.intensityType?.shortLabel}">강도</span>
                             <span class="tag tag-gray" th:text="${mission.companionType?.shortLabel}">동반</span>
                         </td>
                         <td class="tags-cell">
@@ -396,14 +434,14 @@
             <!-- Pagination -->
             <div class="pagination" th:if="${totalPages > 1}">
                 <button class="page-btn" th:disabled="${currentPage == 0}"
-                        th:onclick="'location.href=\'/admin/missions?page=' + (${currentPage} - 1) + '\''">◀</button>
+                        th:onclick="'goToPage(' + (${currentPage} - 1) + ')'">◀</button>
                 <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
                     <button class="page-btn" th:classappend="${i == currentPage} ? 'active'"
                             th:text="${i + 1}"
-                            th:onclick="'location.href=\'/admin/missions?page=' + ${i} + '\''">1</button>
+                            th:onclick="'goToPage(' + ${i} + ')'">1</button>
                 </th:block>
                 <button class="page-btn" th:disabled="${currentPage == totalPages - 1}"
-                        th:onclick="'location.href=\'/admin/missions?page=' + (${currentPage} + 1) + '\''">▶</button>
+                        th:onclick="'goToPage(' + (${currentPage} + 1) + ')'">▶</button>
             </div>
         </div>
 
@@ -486,24 +524,13 @@
 
                         <h4 style="font-size: 14px; margin: 20px 0 12px; color: var(--gray-700);">필터링용 태그</h4>
 
-                        <div class="grid-2">
-                            <div class="form-group">
-                                <label class="form-label">공간 *</label>
-                                <select id="spaceType" name="spaceType" class="form-select" required>
-                                    <option value="">선택하세요</option>
-                                    <option value="INDOOR">실내</option>
-                                    <option value="OUTDOOR">실외</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">강도 *</label>
-                                <select id="intensityType" name="intensityType" class="form-select" required>
-                                    <option value="">선택하세요</option>
-                                    <option value="LIGHT">5분이내</option>
-                                    <option value="MODERATE">30분이내</option>
-                                    <option value="ACTIVE">1시간+</option>
-                                </select>
-                            </div>
+                        <div class="form-group">
+                            <label class="form-label">공간 *</label>
+                            <select id="spaceType" name="spaceType" class="form-select" required>
+                                <option value="">선택하세요</option>
+                                <option value="INDOOR">실내</option>
+                                <option value="OUTDOOR">실외</option>
+                            </select>
                         </div>
 
                         <div class="grid-2">
@@ -521,9 +548,9 @@
                                     <option value="">선택하세요</option>
                                     <option value="FOOD">음식</option>
                                     <option value="NATURE">자연</option>
-                                    <option value="RECORD">기록</option>
+                                    <option value="CONTENT">컨텐츠</option>
                                     <option value="PLACE">장소</option>
-                                    <option value="SENSE">감각</option>
+                                    <option value="MUSIC">음악</option>
                                 </select>
                             </div>
                         </div>
@@ -586,7 +613,6 @@
                     document.getElementById('missionTitle').value = mission.title || '';
                     document.getElementById('missionDescription').value = mission.description || '';
                     document.getElementById('spaceType').value = mission.spaceType || '';
-                    document.getElementById('intensityType').value = mission.intensityType || '';
                     document.getElementById('companionType').value = mission.companionType || '';
                     document.getElementById('categoryType').value = mission.categoryType || '';
                     document.getElementById('enjoyType').value = mission.enjoyType || '';
@@ -608,7 +634,6 @@
                     title: document.getElementById('missionTitle').value,
                     description: document.getElementById('missionDescription').value,
                     spaceType: document.getElementById('spaceType').value,
-                    intensityType: document.getElementById('intensityType').value,
                     companionType: document.getElementById('companionType').value,
                     categoryType: document.getElementById('categoryType').value,
                     enjoyType: document.getElementById('enjoyType').value || null,
@@ -892,6 +917,13 @@
             document.querySelectorAll('.mission-checkbox').forEach(cb => {
                 cb.addEventListener('change', updateBulkActions);
             });
+
+            // 페이지네이션 (필터 유지)
+            function goToPage(page) {
+                const params = new URLSearchParams(window.location.search);
+                params.set('page', page);
+                window.location.href = '/admin/missions?' + params.toString();
+            }
         </script>
     </th:block>
 </body>

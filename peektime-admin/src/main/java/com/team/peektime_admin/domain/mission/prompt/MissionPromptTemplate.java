@@ -47,11 +47,15 @@ public class MissionPromptTemplate {
             ## 출력 형식
             반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
 
+            ### 중요 규칙
+            - title: 반드시 "~하기" 형식으로 끝나야 합니다. (예: "봄나물 캐러 가기", "벚꽃 사진 찍기")
+            - description: 20자 이내로 간결하게 작성하세요.
+
             {
               "missions": [
                 {
-                  "title": "미션 제목 (20자 이내)",
-                  "description": "미션 설명 (50자 이내)",
+                  "title": "미션 제목 (~하기 형식, 20자 이내)",
+                  "description": "간결한 미션 설명 (20자 이내)",
                   "spaceType": "INDOOR 또는 OUTDOOR",
                   "companionType": "SOLO 또는 TOGETHER",
                   "categoryType": "FOOD, NATURE, CONTENT, PLACE, MUSIC 중 하나",

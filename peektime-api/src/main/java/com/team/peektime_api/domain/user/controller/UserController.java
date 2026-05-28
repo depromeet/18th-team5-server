@@ -31,7 +31,7 @@ public class UserController {
         return SuccessResponse.of(SuccessCode.USER_FOUND, userService.getMyProfile(principal.getUserId()));
     }
 
-    @Operation(summary = "온보딩", description = "Q1(spaceType), Q2(intensityType), Q3(enjoyType 순위)를 받아 userType을 계산하고 저장합니다.")
+    @Operation(summary = "온보딩", description = "Q1(spaceType), Q2(activityStyleType), Q3(enjoyType 순위)를 받아 userType을 계산하고 저장합니다.")
     @PostMapping("/onboarding")
     @ResponseStatus(HttpStatus.OK)
     public SuccessResponse<UserOnboardingResponse> onboarding(

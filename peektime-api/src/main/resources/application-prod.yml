@@ -9,6 +9,10 @@ spring:
     hibernate:
       ddl-auto: create
     show-sql: false
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
   data:
     redis:
       host: ${REDIS_HOST}

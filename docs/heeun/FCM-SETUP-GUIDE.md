@@ -7,7 +7,8 @@
 4. [FCM 설정 클래스 구현](#4-fcm-설정-클래스-구현)
 5. [Topic 기반 알림 구현](#5-topic-기반-알림-구현)
 6. [푸시 알림 전송 API](#6-푸시-알림-전송-api)
-7. [테스트 방법](#7-테스트-방법)
+7. [알림 토글 기능](#7-알림-토글-기능)
+8. [테스트 방법](#8-테스트-방법)
 
 ---
 
@@ -440,20 +441,330 @@ public class NotificationScheduler {
 
 ---
 
-## 7. 테스트 방법
+## 7. 알림 토글 기능
 
-### 7-1. Swagger에서 테스트
+### 7-1. PeekTime 알림 종류 (3가지)
+
+| Topic 이름 | 알림 종류 | 발송 시간 | 설명 |
+|-----------|---------|---------|------|
+| `daily_mission` | 오늘의 미션 알림 | 매일 오전 10시 | 새로운 미션 도착 알림 |
+| `solar_term_end` | 절기 마지막 날 알림 | 절기 마지막 날 오후 10시 | 절기 마무리 안내 |
+| `solar_term_change` | 절기 변경 알림 | 절기 다음 날 오전 10시 | 새 절기 시작 안내 |
+
+---
+
+### 7-2. 알림 토글 흐름
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        알림 토글 ON/OFF 흐름                          │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  iOS 앱                        Firebase              백엔드 서버     │
+│    │                              │                      │          │
+│    │  [토글 ON]                   │                      │          │
+│    ├───────────────────────────→ │                      │          │
+│    │  토픽 구독 (subscribe)       │                      │          │
+│    │                              │                      │          │
+│    ├──────────────────────────────────────────────────→ │          │
+│    │  PUT /api/v1/notifications/settings                │          │
+│    │  { "dailyMission": true }                          │          │
+│    │                              │                      │          │
+│    │  [토글 OFF]                  │                      │          │
+│    ├───────────────────────────→ │                      │          │
+│    │  토픽 구독 해제 (unsubscribe) │                      │          │
+│    │                              │                      │          │
+│    ├──────────────────────────────────────────────────→ │          │
+│    │  PUT /api/v1/notifications/settings                │          │
+│    │  { "dailyMission": false }                         │          │
+│    │                              │                      │          │
+│    │  [앱 실행 시 토글 상태 조회]   │                      │          │
+│    ├──────────────────────────────────────────────────→ │          │
+│    │  GET /api/v1/notifications/settings                │          │
+│    │ ←──────────────────────────────────────────────────┤          │
+│    │  { "dailyMission": true, ... }                     │          │
+│    │                              │                      │          │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**핵심 포인트:**
+- iOS에서 토글 변경 시 **FCM 구독/해지** + **백엔드 API 호출** 동시 수행
+- 백엔드는 토글 상태만 저장 (FCM 토큰은 저장하지 않음)
+- 앱 실행 시 GET API로 토글 상태 조회하여 UI 동기화
+
+---
+
+### 7-3. 알림 설정 API
+
+#### GET - 알림 설정 조회
+
+```
+GET /api/v1/notifications/settings
+Authorization: Bearer {accessToken}
+```
+
+**Response:**
+```json
+{
+  "code": "SUCCESS",
+  "message": "성공",
+  "data": {
+    "dailyMission": true,
+    "solarTermEnd": true,
+    "solarTermChange": false
+  }
+}
+```
+
+#### PUT - 알림 설정 변경
+
+```
+PUT /api/v1/notifications/settings
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+
+{
+  "dailyMission": true,
+  "solarTermEnd": false,
+  "solarTermChange": true
+}
+```
+
+**Response:**
+```json
+{
+  "code": "SUCCESS",
+  "message": "알림 설정이 변경되었습니다",
+  "data": {
+    "dailyMission": true,
+    "solarTermEnd": false,
+    "solarTermChange": true
+  }
+}
+```
+
+---
+
+### 7-4. 알림 설정 엔티티
+
+```java
+@Entity
+@Table(name = "notification_setting")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class NotificationSetting extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false, unique = true)
+    private Member member;
+
+    @Column(nullable = false)
+    private Boolean dailyMission = true;  // 오늘의 미션 알림
+
+    @Column(nullable = false)
+    private Boolean solarTermEnd = true;  // 절기 마지막 날 알림
+
+    @Column(nullable = false)
+    private Boolean solarTermChange = true;  // 절기 변경 알림
+
+    @Builder(access = AccessLevel.PRIVATE)
+    private NotificationSetting(Member member, Boolean dailyMission,
+                                 Boolean solarTermEnd, Boolean solarTermChange) {
+        this.member = member;
+        this.dailyMission = dailyMission;
+        this.solarTermEnd = solarTermEnd;
+        this.solarTermChange = solarTermChange;
+    }
+
+    public static NotificationSetting createDefault(Member member) {
+        return NotificationSetting.builder()
+                .member(member)
+                .dailyMission(true)
+                .solarTermEnd(true)
+                .solarTermChange(true)
+                .build();
+    }
+
+    public void update(Boolean dailyMission, Boolean solarTermEnd, Boolean solarTermChange) {
+        if (dailyMission != null) this.dailyMission = dailyMission;
+        if (solarTermEnd != null) this.solarTermEnd = solarTermEnd;
+        if (solarTermChange != null) this.solarTermChange = solarTermChange;
+    }
+}
+```
+
+---
+
+### 7-5. iOS 클라이언트 구현
+
+```swift
+import FirebaseMessaging
+
+// Topic 이름 상수
+enum NotificationTopic: String {
+    case dailyMission = "daily_mission"
+    case solarTermEnd = "solar_term_end"
+    case solarTermChange = "solar_term_change"
+}
+
+// 알림 토글 변경 시 호출
+func toggleNotification(topic: NotificationTopic, isEnabled: Bool) {
+    // 1. FCM 토픽 구독/해지
+    if isEnabled {
+        Messaging.messaging().subscribe(toTopic: topic.rawValue) { error in
+            if let error = error {
+                print("토픽 구독 실패: \(error)")
+                return
+            }
+            print("\(topic.rawValue) 토픽 구독 성공")
+        }
+    } else {
+        Messaging.messaging().unsubscribe(fromTopic: topic.rawValue) { error in
+            if let error = error {
+                print("토픽 구독 해제 실패: \(error)")
+                return
+            }
+            print("\(topic.rawValue) 토픽 구독 해제")
+        }
+    }
+
+    // 2. 백엔드 API 호출하여 상태 저장
+    updateNotificationSetting(topic: topic, isEnabled: isEnabled)
+}
+
+// 백엔드 API 호출
+func updateNotificationSetting(topic: NotificationTopic, isEnabled: Bool) {
+    var body: [String: Bool] = [:]
+
+    switch topic {
+    case .dailyMission:
+        body["dailyMission"] = isEnabled
+    case .solarTermEnd:
+        body["solarTermEnd"] = isEnabled
+    case .solarTermChange:
+        body["solarTermChange"] = isEnabled
+    }
+
+    // PUT /api/v1/notifications/settings 호출
+    // ... API 호출 로직
+}
+
+// 앱 실행 시 토글 상태 조회 및 FCM 구독 동기화
+func syncNotificationSettings() {
+    // GET /api/v1/notifications/settings 호출
+    // 응답 받은 후 각 토픽 구독 상태 동기화
+
+    // 예시: API 응답이 { dailyMission: true, solarTermEnd: false, ... } 인 경우
+    // dailyMission이 true면 토픽 구독, false면 구독 해지
+}
+```
+
+---
+
+### 7-6. 푸시 알림 스케줄러
+
+```java
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class NotificationScheduler {
+
+    private final FcmService fcmService;
+
+    // 오늘의 미션 알림 - 매일 오전 10시
+    @Scheduled(cron = "0 0 10 * * *")
+    public void sendDailyMissionNotification() {
+        log.info("오늘의 미션 알림 발송 시작");
+
+        PushNotificationRequest notification = PushNotificationRequest.builder()
+                .title("오늘의 미션이 도착했어요! 🌿")
+                .body("지금 바로 확인하고 제철을 즐겨보세요")
+                .data(Map.of("type", "DAILY_MISSION"))
+                .build();
+
+        fcmService.sendToTopic("daily_mission", notification);
+    }
+
+    // 절기 마지막 날 알림 - 절기 마지막 날 오후 10시
+    // (별도 로직으로 해당 날짜에만 실행)
+    public void sendSolarTermEndNotification(String solarTermName) {
+        log.info("절기 마지막 날 알림 발송: {}", solarTermName);
+
+        PushNotificationRequest notification = PushNotificationRequest.builder()
+                .title(solarTermName + "의 마지막 날이에요")
+                .body("이번 절기의 미션들을 마무리해보세요")
+                .data(Map.of("type", "SOLAR_TERM_END", "solarTerm", solarTermName))
+                .build();
+
+        fcmService.sendToTopic("solar_term_end", notification);
+    }
+
+    // 절기 변경 알림 - 새 절기 첫날 오전 10시
+    public void sendSolarTermChangeNotification(String newSolarTermName, String description) {
+        log.info("절기 변경 알림 발송: {}", newSolarTermName);
+
+        PushNotificationRequest notification = PushNotificationRequest.builder()
+                .title("새로운 절기, " + newSolarTermName + "이 시작되었어요!")
+                .body(description)
+                .data(Map.of("type", "SOLAR_TERM_CHANGE", "solarTerm", newSolarTermName))
+                .build();
+
+        fcmService.sendToTopic("solar_term_change", notification);
+    }
+}
+```
+
+---
+
+### 7-7. 푸시 알림 전송 시 동작 흐름
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    푸시 알림 전송 흐름                                 │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  백엔드 서버 (스케줄러)              Firebase                iOS 앱   │
+│        │                              │                      │      │
+│        │  [오전 10시 - 오늘의 미션]    │                      │      │
+│        ├───────────────────────────→ │                      │      │
+│        │  POST to topic:             │                      │      │
+│        │  "daily_mission"            │                      │      │
+│        │                              │                      │      │
+│        │                              ├────────────────────→ │      │
+│        │                              │  토픽 구독자에게 전송  │      │
+│        │                              │  (dailyMission=true  │      │
+│        │                              │   인 사용자만 수신)   │      │
+│        │                              │                      │      │
+│        │                              │                      ▼      │
+│        │                              │               알림 표시!     │
+│        │                              │                             │
+└─────────────────────────────────────────────────────────────────────┘
+
+※ 백엔드는 토픽으로만 전송
+※ 구독 여부는 Firebase가 관리
+※ 토글 OFF한 사용자는 해당 토픽 미구독 상태이므로 알림 미수신
+```
+
+---
+
+## 8. 테스트 방법
+
+### 8-1. Swagger에서 테스트
 
 `/api/v1/notifications/all` - 전체 알림 전송
 
-### 7-2. cURL로 테스트
+### 8-2. cURL로 테스트
 
 ```bash
 # 전체 알림 전송
 curl -X POST "http://localhost:8080/api/v1/notifications/all?title=테스트&body=알림입니다"
 ```
 
-### 7-3. Firebase Console에서 테스트
+### 8-3. Firebase Console에서 테스트
 
 1. Firebase Console > **Cloud Messaging** 메뉴
 2. **"새 알림"** 클릭

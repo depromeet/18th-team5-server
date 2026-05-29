@@ -1,4 +1,4 @@
-name: Deploy PeekTime Admin
+name: Deploy PeakTime Admin
 on:
   push:
     branches: [main]

@@ -11,10 +11,10 @@ public record HomeResponse(
         DailyMissionInfo dailyMission
 ) {
 
-    public static HomeResponse from(DailyMission dailyMission) {
+    public static HomeResponse from(DailyMission dailyMission, boolean isCompleted) {
         return new HomeResponse(
                 SolarTermInfo.from(dailyMission.getSolarTerm()),
-                DailyMissionInfo.from(dailyMission)
+                DailyMissionInfo.from(dailyMission, isCompleted)
         );
     }
 
@@ -40,14 +40,16 @@ public record HomeResponse(
             Long id,
             String title,
             Integer participantCount,
-            MissionType missionType
+            MissionType missionType,
+            boolean isCompleted
     ) {
-        public static DailyMissionInfo from(DailyMission dailyMission) {
+        public static DailyMissionInfo from(DailyMission dailyMission, boolean isCompleted) {
             return new DailyMissionInfo(
                     dailyMission.getMission().getId(),
                     dailyMission.getMission().getTitle(),
                     dailyMission.getParticipantCount(),
-                    MissionType.DAILY
+                    MissionType.DAILY,
+                    isCompleted
             );
         }
     }

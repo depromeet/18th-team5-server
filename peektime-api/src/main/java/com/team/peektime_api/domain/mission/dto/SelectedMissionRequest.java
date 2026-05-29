@@ -18,6 +18,6 @@ public class SelectedMissionRequest {
     @Schema(description = "인원 필터 (혼자/같이)", example = "TOGETHER")
     private CompanionType companionType;
 
-    @Schema(description = "카테고리 필터 (음식/자연/기록/장소/감각)", example = "FOOD")
+    @Schema(description = "카테고리 필터 (음식/자연/컨텐츠/장소/음악)", example = "MUSIC")
     private CategoryType categoryType;
 }

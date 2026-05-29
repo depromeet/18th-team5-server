@@ -1,4 +1,4 @@
-name: Deploy PeekTime API
+name: Deploy PeakTime API
 
 # ============================================
 # 트리거 조건
@@ -22,7 +22,7 @@ on:
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: peaktime
-  APP_DIR: /app/peektime-api
+  APP_DIR: /app/peaktime-api
 
 jobs:
   # ============================================

@@ -28,10 +28,6 @@ public class Mission extends BaseEntity {
     private SpaceType spaceType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "intensity_type", nullable = false)
-    private IntensityType intensityType;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "category_type", nullable = false)
     private CategoryType categoryType;
 
@@ -52,14 +48,12 @@ public class Mission extends BaseEntity {
 
     @Builder(access = AccessLevel.PRIVATE)
     private Mission(Long id, String title, String description, SpaceType spaceType,
-                    IntensityType intensityType, CategoryType categoryType,
-                    CompanionType companionType, EnjoyType enjoyType, UserType userType,
-                    boolean deleted) {
+                    CategoryType categoryType, CompanionType companionType,
+                    EnjoyType enjoyType, UserType userType, boolean deleted) {
         this.id = id;
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;
-        this.intensityType = intensityType;
         this.categoryType = categoryType;
         this.companionType = companionType;
         this.enjoyType = enjoyType;
@@ -68,14 +62,13 @@ public class Mission extends BaseEntity {
     }
 
     public static Mission create(Long id, String title, String description, SpaceType spaceType,
-                                  IntensityType intensityType, CategoryType categoryType,
-                                  CompanionType companionType, EnjoyType enjoyType, UserType userType) {
+                                  CategoryType categoryType, CompanionType companionType,
+                                  EnjoyType enjoyType, UserType userType) {
         return Mission.builder()
                 .id(id)
                 .title(title)
                 .description(description)
                 .spaceType(spaceType)
-                .intensityType(intensityType)
                 .categoryType(categoryType)
                 .companionType(companionType)
                 .enjoyType(enjoyType)
@@ -85,13 +78,11 @@ public class Mission extends BaseEntity {
     }
 
     public void update(String title, String description, SpaceType spaceType,
-                       IntensityType intensityType, CategoryType categoryType,
-                       CompanionType companionType, EnjoyType enjoyType, UserType userType,
-                       boolean deleted) {
+                       CategoryType categoryType, CompanionType companionType,
+                       EnjoyType enjoyType, UserType userType, boolean deleted) {
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;
-        this.intensityType = intensityType;
         this.categoryType = categoryType;
         this.companionType = companionType;
         this.enjoyType = enjoyType;

@@ -24,6 +24,9 @@ public class Mission extends BaseEntity {
     @Column(name = "title", nullable = false, length = 100)
     private String title;
 
+
+
+    // 20자 이내로 받아야한다.
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
@@ -33,16 +36,12 @@ public class Mission extends BaseEntity {
     private SpaceType spaceType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "intensity_type", nullable = false)
-    private IntensityType intensityType;
-
-    @Enumerated(EnumType.STRING)
     @Column(name = "category_type", nullable = false)
     private CategoryType categoryType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "companion_type", nullable = false)
-    private CompanionType companionType = CompanionType.SOLO;
+    private CompanionType companionType;
 
     // 추천미션 분류용 태그
     @Enumerated(EnumType.STRING)
@@ -62,13 +61,11 @@ public class Mission extends BaseEntity {
 
     @Builder
     private Mission(String title, String description, SpaceType spaceType,
-                   IntensityType intensityType, CategoryType categoryType,
-                   CompanionType companionType, EnjoyType enjoyType,
-                   UserType userType) {
+                   CategoryType categoryType, CompanionType companionType,
+                   EnjoyType enjoyType, UserType userType) {
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;
-        this.intensityType = intensityType;
         this.categoryType = categoryType;
         this.companionType = companionType != null ? companionType : CompanionType.SOLO;
         this.enjoyType = enjoyType;
@@ -80,7 +77,6 @@ public class Mission extends BaseEntity {
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .spaceType(request.getSpaceType())
-                .intensityType(request.getIntensityType())
                 .companionType(request.getCompanionType())
                 .categoryType(request.getCategoryType())
                 .enjoyType(request.getEnjoyType())
@@ -99,13 +95,11 @@ public class Mission extends BaseEntity {
     }
 
     public void update(String title, String description, SpaceType spaceType,
-                       IntensityType intensityType, CategoryType categoryType,
-                       CompanionType companionType, EnjoyType enjoyType,
-                       UserType userType) {
+                       CategoryType categoryType, CompanionType companionType,
+                       EnjoyType enjoyType, UserType userType) {
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;
-        this.intensityType = intensityType;
         this.categoryType = categoryType;
         this.companionType = companionType != null ? companionType : CompanionType.SOLO;
         this.enjoyType = enjoyType;

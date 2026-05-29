@@ -2,6 +2,7 @@ package com.team.peektime_admin.domain.mission.service;
 
 import com.team.peektime_admin.domain.mission.dto.GeneratedMissionDto;
 import com.team.peektime_admin.domain.mission.dto.GeneratedMissionsWrapper;
+import com.team.peektime_admin.domain.mission.dto.MissionGenerationResult;
 import com.team.peektime_admin.domain.mission.entity.Mission;
 import com.team.peektime_admin.domain.mission.prompt.MissionPromptTemplate;
 import com.team.peektime_admin.domain.mission.repository.MissionRepository;
@@ -30,45 +31,41 @@ public class MissionGenerationService {
     private final SyncService syncService;
 
     @Transactional
-    public List<GeneratedMissionDto> generateMissions(int count) {
+    public MissionGenerationResult generateMissions(int count) {
         String prompt = MissionPromptTemplate.generate(count);
         List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        saveMissions(missions);
-        return missions;
+        return saveMissionsAndSync(missions);
     }
 
     @Transactional
-    public List<GeneratedMissionDto> generateMissionsWithTheme(String theme, int count) {
+    public MissionGenerationResult generateMissionsWithTheme(String theme, int count) {
         String prompt = MissionPromptTemplate.generateWithTheme(theme, count);
         List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        saveMissions(missions);
-        return missions;
+        return saveMissionsAndSync(missions);
     }
 
     @Transactional
-    public List<GeneratedMissionDto> generateMissionsWithSolarTerm(Long solarTermId, int count) {
+    public MissionGenerationResult generateMissionsWithSolarTerm(Long solarTermId, int count) {
         SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
                 .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
 
         String prompt = MissionPromptTemplate.generateWithSolarTerm(solarTerm, count);
         List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        saveMissions(missions);
-        return missions;
+        return saveMissionsAndSync(missions);
     }
 
     @Transactional
-    public List<GeneratedMissionDto> generateMissionsWithSolarTermAndUserType(Long solarTermId, UserType userType, int count) {
+    public MissionGenerationResult generateMissionsWithSolarTermAndUserType(Long solarTermId, UserType userType, int count) {
         SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
                 .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
 
         String prompt = MissionPromptTemplate.generateWithSolarTermAndUserType(solarTerm, userType, count);
         List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        saveMissions(missions);
-        return missions;
+        return saveMissionsAndSync(missions);
     }
 
     @Transactional
-    public List<GeneratedMissionDto> generateMissionsWithSolarTermAndUserTypeAndEnjoyType(
+    public MissionGenerationResult generateMissionsWithSolarTermAndUserTypeAndEnjoyType(
             Long solarTermId, UserType userType, EnjoyType enjoyType, int count) {
         SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
                 .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
@@ -76,11 +73,10 @@ public class MissionGenerationService {
         String prompt = MissionPromptTemplate.generateWithSolarTermAndUserTypeAndEnjoyType(
                 solarTerm, userType, enjoyType, count);
         List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        saveMissions(missions);
-        return missions;
+        return saveMissionsAndSync(missions);
     }
 
-    private void saveMissions(List<GeneratedMissionDto> missionDtos) {
+    private MissionGenerationResult saveMissionsAndSync(List<GeneratedMissionDto> missionDtos) {
         List<Mission> missions = missionDtos.stream()
                 .map(this::toEntity)
                 .toList();
@@ -91,8 +87,10 @@ public class MissionGenerationService {
         try {
             syncService.syncAllMissions();
             log.info("API 서버로 미션 동기화 완료");
+            return MissionGenerationResult.success(missionDtos);
         } catch (Exception e) {
             log.warn("API 서버 동기화 실패 (미션 저장은 완료됨): {}", e.getMessage());
+            return MissionGenerationResult.syncFailed(missionDtos, e.getMessage());
         }
     }
 

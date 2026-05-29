@@ -13,7 +13,7 @@ on:
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: peaktime-admin
-  APP_DIR: /app/peektime-admin
+  APP_DIR: /app/peaktime-admin
 
 jobs:
   build-and-push:

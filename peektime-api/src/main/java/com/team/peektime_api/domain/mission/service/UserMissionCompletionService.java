@@ -3,6 +3,7 @@ package com.team.peektime_api.domain.mission.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.peektime_api.domain.home.dto.RecentRecordCache;
+import com.team.peektime_api.domain.mission.dto.MissionRecordPageResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
@@ -12,6 +13,7 @@ import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
 import com.team.peektime_api.domain.mission.event.MissionCompletedEvent;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import com.team.peektime_api.domain.mission.repository.DailyMissionRepository;
+import com.team.peektime_api.domain.mission.repository.MissionRepository;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
 import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
@@ -39,6 +41,7 @@ public class UserMissionCompletionService {
 
     private final UserMissionCompletionRepository userMissionCompletionRepository;
     private final DailyMissionRepository dailyMissionRepository;
+    private final MissionRepository missionRepository;
     private final SolarTermRepository solarTermRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
@@ -97,6 +100,13 @@ public class UserMissionCompletionService {
                 .stream()
                 .map(this::toDetailResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public MissionRecordPageResponse getMissionRecordPage(Long missionId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
+        return MissionRecordPageResponse.from(mission);
     }
 
     private UserMissionCompletion saveMissionCompletion(UserMissionCompletionRequest request, User user,

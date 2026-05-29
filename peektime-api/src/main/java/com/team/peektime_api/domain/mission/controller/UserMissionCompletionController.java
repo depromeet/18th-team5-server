@@ -1,5 +1,6 @@
 package com.team.peektime_api.domain.mission.controller;
 
+import com.team.peektime_api.domain.mission.dto.MissionRecordPageResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
@@ -45,5 +46,14 @@ public class UserMissionCompletionController {
     ) {
         return SuccessResponse.of(SuccessCode.MISSION_FOUND,
                 userMissionCompletionService.getMissionCompletions(principal.getUserId(), missionId));
+    }
+
+    @Operation(summary = "미션 기록하기 페이지 정보 조회", description = "미션 기록하기 페이지에 필요한 미션 정보(제목, 설명)를 조회합니다.")
+    @GetMapping("/{missionId}/record")
+    public SuccessResponse<MissionRecordPageResponse> getMissionRecordPage(
+            @PathVariable Long missionId
+    ) {
+        return SuccessResponse.of(SuccessCode.MISSION_FOUND,
+                userMissionCompletionService.getMissionRecordPage(missionId));
     }
 }

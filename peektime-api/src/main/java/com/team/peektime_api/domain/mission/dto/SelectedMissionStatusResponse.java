@@ -22,4 +22,11 @@ public class SelectedMissionStatusResponse {
                 .mission(mission != null ? SelectedMissionResponse.from(mission) : null)
                 .build();
     }
+
+    public static SelectedMissionStatusResponse of(boolean hasSelected, Mission mission, boolean isCompleted) {
+        return SelectedMissionStatusResponse.builder()
+                .hasSelected(hasSelected)
+                .mission(mission != null ? SelectedMissionResponse.from(mission, isCompleted) : null)
+                .build();
+    }
 }

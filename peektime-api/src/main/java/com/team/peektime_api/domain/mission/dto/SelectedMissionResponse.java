@@ -31,6 +31,9 @@ public class SelectedMissionResponse {
     @Schema(description = "카테고리 타입")
     private CategoryType categoryType;
 
+    @Schema(description = "미션 수행 완료 여부", example = "false")
+    private boolean isCompleted;
+
     public static SelectedMissionResponse from(Mission mission) {
         return SelectedMissionResponse.builder()
                 .id(mission.getId())
@@ -39,6 +42,19 @@ public class SelectedMissionResponse {
                 .spaceType(mission.getSpaceType())
                 .companionType(mission.getCompanionType())
                 .categoryType(mission.getCategoryType())
+                .isCompleted(false)
+                .build();
+    }
+
+    public static SelectedMissionResponse from(Mission mission, boolean isCompleted) {
+        return SelectedMissionResponse.builder()
+                .id(mission.getId())
+                .title(mission.getTitle())
+                .description(mission.getDescription())
+                .spaceType(mission.getSpaceType())
+                .companionType(mission.getCompanionType())
+                .categoryType(mission.getCategoryType())
+                .isCompleted(isCompleted)
                 .build();
     }
 }

@@ -1,5 +1,6 @@
 package com.team.peektime_api.domain.mission.controller;
 
+import com.team.peektime_api.domain.mission.dto.MissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.MissionRecordPageResponse;
 import com.team.peektime_api.domain.mission.dto.RecommendedMissionCountResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailResponse;
@@ -65,5 +66,27 @@ public class UserMissionCompletionController {
     ) {
         return SuccessResponse.of(SuccessCode.MISSION_FOUND,
                 userMissionCompletionService.getRecommendedMissionCount(principal.getUserId()));
+    }
+
+    @Operation(summary = "추천 미션 완료 기록", description = "추천 미션 완료를 기록합니다. 하루 최대 3회까지 가능합니다.")
+    @PostMapping("/{missionId}/complete/recommended")
+    public SuccessResponse<UserMissionCompletionResponse> completeRecommendedMission(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long missionId,
+            @RequestBody @Valid MissionCompletionRequest request
+    ) {
+        return SuccessResponse.of(SuccessCode.MISSION_COMPLETED,
+                userMissionCompletionService.completeRecommendedMission(principal.getUserId(), missionId, request));
+    }
+
+    @Operation(summary = "선택 미션 완료 기록", description = "선택 미션 완료를 기록합니다. 하루 1회만 가능합니다.")
+    @PostMapping("/{missionId}/complete/selected")
+    public SuccessResponse<UserMissionCompletionResponse> completeSelectedMission(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long missionId,
+            @RequestBody @Valid MissionCompletionRequest request
+    ) {
+        return SuccessResponse.of(SuccessCode.MISSION_COMPLETED,
+                userMissionCompletionService.completeSelectedMission(principal.getUserId(), missionId, request));
     }
 }

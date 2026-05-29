@@ -7,6 +7,7 @@ import com.team.peektime_admin.domain.mission.prompt.MissionPromptTemplate;
 import com.team.peektime_admin.domain.mission.repository.MissionRepository;
 import com.team.peektime_admin.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_admin.domain.solarterm.repository.SolarTermRepository;
+import com.team.peektime_admin.domain.sync.service.SyncService;
 import com.team.peektime_admin.global.common.enums.*;
 import com.team.peektime_admin.infra.llm.GeminiClient;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class MissionGenerationService {
     private final JsonMapper jsonMapper;
     private final SolarTermRepository solarTermRepository;
     private final MissionRepository missionRepository;
+    private final SyncService syncService;
 
     @Transactional
     public List<GeneratedMissionDto> generateMissions(int count) {
@@ -84,6 +86,14 @@ public class MissionGenerationService {
                 .toList();
         missionRepository.saveAll(missions);
         log.info("{}개의 미션이 저장되었습니다.", missions.size());
+
+        // API 서버로 자동 동기화
+        try {
+            syncService.syncAllMissions();
+            log.info("API 서버로 미션 동기화 완료");
+        } catch (Exception e) {
+            log.warn("API 서버 동기화 실패 (미션 저장은 완료됨): {}", e.getMessage());
+        }
     }
 
     private Mission toEntity(GeneratedMissionDto dto) {

@@ -2,15 +2,10 @@ package com.team.peektime_api.domain.mission.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "미션 완료 기록 요청")
 public record MissionCompletionRequest(
-
-        @Schema(description = "절기 ID", example = "1")
-        @NotNull
-        Long solarTermId,
 
         @Schema(description = "S3 오브젝트 키", example = "missions/2026/05/29/uuid.jpg")
         @NotBlank(message = "사진은 필수입니다")

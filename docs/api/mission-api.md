@@ -117,13 +117,11 @@
 ### 오늘의 미션 완료 기록
 - **URL**: `POST /api/v1/missions/{missionId}/complete/daily`
 - **인증**: 필요
-- **설명**: 오늘의 미션 완료 기록. 동일 미션 중복 완료 시 409 반환
+- **설명**: 오늘의 미션 완료 기록. 동일 미션 중복 완료 시 409 반환. 절기는 서버에서 자동 조회
 
 **Request**
 ```json
 {
-  "missionType": "DAILY",
-  "solarTermId": 1,
   "objectKey": "missions/2026/05/29/uuid.jpg",
   "memo": "맛있었다!"
 }
@@ -142,12 +140,11 @@
 ### 추천 미션 완료 기록
 - **URL**: `POST /api/v1/missions/{missionId}/complete/recommended`
 - **인증**: 필요
-- **설명**: 추천 미션 완료 기록. **하루 3회까지** 가능
+- **설명**: 추천 미션 완료 기록. **하루 3회까지** 가능. 절기는 서버에서 자동 조회
 
 **Request**
 ```json
 {
-  "solarTermId": 1,
   "objectKey": "missions/2026/05/29/uuid.jpg",
   "memo": "맛있었다!"
 }
@@ -174,12 +171,11 @@
 ### 선택 미션 완료 기록
 - **URL**: `POST /api/v1/missions/{missionId}/complete/selected`
 - **인증**: 필요
-- **설명**: 선택 미션 완료 기록. **하루 1회만** 가능
+- **설명**: 선택 미션 완료 기록. **하루 1회만** 가능. 절기는 서버에서 자동 조회
 
 **Request**
 ```json
 {
-  "solarTermId": 1,
   "objectKey": "missions/2026/05/29/uuid.jpg",
   "memo": "맛있었다!"
 }

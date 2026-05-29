@@ -63,10 +63,12 @@ public class UserMissionCompletionService {
 
         validateSameMission(missionId, user);
 
-        SolarTerm solarTerm = solarTermRepository.findById(request.solarTermId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
+        SolarTerm solarTerm = getCurrentSolarTerm(today);
 
-        UserMissionCompletion completion = saveMissionCompletion(request, user, mission, solarTerm);
+        UserMissionCompletion completion = userMissionCompletionRepository.save(
+                UserMissionCompletion.create(user, mission, solarTerm, MissionType.DAILY,
+                        request.objectKey(), request.memo())
+        );
 
         updateRecentRecordsCache(userId, completion);
 
@@ -75,7 +77,7 @@ public class UserMissionCompletionService {
         MissionLogPayload payload = MissionLogPayload.of(
                 user.getDeviceUuid(),
                 missionId,
-                request.missionType(),
+                MissionType.DAILY,
                 solarTerm.getId(),
                 completion.getCreatedAt()
         );
@@ -83,6 +85,11 @@ public class UserMissionCompletionService {
         eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
 
         return UserMissionCompletionResponse.from(completion);
+    }
+
+    private SolarTerm getCurrentSolarTerm(LocalDate date) {
+        return solarTermRepository.findByDate(date)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
     }
 
     private void validateSameMission(Long missionId, User user) {
@@ -124,9 +131,9 @@ public class UserMissionCompletionService {
     @Transactional
     public UserMissionCompletionResponse completeRecommendedMission(Long userId, Long missionId, MissionCompletionRequest request) {
         User user = findUser(userId);
+        LocalDate today = LocalDate.now();
 
         // 하루 3회 제한 체크
-        LocalDate today = LocalDate.now();
         long todayCount = userMissionCompletionRepository.countTodayByUserIdAndMissionType(
                 userId, MissionType.RECOMMENDED,
                 today.atStartOfDay(), today.plusDays(1).atStartOfDay());
@@ -138,8 +145,7 @@ public class UserMissionCompletionService {
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
 
-        SolarTerm solarTerm = solarTermRepository.findById(request.solarTermId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
+        SolarTerm solarTerm = getCurrentSolarTerm(today);
 
         UserMissionCompletion completion = userMissionCompletionRepository.save(
                 UserMissionCompletion.create(user, mission, solarTerm, MissionType.RECOMMENDED,
@@ -152,9 +158,9 @@ public class UserMissionCompletionService {
     @Transactional
     public UserMissionCompletionResponse completeSelectedMission(Long userId, Long missionId, MissionCompletionRequest request) {
         User user = findUser(userId);
+        LocalDate today = LocalDate.now();
 
         // 하루 1회 제한 체크
-        LocalDate today = LocalDate.now();
         long todayCount = userMissionCompletionRepository.countTodayByUserIdAndMissionType(
                 userId, MissionType.SELECTED,
                 today.atStartOfDay(), today.plusDays(1).atStartOfDay());
@@ -166,8 +172,7 @@ public class UserMissionCompletionService {
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
 
-        SolarTerm solarTerm = solarTermRepository.findById(request.solarTermId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
+        SolarTerm solarTerm = getCurrentSolarTerm(today);
 
         UserMissionCompletion completion = userMissionCompletionRepository.save(
                 UserMissionCompletion.create(user, mission, solarTerm, MissionType.SELECTED,
@@ -175,14 +180,6 @@ public class UserMissionCompletionService {
         );
 
         return UserMissionCompletionResponse.from(completion);
-    }
-
-    private UserMissionCompletion saveMissionCompletion(UserMissionCompletionRequest request, User user,
-                                                        Mission mission, SolarTerm solarTerm) {
-        return userMissionCompletionRepository.save(
-                UserMissionCompletion.create(user, mission, solarTerm, request.missionType(),
-                        request.objectKey(), request.memo())
-        );
     }
 
     private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {

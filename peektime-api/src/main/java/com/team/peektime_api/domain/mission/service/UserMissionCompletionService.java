@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.peektime_api.domain.home.dto.RecentRecordCache;
 import com.team.peektime_api.domain.mission.dto.MissionRecordPageResponse;
+import com.team.peektime_api.domain.mission.dto.RecommendedMissionCountResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
+import com.team.peektime_api.global.common.enums.MissionType;
 import com.team.peektime_api.domain.mission.entity.DailyMission;
 import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
@@ -107,6 +109,12 @@ public class UserMissionCompletionService {
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
         return MissionRecordPageResponse.from(mission);
+    }
+
+    @Transactional(readOnly = true)
+    public RecommendedMissionCountResponse getRecommendedMissionCount(Long userId) {
+        long count = userMissionCompletionRepository.countByUser_IdAndMissionType(userId, MissionType.RECOMMENDED);
+        return RecommendedMissionCountResponse.of(count);
     }
 
     private UserMissionCompletion saveMissionCompletion(UserMissionCompletionRequest request, User user,

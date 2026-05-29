@@ -1,6 +1,7 @@
 package com.team.peektime_api.domain.mission.controller;
 
 import com.team.peektime_api.domain.mission.dto.MissionRecordPageResponse;
+import com.team.peektime_api.domain.mission.dto.RecommendedMissionCountResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
@@ -55,5 +56,14 @@ public class UserMissionCompletionController {
     ) {
         return SuccessResponse.of(SuccessCode.MISSION_FOUND,
                 userMissionCompletionService.getMissionRecordPage(missionId));
+    }
+
+    @Operation(summary = "추천 미션 완료 횟수 조회", description = "사용자가 완료한 추천 미션의 총 횟수를 조회합니다.")
+    @GetMapping("/recommended/count")
+    public SuccessResponse<RecommendedMissionCountResponse> getRecommendedMissionCount(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return SuccessResponse.of(SuccessCode.MISSION_FOUND,
+                userMissionCompletionService.getRecommendedMissionCount(principal.getUserId()));
     }
 }

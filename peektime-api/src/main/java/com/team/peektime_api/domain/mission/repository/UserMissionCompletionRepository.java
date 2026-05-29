@@ -8,9 +8,13 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.team.peektime_api.global.common.enums.MissionType;
+
 public interface UserMissionCompletionRepository extends JpaRepository<UserMissionCompletion, Long> {
 
     boolean existsByUser_IdAndMission_Id(Long userId, Long missionId);
+
+    long countByUser_IdAndMissionType(Long userId, MissionType missionType);
 
     List<UserMissionCompletion> findByUser_IdAndMission_Id(Long userId, Long missionId);
 

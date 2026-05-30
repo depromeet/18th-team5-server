@@ -133,6 +133,9 @@ public class UserMissionCompletionService {
         User user = findUser(userId);
         LocalDate today = LocalDate.now();
 
+        // 같은 미션 중복 완료 방지
+        validateSameMission(missionId, user);
+
         // 하루 3회 제한 체크
         long todayCount = userMissionCompletionRepository.countTodayByUserIdAndMissionType(
                 userId, MissionType.RECOMMENDED,
@@ -159,6 +162,9 @@ public class UserMissionCompletionService {
     public UserMissionCompletionResponse completeSelectedMission(Long userId, Long missionId, MissionCompletionRequest request) {
         User user = findUser(userId);
         LocalDate today = LocalDate.now();
+
+        // 같은 미션 중복 완료 방지
+        validateSameMission(missionId, user);
 
         // 하루 1회 제한 체크
         long todayCount = userMissionCompletionRepository.countTodayByUserIdAndMissionType(

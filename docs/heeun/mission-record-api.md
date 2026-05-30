@@ -13,8 +13,8 @@
 |-----|------|-----|-----|------|
 | 기록 페이지 정보 조회 | GET | `/api/v1/missions/{missionId}/record` | X | **기록 전 필수 호출** |
 | 오늘의 미션 기록 | POST | `/api/v1/missions/{missionId}/complete/daily` | O | 중복 완료 불가 |
-| 추천 미션 기록 | POST | `/api/v1/missions/{missionId}/complete/recommended` | O | 하루 3회 제한 |
-| 선택 미션 기록 | POST | `/api/v1/missions/{missionId}/complete/selected` | O | 하루 1회 제한 |
+| 추천 미션 기록 | POST | `/api/v1/missions/{missionId}/complete/recommended` | O | 중복 완료 불가, 하루 3회 제한 |
+| 선택 미션 기록 | POST | `/api/v1/missions/{missionId}/complete/selected` | O | 중복 완료 불가, 하루 1회 제한 |
 
 ---
 
@@ -150,13 +150,15 @@ Content-Type: application/json
 
 | 코드 | HTTP | 설명 |
 |-----|------|------|
+| MISSION_ALREADY_COMPLETED | 409 | 이미 완료한 미션 |
 | RECOMMENDED_MISSION_LIMIT_EXCEEDED | 409 | 하루 3회 초과 |
 | MISSION_NOT_FOUND | 404 | 미션 없음 |
 | SOLAR_TERM_NOT_FOUND | 404 | 절기 정보 없음 |
 | USER_NOT_FOUND | 404 | 사용자 없음 |
 
 ### 특이사항
-- **하루 최대 3회** 완료 가능
+- 동일한 미션은 **중복 완료 불가**
+- **하루 최대 3회** 완료 가능 (서로 다른 미션)
 - 4번째 시도 시 409 에러
 
 ---
@@ -199,13 +201,15 @@ Content-Type: application/json
 
 | 코드 | HTTP | 설명 |
 |-----|------|------|
+| MISSION_ALREADY_COMPLETED | 409 | 이미 완료한 미션 |
 | SELECTED_MISSION_LIMIT_EXCEEDED | 409 | 하루 1회 초과 |
 | MISSION_NOT_FOUND | 404 | 미션 없음 |
 | SOLAR_TERM_NOT_FOUND | 404 | 절기 정보 없음 |
 | USER_NOT_FOUND | 404 | 사용자 없음 |
 
 ### 특이사항
-- **하루 최대 1회** 완료 가능
+- 동일한 미션은 **중복 완료 불가**
+- **하루 최대 1회** 완료 가능 (서로 다른 미션)
 - 2번째 시도 시 409 에러
 
 ---
@@ -247,11 +251,11 @@ Content-Type: application/json
 
 ## 일일 제한 요약
 
-| 미션 타입 | 일일 제한 | 중복 완료 |
-|----------|----------|----------|
-| 오늘의 미션 (DAILY) | 없음 (단, 각 미션당 1회) | X |
-| 추천 미션 (RECOMMENDED) | 3회 | O |
-| 선택 미션 (SELECTED) | 1회 | O |
+| 미션 타입 | 일일 제한 | 같은 미션 중복 완료 |
+|----------|----------|-------------------|
+| 오늘의 미션 (DAILY) | 없음 (각 미션당 1회) | X |
+| 추천 미션 (RECOMMENDED) | 3회 (서로 다른 미션) | X |
+| 선택 미션 (SELECTED) | 1회 (서로 다른 미션) | X |
 
 ---
 

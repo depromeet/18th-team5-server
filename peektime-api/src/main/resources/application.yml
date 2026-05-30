@@ -26,7 +26,7 @@ admin:
 cloud:
   aws:
     s3:
-      bucket: ${AWS_S3_BUCKET}
+      bucket: peaktime-932316879839-ap-northeast-2-an
     region: ap-northeast-2
 
 firebase:

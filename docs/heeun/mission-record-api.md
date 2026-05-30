@@ -16,7 +16,6 @@
 | 추천 미션 기록 | POST | `/api/v1/missions/{missionId}/complete/recommended` | O | 하루 3회 제한 |
 | 선택 미션 기록 | POST | `/api/v1/missions/{missionId}/complete/selected` | O | 하루 1회 제한 |
 | 완료 기록 상세 조회 | GET | `/api/v1/missions/{missionId}/completions` | O | Presigned URL 포함 |
-| 추천 미션 완료 횟수 | GET | `/api/v1/missions/recommended/count` | O | 누적 완료 횟수 |
 
 ---
 
@@ -258,40 +257,6 @@ Authorization: Bearer {accessToken}
 ### 특이사항
 - 같은 미션을 여러 번 완료했으면 모든 기록 반환
 - Presigned URL은 일정 시간 후 만료됨
-
----
-
-## 6. 추천 미션 완료 횟수 조회
-
-사용자의 추천 미션 누적 완료 횟수를 조회합니다.
-
-### 요청
-
-```
-GET /api/v1/missions/recommended/count
-Authorization: Bearer {accessToken}
-```
-
-### 응답
-
-```json
-{
-  "code": "MISSION_200",
-  "message": "미션 조회 성공",
-  "data": {
-    "completedCount": 5
-  }
-}
-```
-
-### 응답 필드
-
-| 필드 | 타입 | 설명 |
-|-----|-----|------|
-| completedCount | Long | 추천 미션 총 완료 횟수 |
-
-### 특이사항
-- 일일 횟수가 아닌 **전체 누적** 횟수
 
 ---
 

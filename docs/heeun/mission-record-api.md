@@ -15,7 +15,6 @@
 | 오늘의 미션 기록 | POST | `/api/v1/missions/{missionId}/complete/daily` | O | 중복 완료 불가 |
 | 추천 미션 기록 | POST | `/api/v1/missions/{missionId}/complete/recommended` | O | 하루 3회 제한 |
 | 선택 미션 기록 | POST | `/api/v1/missions/{missionId}/complete/selected` | O | 하루 1회 제한 |
-| 완료 기록 상세 조회 | GET | `/api/v1/missions/{missionId}/completions` | O | Presigned URL 포함 |
 
 ---
 
@@ -208,55 +207,6 @@ Content-Type: application/json
 ### 특이사항
 - **하루 최대 1회** 완료 가능
 - 2번째 시도 시 409 에러
-
----
-
-## 5. 미션 완료 기록 상세 조회
-
-사용자가 특정 미션에 대해 완료한 기록 목록을 조회합니다.
-
-### 요청
-
-```
-GET /api/v1/missions/{missionId}/completions
-Authorization: Bearer {accessToken}
-```
-
-### 응답
-
-```json
-{
-  "code": "MISSION_200",
-  "message": "미션 조회 성공",
-  "data": [
-    {
-      "completionId": 1234,
-      "missionId": 1,
-      "missionType": "DAILY",
-      "objectKey": "missions/2026/05/29/uuid.jpg",
-      "presignedImageUrl": "https://s3.amazonaws.com/bucket/...?X-Amz-Signature=...",
-      "memo": "맛있었다!",
-      "completedAt": "2026-05-29T14:30:00+09:00"
-    }
-  ]
-}
-```
-
-### 응답 필드
-
-| 필드 | 타입 | 설명 |
-|-----|-----|------|
-| completionId | Long | 완료 기록 ID |
-| missionId | Long | 미션 ID |
-| missionType | String | DAILY / RECOMMENDED / SELECTED |
-| objectKey | String | S3 오브젝트 키 |
-| presignedImageUrl | String | 이미지 접근용 Presigned URL (만료 시간 있음) |
-| memo | String | 한줄 메모 |
-| completedAt | String | 완료 일시 (ISO 8601, KST) |
-
-### 특이사항
-- 같은 미션을 여러 번 완료했으면 모든 기록 반환
-- Presigned URL은 일정 시간 후 만료됨
 
 ---
 

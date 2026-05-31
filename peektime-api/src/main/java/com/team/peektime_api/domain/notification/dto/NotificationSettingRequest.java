@@ -15,6 +15,6 @@ public class NotificationSettingRequest {
     @Schema(description = "절기 마지막 날 알림", example = "true")
     private Boolean solarTermEnd;
 
-    @Schema(description = "절기 변경 알림", example = "true")
-    private Boolean solarTermChange;
+    @Schema(description = "절기 시작 알림", example = "true")
+    private Boolean solarTermStart;
 }

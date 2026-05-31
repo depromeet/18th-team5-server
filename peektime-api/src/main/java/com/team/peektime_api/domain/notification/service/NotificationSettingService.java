@@ -31,7 +31,7 @@ public class NotificationSettingService {
         NotificationSetting setting = notificationSettingRepository.findByUserId(userId)
                 .orElseGet(() -> createDefaultSetting(userId));
 
-        setting.update(request.getDailyMission(), request.getSolarTermEnd(), request.getSolarTermChange());
+        setting.update(request.getDailyMission(), request.getSolarTermEnd(), request.getSolarTermStart());
 
         return NotificationSettingResponse.from(setting);
     }

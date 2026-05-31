@@ -40,7 +40,12 @@ public class CalendarService {
     public CalendarSolarTermResponse getCurrentSolarTermCalendar(Long userId) {
         SolarTerm current = solarTermRepository.findByDate(LocalDate.now())
                 .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
-        return getSolarTermCalendar(userId, current.getId());
+
+        Long startId = solarTermRepository.findPrevBefore(current.getId())
+                .map(SolarTerm::getId)
+                .orElse(current.getId());
+
+        return getSolarTermCalendar(userId, startId);
     }
 
     @Transactional(readOnly = true)

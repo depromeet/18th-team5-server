@@ -35,6 +35,8 @@ public enum SuccessCode {
     CALENDAR_SOLAR_TERM_FOUND("CALENDAR_200", "절기 캘린더 조회 성공"),
     CALENDAR_DAY_FOUND("CALENDAR_200", "날짜 기록 조회 성공"),
     CALENDAR_RECORD_CREATED("CALENDAR_201", "자유 기록 생성 성공"),
+    CALENDAR_RECORD_UPDATED("CALENDAR_200", "기록 수정 성공"),
+    CALENDAR_RECORD_DELETED("CALENDAR_204", "기록 삭제 성공"),
 
     // 인증
     LOGIN_SUCCESS("AUTH_200", "로그인 성공"),

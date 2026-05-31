@@ -130,6 +130,68 @@ public class CalendarService {
         return new CalendarRecordCreateResponse(saved.getId());
     }
 
+    @Transactional
+    public void updateMissionCompletion(Long userId, Long completionId, CalendarRecordUpdateRequest request) {
+        UserMissionCompletion completion = completionRepository.findById(completionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RECORD_NOT_FOUND));
+
+        if (!completion.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.CALENDAR_RECORD_FORBIDDEN);
+        }
+
+        validateCurrentSolarTerm(completion.getCreatedAt().toLocalDate());
+
+        completion.update(request.objectKey(), request.memo());
+    }
+
+    @Transactional
+    public void deleteMissionCompletion(Long userId, Long completionId) {
+        UserMissionCompletion completion = completionRepository.findById(completionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RECORD_NOT_FOUND));
+
+        if (!completion.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.CALENDAR_RECORD_FORBIDDEN);
+        }
+
+        completionRepository.delete(completion);
+    }
+
+    @Transactional
+    public void updateUserRecord(Long userId, Long recordId, CalendarRecordUpdateRequest request) {
+        UserRecord record = userRecordRepository.findById(recordId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RECORD_NOT_FOUND));
+
+        if (!record.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.CALENDAR_RECORD_FORBIDDEN);
+        }
+
+        validateCurrentSolarTerm(record.getRecordDate());
+
+        record.update(request.objectKey(), request.memo());
+    }
+
+    @Transactional
+    public void deleteUserRecord(Long userId, Long recordId) {
+        UserRecord record = userRecordRepository.findById(recordId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.RECORD_NOT_FOUND));
+
+        if (!record.getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.CALENDAR_RECORD_FORBIDDEN);
+        }
+
+        userRecordRepository.delete(record);
+    }
+
+    private void validateCurrentSolarTerm(LocalDate recordDate) {
+        SolarTerm currentSolarTerm = solarTermRepository.findByDate(LocalDate.now())
+                .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
+
+        if (recordDate.isBefore(currentSolarTerm.getStartDate()) ||
+                recordDate.isAfter(currentSolarTerm.getEndDate())) {
+            throw new BusinessException(ErrorCode.CALENDAR_UPDATE_NOT_ALLOWED);
+        }
+    }
+
     private Map<LocalDate, String> buildThumbnailMap(
             List<UserMissionCompletion> completions, List<UserRecord> records) {
 

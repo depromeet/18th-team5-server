@@ -6,6 +6,7 @@ import com.team.peektime_api.domain.mission.dto.SelectedMissionStatusResponse;
 import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.domain.mission.entity.UserSelectedMission;
 import com.team.peektime_api.domain.mission.repository.MissionRepository;
+import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
 import com.team.peektime_api.domain.mission.repository.UserSelectedMissionRepository;
 import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
@@ -32,12 +33,17 @@ public class SelectedMissionService {
     private final UserRepository userRepository;
     private final UserOnboardingRepository userOnboardingRepository;
     private final UserSelectedMissionRepository userSelectedMissionRepository;
+    private final UserMissionCompletionRepository userMissionCompletionRepository;
     private final SolarTermRepository solarTermRepository;
 
     public SelectedMissionStatusResponse getTodaySelectedMission(Long userId) {
         LocalDate today = LocalDate.now();
         return userSelectedMissionRepository.findByUserIdAndSelectedDate(userId, today)
-                .map(selected -> SelectedMissionStatusResponse.of(true, selected.getMission()))
+                .map(selected -> {
+                    boolean isCompleted = userMissionCompletionRepository
+                            .existsByUser_IdAndMission_Id(userId, selected.getMission().getId());
+                    return SelectedMissionStatusResponse.of(true, selected.getMission(), isCompleted);
+                })
                 .orElseGet(() -> SelectedMissionStatusResponse.of(false, null));
     }
 

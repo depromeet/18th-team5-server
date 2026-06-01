@@ -31,14 +31,14 @@ public class NotificationSetting extends BaseEntity {
     private Boolean solarTermEnd = true;
 
     @Column(nullable = false)
-    private Boolean solarTermChange = true;
+    private Boolean solarTermStart = true;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private NotificationSetting(User user, Boolean dailyMission, Boolean solarTermEnd, Boolean solarTermChange) {
+    private NotificationSetting(User user, Boolean dailyMission, Boolean solarTermEnd, Boolean solarTermStart) {
         this.user = user;
         this.dailyMission = dailyMission;
         this.solarTermEnd = solarTermEnd;
-        this.solarTermChange = solarTermChange;
+        this.solarTermStart = solarTermStart;
     }
 
     public static NotificationSetting createDefault(User user) {
@@ -46,19 +46,19 @@ public class NotificationSetting extends BaseEntity {
                 .user(user)
                 .dailyMission(true)
                 .solarTermEnd(true)
-                .solarTermChange(true)
+                .solarTermStart(true)
                 .build();
     }
 
-    public void update(Boolean dailyMission, Boolean solarTermEnd, Boolean solarTermChange) {
+    public void update(Boolean dailyMission, Boolean solarTermEnd, Boolean solarTermStart) {
         if (dailyMission != null) {
             this.dailyMission = dailyMission;
         }
         if (solarTermEnd != null) {
             this.solarTermEnd = solarTermEnd;
         }
-        if (solarTermChange != null) {
-            this.solarTermChange = solarTermChange;
+        if (solarTermStart != null) {
+            this.solarTermStart = solarTermStart;
         }
     }
 }

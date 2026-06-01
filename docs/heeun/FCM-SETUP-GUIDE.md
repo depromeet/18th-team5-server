@@ -449,7 +449,7 @@ public class NotificationScheduler {
 |-----------|---------|---------|------|
 | `daily_mission` | 오늘의 미션 알림 | 매일 오전 10시 | 새로운 미션 도착 알림 |
 | `solar_term_end` | 절기 마지막 날 알림 | 절기 마지막 날 오후 10시 | 절기 마무리 안내 |
-| `solar_term_change` | 절기 변경 알림 | 절기 다음 날 오전 10시 | 새 절기 시작 안내 |
+| `solar_term_start` | 절기 시작 알림 | 절기 다음 날 오전 10시 | 새 절기 시작 안내 |
 
 ---
 
@@ -511,7 +511,7 @@ Authorization: Bearer {accessToken}
   "data": {
     "dailyMission": true,
     "solarTermEnd": true,
-    "solarTermChange": false
+    "solarTermStart": false
   }
 }
 ```
@@ -526,7 +526,7 @@ Content-Type: application/json
 {
   "dailyMission": true,
   "solarTermEnd": false,
-  "solarTermChange": true
+  "solarTermStart": true
 }
 ```
 
@@ -538,7 +538,7 @@ Content-Type: application/json
   "data": {
     "dailyMission": true,
     "solarTermEnd": false,
-    "solarTermChange": true
+    "solarTermStart": true
   }
 }
 ```
@@ -569,15 +569,15 @@ public class NotificationSetting extends BaseEntity {
     private Boolean solarTermEnd = true;  // 절기 마지막 날 알림
 
     @Column(nullable = false)
-    private Boolean solarTermChange = true;  // 절기 변경 알림
+    private Boolean solarTermStart = true;  // 절기 시작 알림
 
     @Builder(access = AccessLevel.PRIVATE)
     private NotificationSetting(Member member, Boolean dailyMission,
-                                 Boolean solarTermEnd, Boolean solarTermChange) {
+                                 Boolean solarTermEnd, Boolean solarTermStart) {
         this.member = member;
         this.dailyMission = dailyMission;
         this.solarTermEnd = solarTermEnd;
-        this.solarTermChange = solarTermChange;
+        this.solarTermStart = solarTermStart;
     }
 
     public static NotificationSetting createDefault(Member member) {
@@ -585,14 +585,14 @@ public class NotificationSetting extends BaseEntity {
                 .member(member)
                 .dailyMission(true)
                 .solarTermEnd(true)
-                .solarTermChange(true)
+                .solarTermStart(true)
                 .build();
     }
 
-    public void update(Boolean dailyMission, Boolean solarTermEnd, Boolean solarTermChange) {
+    public void update(Boolean dailyMission, Boolean solarTermEnd, Boolean solarTermStart) {
         if (dailyMission != null) this.dailyMission = dailyMission;
         if (solarTermEnd != null) this.solarTermEnd = solarTermEnd;
-        if (solarTermChange != null) this.solarTermChange = solarTermChange;
+        if (solarTermStart != null) this.solarTermStart = solarTermStart;
     }
 }
 ```
@@ -608,7 +608,7 @@ import FirebaseMessaging
 enum NotificationTopic: String {
     case dailyMission = "daily_mission"
     case solarTermEnd = "solar_term_end"
-    case solarTermChange = "solar_term_change"
+    case solarTermStart = "solar_term_start"
 }
 
 // 알림 토글 변경 시 호출
@@ -645,8 +645,8 @@ func updateNotificationSetting(topic: NotificationTopic, isEnabled: Bool) {
         body["dailyMission"] = isEnabled
     case .solarTermEnd:
         body["solarTermEnd"] = isEnabled
-    case .solarTermChange:
-        body["solarTermChange"] = isEnabled
+    case .solarTermStart:
+        body["solarTermStart"] = isEnabled
     }
 
     // PUT /api/v1/notifications/settings 호출
@@ -703,17 +703,17 @@ public class NotificationScheduler {
         fcmService.sendToTopic("solar_term_end", notification);
     }
 
-    // 절기 변경 알림 - 새 절기 첫날 오전 10시
-    public void sendSolarTermChangeNotification(String newSolarTermName, String description) {
-        log.info("절기 변경 알림 발송: {}", newSolarTermName);
+    // 절기 시작 알림 - 새 절기 첫날 오전 10시
+    public void sendSolarTermStartNotification(String newSolarTermName, String description) {
+        log.info("절기 시작 알림 발송: {}", newSolarTermName);
 
         PushNotificationRequest notification = PushNotificationRequest.builder()
                 .title("새로운 절기, " + newSolarTermName + "이 시작되었어요!")
                 .body(description)
-                .data(Map.of("type", "SOLAR_TERM_CHANGE", "solarTerm", newSolarTermName))
+                .data(Map.of("type", "SOLAR_TERM_START", "solarTerm", newSolarTermName))
                 .build();
 
-        fcmService.sendToTopic("solar_term_change", notification);
+        fcmService.sendToTopic("solar_term_start", notification);
     }
 }
 ```

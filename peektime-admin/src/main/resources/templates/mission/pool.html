@@ -863,7 +863,13 @@
                     }
 
                     const data = await response.json();
-                    alert(`${data.missions.length}개의 미션이 생성되었습니다.`);
+
+                    // 동기화 결과에 따라 메시지 표시
+                    if (data.syncSuccess) {
+                        alert(`${data.missions.length}개의 미션이 생성되었습니다.\n\n✅ ${data.syncMessage}`);
+                    } else {
+                        alert(`${data.missions.length}개의 미션이 생성되었습니다.\n\n⚠️ ${data.syncMessage}\n\n수동으로 API 동기화 버튼을 눌러주세요.`);
+                    }
                     location.reload();
                 } catch (error) {
                     console.error('미션 생성 오류:', error);

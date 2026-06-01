@@ -1,20 +1,25 @@
 package com.team.peektime_admin.domain.mission.dto;
 
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
+@Builder
 public class MissionGenerationResponse {
 
     private int generatedCount;
     private List<GeneratedMissionDto> missions;
+    private boolean syncSuccess;
+    private String syncMessage;
 
-    public static MissionGenerationResponse of(List<GeneratedMissionDto> missions) {
-        return new MissionGenerationResponse(missions.size(), missions);
+    public static MissionGenerationResponse of(List<GeneratedMissionDto> missions, boolean syncSuccess, String syncMessage) {
+        return MissionGenerationResponse.builder()
+                .generatedCount(missions.size())
+                .missions(missions)
+                .syncSuccess(syncSuccess)
+                .syncMessage(syncMessage)
+                .build();
     }
 }

@@ -24,6 +24,8 @@ public enum ErrorCode {
     MISSION_ALREADY_COMPLETED(HttpStatus.CONFLICT, "MISSION_409", "이미 완료한 미션입니다"),
     MISSION_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "MISSION_400", "선택할 수 없는 미션입니다"),
     DAILY_MISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "MISSION_404_DAILY", "오늘의 미션을 찾을 수 없습니다"),
+    RECOMMENDED_MISSION_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "MISSION_409_REC", "추천 미션은 하루 3회까지만 기록할 수 있습니다"),
+    SELECTED_MISSION_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "MISSION_409_SEL", "선택 미션은 하루 1회만 기록할 수 있습니다"),
 
     // 절기
     SOLAR_TERM_NOT_FOUND(HttpStatus.NOT_FOUND, "SOLAR_TERM_404", "절기를 찾을 수 없습니다"),

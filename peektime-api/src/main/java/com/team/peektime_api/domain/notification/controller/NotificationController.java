@@ -50,12 +50,12 @@ public class NotificationController {
         return ResponseEntity.ok(SuccessResponse.ok());
     }
 
-    @Operation(summary = "절기 변경 알림 전송 (solar_term_change 토픽 구독자에게만)")
-    @PostMapping("/solar-term-change")
-    public ResponseEntity<SuccessResponse<Void>> sendSolarTermChangeNotification(
+    @Operation(summary = "절기 시작 알림 전송 (solar_term_start 토픽 구독자에게만)")
+    @PostMapping("/solar-term-start")
+    public ResponseEntity<SuccessResponse<Void>> sendSolarTermStartNotification(
             @RequestParam String solarTermName,
             @RequestParam(required = false, defaultValue = "새로운 절기가 시작되었어요") String description) {
-        fcmService.sendSolarTermChangeNotification(solarTermName, description);
+        fcmService.sendSolarTermStartNotification(solarTermName, description);
         return ResponseEntity.ok(SuccessResponse.ok());
     }
 }

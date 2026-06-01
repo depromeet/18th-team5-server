@@ -1,7 +1,9 @@
 package com.team.peektime_api.domain.home.service;
 
 import com.team.peektime_api.domain.home.dto.HomeResponse;
+import com.team.peektime_api.domain.mission.entity.DailyMission;
 import com.team.peektime_api.domain.mission.repository.DailyMissionRepository;
+import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +18,17 @@ import java.time.LocalDate;
 public class HomeCardService {
 
     private final DailyMissionRepository dailyMissionRepository;
+    private final UserMissionCompletionRepository userMissionCompletionRepository;
 
-    public HomeResponse getHome() {
+    public HomeResponse getHome(Long userId) {
         LocalDate today = LocalDate.now();
 
-        return dailyMissionRepository.findByMissionDateWithDetails(today)
-                .map(HomeResponse::from)
+        DailyMission dailyMission = dailyMissionRepository.findByMissionDateWithDetails(today)
                 .orElseThrow(() -> new BusinessException(ErrorCode.DAILY_MISSION_NOT_FOUND));
+
+        boolean isCompleted = userMissionCompletionRepository
+                .existsByUser_IdAndMission_Id(userId, dailyMission.getMission().getId());
+
+        return HomeResponse.from(dailyMission, isCompleted);
     }
 }

@@ -16,14 +16,14 @@ public class NotificationSettingResponse {
     @Schema(description = "절기 마지막 날 알림", example = "true")
     private Boolean solarTermEnd;
 
-    @Schema(description = "절기 변경 알림", example = "true")
-    private Boolean solarTermChange;
+    @Schema(description = "절기 시작 알림", example = "true")
+    private Boolean solarTermStart;
 
     public static NotificationSettingResponse from(NotificationSetting setting) {
         return NotificationSettingResponse.builder()
                 .dailyMission(setting.getDailyMission())
                 .solarTermEnd(setting.getSolarTermEnd())
-                .solarTermChange(setting.getSolarTermChange())
+                .solarTermStart(setting.getSolarTermStart())
                 .build();
     }
 }

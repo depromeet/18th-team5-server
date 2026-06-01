@@ -22,7 +22,7 @@ public class FcmService {
     // 알림 토글별 토픽
     public static final String TOPIC_DAILY_MISSION = "daily_mission";
     public static final String TOPIC_SOLAR_TERM_END = "solar_term_end";
-    public static final String TOPIC_SOLAR_TERM_CHANGE = "solar_term_change";
+    public static final String TOPIC_SOLAR_TERM_START = "solar_term_start";
 
     /**
      * 전체 사용자에게 알림 전송 (Topic 방식)
@@ -58,16 +58,16 @@ public class FcmService {
     }
 
     /**
-     * 절기 변경 알림 전송 (solar_term_change 토픽 구독자에게만)
+     * 절기 시작 알림 전송 (solar_term_start 토픽 구독자에게만)
      */
-    public void sendSolarTermChangeNotification(String newSolarTermName, String description) {
+    public void sendSolarTermStartNotification(String newSolarTermName, String description) {
         PushNotificationRequest request = PushNotificationRequest.builder()
                 .title("새로운 절기, " + newSolarTermName + "이 시작되었어요!")
                 .body(description)
-                .data(Map.of("type", "SOLAR_TERM_CHANGE", "solarTerm", newSolarTermName))
+                .data(Map.of("type", "SOLAR_TERM_START", "solarTerm", newSolarTermName))
                 .build();
 
-        sendToTopic(TOPIC_SOLAR_TERM_CHANGE, request);
+        sendToTopic(TOPIC_SOLAR_TERM_START, request);
     }
 
     /**

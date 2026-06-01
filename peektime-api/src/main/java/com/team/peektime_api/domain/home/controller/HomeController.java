@@ -29,8 +29,10 @@ public class HomeController {
     @Operation(summary = "홈 메인 카드 조회", description = "현재 절기 정보와 오늘의 미션을 조회합니다.")
     @GetMapping("/card")
     @ResponseStatus(HttpStatus.OK)
-    public SuccessResponse<HomeResponse> getHomeCard() {
-        return SuccessResponse.of(SuccessCode.HOME_FOUND, homeCardService.getHome());
+    public SuccessResponse<HomeResponse> getHomeCard(
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return SuccessResponse.of(SuccessCode.HOME_FOUND, homeCardService.getHome(principal.getUserId()));
     }
 
     @Operation(summary = "절기 기록 조회", description = "현재 절기 내 기록 횟수와 최근 3개의 이미지를 조회합니다.")

@@ -3,15 +3,20 @@ package com.team.peektime_api.domain.mission.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.peektime_api.domain.home.dto.RecentRecordCache;
+import com.team.peektime_api.domain.mission.dto.MissionCompletionRequest;
+import com.team.peektime_api.domain.mission.dto.MissionRecordPageResponse;
+import com.team.peektime_api.domain.mission.dto.RecommendedMissionCountResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionDetailResponse;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.UserMissionCompletionResponse;
+import com.team.peektime_api.global.common.enums.MissionType;
 import com.team.peektime_api.domain.mission.entity.DailyMission;
 import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
 import com.team.peektime_api.domain.mission.event.MissionCompletedEvent;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import com.team.peektime_api.domain.mission.repository.DailyMissionRepository;
+import com.team.peektime_api.domain.mission.repository.MissionRepository;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
 import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
@@ -39,6 +44,7 @@ public class UserMissionCompletionService {
 
     private final UserMissionCompletionRepository userMissionCompletionRepository;
     private final DailyMissionRepository dailyMissionRepository;
+    private final MissionRepository missionRepository;
     private final SolarTermRepository solarTermRepository;
     private final UserRepository userRepository;
     private final S3Service s3Service;
@@ -57,10 +63,12 @@ public class UserMissionCompletionService {
 
         validateSameMission(missionId, user);
 
-        SolarTerm solarTerm = solarTermRepository.findById(request.solarTermId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
+        SolarTerm solarTerm = getCurrentSolarTerm(today);
 
-        UserMissionCompletion completion = saveMissionCompletion(request, user, mission, solarTerm);
+        UserMissionCompletion completion = userMissionCompletionRepository.save(
+                UserMissionCompletion.create(user, mission, solarTerm, MissionType.DAILY,
+                        request.objectKey(), request.memo())
+        );
 
         updateRecentRecordsCache(userId, completion);
 
@@ -69,7 +77,7 @@ public class UserMissionCompletionService {
         MissionLogPayload payload = MissionLogPayload.of(
                 user.getDeviceUuid(),
                 missionId,
-                request.missionType(),
+                MissionType.DAILY,
                 solarTerm.getId(),
                 completion.getCreatedAt()
         );
@@ -77,6 +85,11 @@ public class UserMissionCompletionService {
         eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
 
         return UserMissionCompletionResponse.from(completion);
+    }
+
+    private SolarTerm getCurrentSolarTerm(LocalDate date) {
+        return solarTermRepository.findByDate(date)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
     }
 
     private void validateSameMission(Long missionId, User user) {
@@ -99,12 +112,80 @@ public class UserMissionCompletionService {
                 .toList();
     }
 
-    private UserMissionCompletion saveMissionCompletion(UserMissionCompletionRequest request, User user,
-                                                        Mission mission, SolarTerm solarTerm) {
-        return userMissionCompletionRepository.save(
-                UserMissionCompletion.create(user, mission, solarTerm, request.missionType(),
+    @Transactional(readOnly = true)
+    public MissionRecordPageResponse getMissionRecordPage(Long missionId) {
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
+        return MissionRecordPageResponse.from(mission);
+    }
+
+    @Transactional(readOnly = true)
+    public RecommendedMissionCountResponse getRecommendedMissionCount(Long userId) {
+        long count = userMissionCompletionRepository.countByUser_IdAndMissionType(userId, MissionType.RECOMMENDED);
+        return RecommendedMissionCountResponse.of(count);
+    }
+
+    private static final int RECOMMENDED_DAILY_LIMIT = 3;
+    private static final int SELECTED_DAILY_LIMIT = 1;
+
+    @Transactional
+    public UserMissionCompletionResponse completeRecommendedMission(Long userId, Long missionId, MissionCompletionRequest request) {
+        User user = findUser(userId);
+        LocalDate today = LocalDate.now();
+
+        // 같은 미션 중복 완료 방지
+        validateSameMission(missionId, user);
+
+        // 하루 3회 제한 체크
+        long todayCount = userMissionCompletionRepository.countTodayByUserIdAndMissionType(
+                userId, MissionType.RECOMMENDED,
+                today.atStartOfDay(), today.plusDays(1).atStartOfDay());
+
+        if (todayCount >= RECOMMENDED_DAILY_LIMIT) {
+            throw new BusinessException(ErrorCode.RECOMMENDED_MISSION_LIMIT_EXCEEDED);
+        }
+
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
+
+        SolarTerm solarTerm = getCurrentSolarTerm(today);
+
+        UserMissionCompletion completion = userMissionCompletionRepository.save(
+                UserMissionCompletion.create(user, mission, solarTerm, MissionType.RECOMMENDED,
                         request.objectKey(), request.memo())
         );
+
+        return UserMissionCompletionResponse.from(completion);
+    }
+
+    @Transactional
+    public UserMissionCompletionResponse completeSelectedMission(Long userId, Long missionId, MissionCompletionRequest request) {
+        User user = findUser(userId);
+        LocalDate today = LocalDate.now();
+
+        // 같은 미션 중복 완료 방지
+        validateSameMission(missionId, user);
+
+        // 하루 1회 제한 체크
+        long todayCount = userMissionCompletionRepository.countTodayByUserIdAndMissionType(
+                userId, MissionType.SELECTED,
+                today.atStartOfDay(), today.plusDays(1).atStartOfDay());
+
+        if (todayCount >= SELECTED_DAILY_LIMIT) {
+            throw new BusinessException(ErrorCode.SELECTED_MISSION_LIMIT_EXCEEDED);
+        }
+
+        Mission mission = missionRepository.findById(missionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
+
+        SolarTerm solarTerm = getCurrentSolarTerm(today);
+
+        UserMissionCompletion completion = userMissionCompletionRepository.save(
+                UserMissionCompletion.create(user, mission, solarTerm, MissionType.SELECTED,
+                        request.objectKey(), request.memo())
+        );
+
+        return UserMissionCompletionResponse.from(completion);
     }
 
     private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {

@@ -56,6 +56,11 @@ public class UserMissionCompletion extends BaseEntity {
         this.memo = memo;
     }
 
+    public void update(String objectKey, String memo) {
+        this.objectKey = objectKey;
+        this.memo = memo;
+    }
+
     public static UserMissionCompletion create(User user, Mission mission, SolarTerm solarTerm,
                                                MissionType missionType, String objectKey, String memo) {
         return UserMissionCompletion.builder()

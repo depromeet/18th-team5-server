@@ -68,4 +68,46 @@ public class CalendarController {
         return SuccessResponse.of(SuccessCode.CALENDAR_RECORD_CREATED,
                 calendarService.createFreeRecord(principal.getUserId(), request));
     }
+
+    @Operation(summary = "미션 기록 수정", description = "미션 완료 기록의 사진/메모를 수정합니다. 현재 절기 내의 기록만 수정 가능합니다.")
+    @PatchMapping("/mission-completions/{completionId}")
+    public SuccessResponse<Void> updateMissionCompletion(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long completionId,
+            @RequestBody @Valid CalendarRecordUpdateRequest request
+    ) {
+        calendarService.updateMissionCompletion(principal.getUserId(), completionId, request);
+        return SuccessResponse.of(SuccessCode.CALENDAR_RECORD_UPDATED, null);
+    }
+
+    @Operation(summary = "미션 기록 삭제", description = "미션 완료 기록을 삭제합니다. 모든 절기의 기록 삭제 가능합니다.")
+    @DeleteMapping("/mission-completions/{completionId}")
+    public SuccessResponse<Void> deleteMissionCompletion(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long completionId
+    ) {
+        calendarService.deleteMissionCompletion(principal.getUserId(), completionId);
+        return SuccessResponse.of(SuccessCode.CALENDAR_RECORD_DELETED, null);
+    }
+
+    @Operation(summary = "자유 기록 수정", description = "자유 기록의 사진/메모를 수정합니다. 현재 절기 내의 기록만 수정 가능합니다.")
+    @PatchMapping("/records/{recordId}")
+    public SuccessResponse<Void> updateUserRecord(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long recordId,
+            @RequestBody @Valid CalendarRecordUpdateRequest request
+    ) {
+        calendarService.updateUserRecord(principal.getUserId(), recordId, request);
+        return SuccessResponse.of(SuccessCode.CALENDAR_RECORD_UPDATED, null);
+    }
+
+    @Operation(summary = "자유 기록 삭제", description = "자유 기록을 삭제합니다. 모든 절기의 기록 삭제 가능합니다.")
+    @DeleteMapping("/records/{recordId}")
+    public SuccessResponse<Void> deleteUserRecord(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long recordId
+    ) {
+        calendarService.deleteUserRecord(principal.getUserId(), recordId);
+        return SuccessResponse.of(SuccessCode.CALENDAR_RECORD_DELETED, null);
+    }
 }

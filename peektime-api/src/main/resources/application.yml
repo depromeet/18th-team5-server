@@ -31,3 +31,16 @@ cloud:
 
 firebase:
   credentials-path: classpath:firebase/firebase-service-account.json
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+  prometheus:
+    metrics:
+      export:
+        enabled: true

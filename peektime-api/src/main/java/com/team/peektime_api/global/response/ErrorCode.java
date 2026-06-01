@@ -34,6 +34,8 @@ public enum ErrorCode {
     RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "RECORD_404", "기록을 찾을 수 없습니다"),
     CALENDAR_FREE_RECORD_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "RECORD_409_FREE", "자유 기록은 하루 1개까지 등록 가능합니다"),
     CALENDAR_TOTAL_CARD_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "RECORD_409_TOTAL", "하루 최대 기록 수를 초과했습니다"),
+    CALENDAR_UPDATE_NOT_ALLOWED(HttpStatus.FORBIDDEN, "RECORD_403", "현재 절기 내의 기록만 수정할 수 있습니다"),
+    CALENDAR_RECORD_FORBIDDEN(HttpStatus.FORBIDDEN, "RECORD_403_USER", "본인의 기록만 수정/삭제할 수 있습니다"),
 
     // 인증
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_401", "유효하지 않은 토큰입니다"),

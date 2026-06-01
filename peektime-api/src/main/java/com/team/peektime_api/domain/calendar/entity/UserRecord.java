@@ -43,6 +43,11 @@ public class UserRecord extends BaseEntity {
         this.memo = memo;
     }
 
+    public void update(String objectKey, String memo) {
+        this.objectKey = objectKey;
+        this.memo = memo;
+    }
+
     public static UserRecord create(User user, LocalDate recordDate, String objectKey, String memo) {
         return UserRecord.builder()
                 .user(user)

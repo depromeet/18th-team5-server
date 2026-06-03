@@ -20,20 +20,20 @@ public class MissionPromptTemplate {
             - OUTDOOR: 실외에서 수행하는 미션
 
             ### 2. 동반 (companionType)
-            - SOLO: 혼자서 할 수 있는 미션
-            - TOGETHER: 다른 사람과 함께하면 더 좋은 미션
+            - SOLO: 혼자 가능 (혼자서도 충분히 즐길 수 있는 미션)
+            - TOGETHER: 같이하면 더 좋음 (함께하면 더 재미있는 미션)
 
             ### 3. 카테고리 (categoryType)
-            - FOOD: 음식 관련 미션
-            - NATURE: 자연 관련 미션
-            - CONTENT: 사진, 일기 등 기록/콘텐츠 관련 미션
-            - PLACE: 장소 관련 미션
+            - FOOD: 제철 음식, 요리 관련 미션
+            - NATURE: 자연 감상, 야외 활동 미션
+            - CONTENT: 사진, 일기 등 기록/콘텐츠 미션
+            - PLACE: 특정 장소 방문 미션
             - MUSIC: 음악 관련 미션
 
             ### 4. 즐기는 방식 (enjoyType)
-            - NATURE_OUTDOOR: 자연이나 야외에서 즐기는 활동
-            - SEASONAL_FOOD: 제철 음식을 맛보거나 요리하는 활동
-            - CULTURE_CONTENT: 감성적인 콘텐츠나 문화 활동
+            - NATURE_OUTDOOR (자연/야외 활동): 자연이나 야외에서 즐기는 활동
+            - SEASONAL_FOOD (제철 음식/요리): 제철 음식을 맛보거나 요리하는 활동
+            - CULTURE_CONTENT (감성 콘텐츠/문화): 감성적인 콘텐츠나 문화 활동
 
             ### 5. 추천 사용자 타입 (userType)
             - EXPLORER: 밖에서 적극적으로 활동하는 제철을 쫓는 탐험가

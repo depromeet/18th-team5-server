@@ -17,10 +17,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.team.peektime_api.domain.mission.dto.RecommendedMissionAvailabilityResponse;
+import com.team.peektime_api.global.common.enums.MissionType;
 
 @Service
 @RequiredArgsConstructor
@@ -56,6 +60,22 @@ public class RecommendedMissionService {
 
         return RecommendedMissionResponse.of(onboarding.getUserType(), currentSolarTerm, missions);
     }
+
+
+
+
+    public RecommendedMissionAvailabilityResponse getAvailability(Long userId) {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime startOfNextDay = startOfDay.plusDays(1);
+
+        long completedCount = userMissionCompletionRepository.countTodayByUserIdAndMissionType(
+                userId, MissionType.RECOMMENDED, startOfDay, startOfNextDay);
+
+        return RecommendedMissionAvailabilityResponse.of((int) completedCount);
+    }
+
+
+
 
     private List<MissionItem> sortByPriority(List<RecommendedMissionPool> pools, List<EnjoyType> priority, Long userId) {
         Map<EnjoyType, List<RecommendedMissionPool>> grouped = new LinkedHashMap<>();

@@ -55,7 +55,7 @@ public class MissionPromptTemplate {
             - NATURE: 자연 감상, 야외 활동 미션
             - CONTENT: 사진, 일기 등 기록/콘텐츠 미션
             - PLACE: 특정 장소 방문 미션
-            - MUSIC: 음악 관련 미션
+            - MUSIC: 음악 관련 미션 (예: "계절 어울리는 플레이리스트 화면 찍기", "창문 열고 빗소리 들으며 음악 틀기", "지금 기분에 맞는 노래 찾아보기")
 
             ### 4. 즐기는 방식 (enjoyType)
             - NATURE_OUTDOOR (자연/야외 활동): 자연이나 야외에서 즐기는 활동

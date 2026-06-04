@@ -32,6 +32,10 @@ public class MissionPromptTemplate {
 
             ### 오감 활용
             - 전체 미션 중 2/3 이상은 시각, 청각, 촉각, 미각, 후각을 자극하는 행동 동사를 포함해야 한다.
+
+            ### 속성 분산
+            - companionType은 전체 미션 중 절반은 SOLO, 절반은 TOGETHER로 배분한다. 홀수 개수일 경우 SOLO를 하나 더 배분한다.
+            - categoryType은 특정 카테고리에 편중되지 않도록 가능한 한 다양한 값을 사용한다.
             """;
 
     private static final String ATTRIBUTE_DESCRIPTION = """

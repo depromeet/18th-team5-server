@@ -18,12 +18,12 @@ public interface UserMissionCompletionRepository extends JpaRepository<UserMissi
 
     @Query("SELECT COUNT(c) FROM UserMissionCompletion c " +
             "WHERE c.user.id = :userId AND c.missionType = :missionType " +
-            "AND c.createdAt BETWEEN :startOfDay AND :endOfDay")
+            "AND c.createdAt >= :startOfDay AND c.createdAt < :startOfNextDay")
     long countTodayByUserIdAndMissionType(
             @Param("userId") Long userId,
             @Param("missionType") MissionType missionType,
             @Param("startOfDay") LocalDateTime startOfDay,
-            @Param("endOfDay") LocalDateTime endOfDay);
+            @Param("startOfNextDay") LocalDateTime startOfNextDay);
 
     List<UserMissionCompletion> findByUser_IdAndMission_Id(Long userId, Long missionId);
 

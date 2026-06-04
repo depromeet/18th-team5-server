@@ -27,26 +27,26 @@ public class OutboxPoller {
     private final OutboxRepository outboxRepository;
     private final AdminClient adminClient;
     private final ObjectMapper objectMapper;
+    private final PollProcesser processer;
 
-    @Scheduled(fixedDelay = 60000)  // 1분마다
-    @Transactional
+    @Scheduled(fixedDelay = 30000)  // 1분마다
     public void pollAndProcess() {
-        LocalDateTime threshold = LocalDateTime.now().minusSeconds(3);
-        List<OutboxEvent> events = outboxRepository.findByCreatedAtBeforeWithSkipLocked(threshold);
-
-        if (events.isEmpty()) {
-            log.info("기록해야 하는 미션이 존재하지 않습니다.");
-            return;
-        }
-
-        log.info("Outbox 폴링: {}건 처리 시작", events.size());
-        // timeout 이 3초 일 경우 : 3초 * 5 = 15초 동안 커넥션을 소유할 가능성이 존재한다.
-        ProcessingResult result = processAllEvents(events);
+        long startTime = System.currentTimeMillis();
+        log.info("[Task Start] 시작 시각: {}", LocalDateTime.now());
 
 
-        // TX : 성공시 Outbox 테이블에서 삭제
-        deleteProcessedEvents(result.toDelete());
-        logUnknownEvents(result.unknownCount());
+        // @Tx 시작
+        processer.process();
+
+
+        long endTime = System.currentTimeMillis();
+        log.info("[Task End] 끝 시각: {}", LocalDateTime.now());
+
+        // 소요 시간 계산 (끝 시각 - 시작 시각)
+        long duration = endTime - startTime;
+
+        // 밀리초(ms) 단위와 초(s) 단위를 보기 편하게 로그로 기록
+        log.info("[Performance Result] 작업 완료! 소요 시간: {} ms (약 {} 초)", duration, duration / 1000.0);
     }
 
 

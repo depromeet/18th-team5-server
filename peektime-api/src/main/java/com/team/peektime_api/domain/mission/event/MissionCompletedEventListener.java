@@ -23,9 +23,9 @@ public class MissionCompletedEventListener {
         try {
             MissionLogPayload payload = MissionLogPayload.from(event);
             adminClient.sendMissionLog(payload);
-            outboxRepository.deleteById(event.outboxId());
+            outboxRepository.deleteById(event.getOutboxId());
 
-            log.info("미션 완료 로그 전송 성공: missionId={}", event.missionId());
+            log.info("미션 완료 로그 전송 성공: missionId={}", event.getMissionId());
         } catch (Exception e) {
             log.warn("미션 완료 로그 즉시 전송 실패, 폴러가 재시도 예정: {}", e.getMessage());
         }

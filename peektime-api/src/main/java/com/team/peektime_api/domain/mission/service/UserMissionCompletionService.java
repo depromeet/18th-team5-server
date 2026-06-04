@@ -14,7 +14,6 @@ import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
 import com.team.peektime_api.domain.mission.event.MissionCompletedEvent;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
-import com.team.peektime_api.domain.mission.event.RecentRecordsCacheInvalidationEvent;
 import com.team.peektime_api.domain.mission.repository.DailyMissionRepository;
 import com.team.peektime_api.domain.mission.repository.MissionRepository;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
@@ -70,9 +69,6 @@ public class UserMissionCompletionService {
 
         dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
 
-        // 캐시 Invalidation (커밋 후 실행)
-        eventPublisher.publishEvent(RecentRecordsCacheInvalidationEvent.of(userId));
-
         MissionLogPayload payload = MissionLogPayload.of(
                 user.getDeviceUuid(),
                 missionId,
@@ -81,7 +77,10 @@ public class UserMissionCompletionService {
                 completion.getCreatedAt()
         );
         OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
-        eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
+
+        // 팩트 이벤트 발행: "미션이 완료되었다"
+        // → 리스너들이 각자 반응 (캐시 삭제, 로그 전송 등)
+        eventPublisher.publishEvent(MissionCompletedEvent.of(userId, outbox, payload));
 
         return UserMissionCompletionResponse.from(completion);
     }

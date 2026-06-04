@@ -69,18 +69,10 @@ public class UserMissionCompletionService {
 
         dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
 
-        MissionLogPayload payload = MissionLogPayload.of(
-                user.getDeviceUuid(),
-                missionId,
-                MissionType.DAILY,
-                solarTerm.getId(),
-                completion.getCreatedAt()
-        );
-        OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
+        OutboxEvent outbox = saveOutboxEvent(user, missionId, MissionType.DAILY, solarTerm, completion);
 
-        // 팩트 이벤트 발행: "미션이 완료되었다"
-        // → 리스너들이 각자 반응 (캐시 삭제, 로그 전송 등)
-        eventPublisher.publishEvent(MissionCompletedEvent.of(userId, outbox, payload));
+        // 팩트 이벤트 발행 (Pull 방식: ID만 전달)
+        publishMissionCompletedEvent(completion.getId(), outbox.getId());
 
         return UserMissionCompletionResponse.from(completion);
     }
@@ -184,6 +176,22 @@ public class UserMissionCompletionService {
         );
 
         return UserMissionCompletionResponse.from(completion);
+    }
+
+    private OutboxEvent saveOutboxEvent(User user, Long missionId, MissionType missionType,
+                                         SolarTerm solarTerm, UserMissionCompletion completion) {
+        MissionLogPayload payload = MissionLogPayload.of(
+                user.getDeviceUuid(),
+                missionId,
+                missionType,
+                solarTerm.getId(),
+                completion.getCreatedAt()
+        );
+        return outboxRepository.save(new OutboxEvent(toJson(payload)));
+    }
+
+    private void publishMissionCompletedEvent(Long completionId, Long outboxId) {
+        eventPublisher.publishEvent(MissionCompletedEvent.of(completionId, outboxId));
     }
 
     private String toJson(MissionLogPayload payload) {

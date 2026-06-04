@@ -20,14 +20,4 @@ public record MissionLogPayload(
     ) {
         return new MissionLogPayload(userUuid, missionId, missionType, solarTermId, completedAt);
     }
-
-    public static MissionLogPayload from(MissionCompletedEvent event) {
-        return new MissionLogPayload(
-                event.getUserUuid(),
-                event.getMissionId(),
-                event.getMissionType(),
-                event.getSolarTermId(),
-                event.getCompletedAt()
-        );
-    }
 }

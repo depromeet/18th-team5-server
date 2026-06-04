@@ -1,35 +1,22 @@
 package com.team.peektime_api.domain.mission.event;
 
-import com.team.peektime_api.global.common.enums.MissionType;
-import com.team.peektime_api.global.outbox.entity.OutboxEvent;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDateTime;
-
+/**
+ * 미션 완료 팩트 이벤트
+ *
+ * - 최소한의 ID만 포함 (Pull 방식)
+ * - 리스너가 필요한 데이터를 직접 조회
+ */
 @Getter
-@Builder
 @RequiredArgsConstructor
 public class MissionCompletedEvent {
 
-    private final Long userId;
+    private final Long completionId;
     private final Long outboxId;
-    private final String userUuid;
-    private final Long missionId;
-    private final MissionType missionType;
-    private final Long solarTermId;
-    private final LocalDateTime completedAt;
 
-    public static MissionCompletedEvent of(Long userId, OutboxEvent outbox, MissionLogPayload payload) {
-        return MissionCompletedEvent.builder()
-                .userId(userId)
-                .outboxId(outbox.getId())
-                .userUuid(payload.userUuid())
-                .missionId(payload.missionId())
-                .missionType(payload.missionType())
-                .solarTermId(payload.solarTermId())
-                .completedAt(payload.completedAt())
-                .build();
+    public static MissionCompletedEvent of(Long completionId, Long outboxId) {
+        return new MissionCompletedEvent(completionId, outboxId);
     }
 }

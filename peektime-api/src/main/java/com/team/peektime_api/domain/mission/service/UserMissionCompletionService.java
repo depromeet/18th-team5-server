@@ -2,7 +2,6 @@ package com.team.peektime_api.domain.mission.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team.peektime_api.domain.home.dto.RecentRecordCache;
 import com.team.peektime_api.domain.mission.dto.MissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.MissionRecordPageResponse;
 import com.team.peektime_api.domain.mission.dto.RecommendedMissionCountResponse;
@@ -15,6 +14,7 @@ import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
 import com.team.peektime_api.domain.mission.event.MissionCompletedEvent;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
+import com.team.peektime_api.domain.mission.event.RecentRecordsCacheInvalidationEvent;
 import com.team.peektime_api.domain.mission.repository.DailyMissionRepository;
 import com.team.peektime_api.domain.mission.repository.MissionRepository;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
@@ -24,7 +24,6 @@ import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.S3Service;
-import com.team.peektime_api.global.infra.cache.RecentRecordsCacheRepository;
 import com.team.peektime_api.global.outbox.entity.OutboxEvent;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
 import com.team.peektime_api.global.response.ErrorCode;
@@ -51,7 +50,6 @@ public class UserMissionCompletionService {
     private final OutboxRepository outboxRepository;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
-    private final RecentRecordsCacheRepository recentRecordsCacheRepository;
 
     @Transactional
     public UserMissionCompletionResponse completeDailyMission(Long userId, Long missionId, UserMissionCompletionRequest request) {
@@ -70,9 +68,10 @@ public class UserMissionCompletionService {
                         request.objectKey(), request.memo())
         );
 
-        updateRecentRecordsCache(userId, completion);
-
         dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
+
+        // 캐시 Invalidation (커밋 후 실행)
+        eventPublisher.publishEvent(RecentRecordsCacheInvalidationEvent.of(userId));
 
         MissionLogPayload payload = MissionLogPayload.of(
                 user.getDeviceUuid(),
@@ -186,17 +185,6 @@ public class UserMissionCompletionService {
         );
 
         return UserMissionCompletionResponse.from(completion);
-    }
-
-    private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {
-        if (completion.getObjectKey() == null) {
-            return;
-        }
-        try {
-            recentRecordsCacheRepository.addRecord(userId, RecentRecordCache.from(completion));
-        } catch (Exception e) {
-            log.warn("Redis 캐시 업데이트 실패 (userId={}): {}", userId, e.getMessage());
-        }
     }
 
     private String toJson(MissionLogPayload payload) {

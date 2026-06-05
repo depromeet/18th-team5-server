@@ -23,15 +23,20 @@ public class StatsService {
 
     private final UserMissionLogRepository userMissionLogRepository;
 
+    /**
+     * 미션 로그 저장 (멱등성 보장)
+     *
+     * @return true: 새로 저장됨, false: 이미 존재하여 무시됨
+     */
     @Transactional
-    public void saveMissionLog(MissionLogRequest request) {
+    public boolean saveMissionLog(MissionLogRequest request) {
         LocalDate completedDate = request.completedAt().toLocalDate();
         String idempotencyKey = generateIdempotencyKey(request.userUuid(), request.missionId(), completedDate);
 
         // 1차 방어: 존재 여부 체크 (대부분의 중복 요청 필터링)
         if (userMissionLogRepository.existsByIdempotencyKey(idempotencyKey)) {
-            log.info("이미 존재하는 미션 로그: idempotencyKey={}", idempotencyKey);
-            throw new BusinessException(ErrorCode.DUPLICATE_MISSION_LOG);
+            log.info("이미 존재하는 미션 로그 (멱등성 처리): idempotencyKey={}", idempotencyKey);
+            return false;  // 200 OK 반환, 저장 안 함
         }
 
         // 2차 방어: UNIQUE 제약 위반 시 예외 처리 (TOCTOU 레이스 컨디션 방지)
@@ -40,8 +45,10 @@ public class StatsService {
         try {
             userMissionLogRepository.save(missionLog);
             log.info("미션 로그 저장 완료: idempotencyKey={}", idempotencyKey);
+            return true;
         } catch (DataIntegrityViolationException e) {
-            log.info("중복 요청으로 인한 제약 조건 위반: idempotencyKey={}", idempotencyKey);
+            // 동시 요청으로 인한 충돌 → 409 Conflict (재시도 필요)
+            log.info("동시 요청으로 인한 제약 조건 위반: idempotencyKey={}", idempotencyKey);
             throw new BusinessException(ErrorCode.DUPLICATE_MISSION_LOG);
         }
     }

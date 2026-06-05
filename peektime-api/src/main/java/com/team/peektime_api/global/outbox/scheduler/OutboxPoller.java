@@ -38,14 +38,12 @@ public class OutboxPoller {
         // @Tx 시작
         processer.process();
 
-
         long endTime = System.currentTimeMillis();
         log.info("[Task End] 끝 시각: {}", LocalDateTime.now());
 
         // 소요 시간 계산 (끝 시각 - 시작 시각)
         long duration = endTime - startTime;
 
-        // 밀리초(ms) 단위와 초(s) 단위를 보기 편하게 로그로 기록
         log.info("[Performance Result] 작업 완료! 소요 시간: {} ms (약 {} 초)", duration, duration / 1000.0);
     }
 

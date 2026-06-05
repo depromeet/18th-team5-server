@@ -7,168 +7,125 @@
 
 ---
 
-## 1. 정상 플로우 (즉시 전송 성공)
+## 전체 플로우 (비동기 + 폴링)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Client
-    participant Controller
-    participant Service
-    participant DB as API DB
-    participant EventListener
-    participant AdminClient
+    participant Service as completeMission()
+    participant Outbox as OutboxRecorder
+    participant MySQL
+    participant Relay as AfterCommitRelay
     participant Admin as Admin Server
+    participant Poller as Poller (Fallback)
 
-    Client->>Controller: POST /missions/{id}/complete
-    Controller->>Service: completeMission()
+    Service->>Outbox: record(payload)
+    Outbox->>MySQL: INSERT outbox_event (READY)
+    Outbox-->>Service: Spring Event (OutboxSavedEvent)
+    Service->>MySQL: saveUserMissionCompletion()
 
-    rect rgb(230, 245, 255)
-        Note over Service,DB: @Transactional
-        Service->>DB: UserMissionCompletion 저장
-        Service->>DB: OutboxEvent 저장
-        Service->>Service: 이벤트 발행
-        Service-->>DB: COMMIT
+    Note over MySQL: TX COMMIT
+
+    rect rgb(144, 238, 144)
+        Note right of Relay: ⚡ Happy Path — 지연 0ms
+        Relay->>Admin: adminClient.sendMissionLog()
+
+        alt [Admin 정상]
+            Admin-->>Relay: 200 OK
+            Relay->>MySQL: deleteOutbox() [REQUIRES_NEW]
+        else [Admin 장애 / Timeout]
+            Note over Relay: 예외 삼킴, READY 유지
+        end
     end
 
-    Service-->>Controller: 응답 생성
-    Controller-->>Client: 200 OK
+    rect rgb(255, 200, 150)
+        Note right of Poller: 🔄 Fallback — Admin 장애 시에만 동작
 
-    rect rgb(255, 245, 230)
-        Note over EventListener,Admin: @Async + AFTER_COMMIT (비동기)
-        EventListener->>AdminClient: sendMissionLog()
-        AdminClient->>Admin: POST /api/stats/mission-log
-        Admin-->>AdminClient: 200 OK (저장 완료)
-        AdminClient-->>EventListener: Success
-        EventListener->>DB: Outbox 삭제
+        Poller->>MySQL: READY 조회 (SKIP LOCKED)
+        MySQL-->>Poller: OutboxEvent 목록
+
+        Poller->>Admin: sendMissionLog()
+
+        alt [성공 / 멱등]
+            Admin-->>Poller: 200 OK
+            Poller->>MySQL: deleteOutbox()
+        else [409 Conflict]
+            Note over Poller: TransientFailure → 재시도 대기
+        else [4xx 기타]
+            Note over Poller: PermanentFailure → 삭제
+        end
     end
 ```
 
 ---
 
-## 2. 비동기 전송 실패 → 폴러 재시도
+## 멱등성 처리 플로우
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant Client
-    participant Service
-    participant DB as API DB
-    participant EventListener
-    participant AdminClient
-    participant Admin as Admin Server
-    participant Poller
-
-    Client->>Service: completeMission()
-
-    rect rgb(230, 245, 255)
-        Note over Service,DB: @Transactional
-        Service->>DB: UserMissionCompletion 저장
-        Service->>DB: OutboxEvent 저장 (status=READY)
-        Service-->>DB: COMMIT
-    end
-
-    Service-->>Client: 200 OK
-
-    rect rgb(255, 230, 230)
-        Note over EventListener,Admin: 비동기 전송 실패
-        EventListener->>AdminClient: sendMissionLog()
-        AdminClient->>Admin: POST /api/stats/mission-log
-        Admin--xAdminClient: ⏱️ Timeout / 네트워크 오류
-        AdminClient-->>EventListener: TransientFailure
-        Note over EventListener: Outbox 유지 (삭제 안 함)
-    end
-
-    rect rgb(230, 255, 230)
-        Note over Poller,Admin: 30초 후 폴러 재시도
-        Poller->>DB: READY 상태 Outbox 조회
-        DB-->>Poller: OutboxEvent 목록
-        Poller->>AdminClient: sendMissionLog()
-        AdminClient->>Admin: POST /api/stats/mission-log
-        Admin-->>AdminClient: 200 OK
-        AdminClient-->>Poller: Success
-        Poller->>DB: Outbox 삭제
-    end
-```
-
----
-
-## 3. 멱등성 처리 (중복 요청)
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant EventListener
-    participant Poller
-    participant AdminClient
+    participant Relay as AfterCommitRelay
+    participant Poller as Poller (Fallback)
     participant Admin as Admin Server
     participant AdminDB as Admin DB
 
-    rect rgb(255, 245, 230)
-        Note over EventListener,Admin: 첫 번째 요청 (성공, 응답 손실)
-        EventListener->>AdminClient: sendMissionLog()
-        AdminClient->>Admin: POST /mission-log
+    rect rgb(255, 220, 180)
+        Note over Relay,Admin: 첫 번째 요청 (성공했으나 응답 손실)
+        Relay->>Admin: POST /mission-log
         Admin->>AdminDB: 멱등성 키 체크 → 없음
-        Admin->>AdminDB: 로그 저장
-        Admin--xAdminClient: 200 OK (응답 손실!)
-        Note over EventListener: Outbox 유지됨
+        Admin->>AdminDB: INSERT 로그
+        Admin--xRelay: 200 OK (응답 손실!)
+        Note over Relay: 예외 삼킴, Outbox 유지
     end
 
-    rect rgb(230, 255, 230)
-        Note over Poller,AdminDB: 폴러 재시도 (멱등성 처리)
-        Poller->>AdminClient: sendMissionLog()
-        AdminClient->>Admin: POST /mission-log (동일 요청)
+    rect rgb(144, 238, 144)
+        Note over Poller,AdminDB: 폴러 재시도 (멱등성 보장)
+        Poller->>Admin: POST /mission-log (동일 요청)
         Admin->>AdminDB: 멱등성 키 체크 → 존재함
         Note over Admin: 저장 안 함 (이미 처리됨)
-        Admin-->>AdminClient: 200 OK (ALREADY_EXISTS)
-        AdminClient-->>Poller: Success
+        Admin-->>Poller: 200 OK (ALREADY_EXISTS)
         Poller->>Poller: Outbox 삭제
     end
 ```
 
 ---
 
-## 4. 동시 요청 처리 (Race Condition)
+## 동시 요청 처리 (Race Condition)
 
 ```mermaid
 sequenceDiagram
     autonumber
-    participant EventListener
-    participant Poller
-    participant AdminClient
+    participant Relay as AfterCommitRelay
+    participant Poller as Poller (Fallback)
     participant Admin as Admin Server
     participant AdminDB as Admin DB
 
     par 동시 전송
-        EventListener->>AdminClient: sendMissionLog()
-        AdminClient->>Admin: POST /mission-log
+        Relay->>Admin: POST /mission-log
     and
-        Poller->>AdminClient: sendMissionLog()
-        AdminClient->>Admin: POST /mission-log
+        Poller->>Admin: POST /mission-log
     end
 
     Admin->>AdminDB: 멱등성 키 체크 (둘 다 없음)
 
-    par 동시 INSERT 시도
-        Admin->>AdminDB: INSERT (EventListener 요청)
+    par 동시 INSERT
+        Admin->>AdminDB: INSERT (Relay)
     and
-        Admin->>AdminDB: INSERT (Poller 요청)
+        Admin->>AdminDB: INSERT (Poller)
     end
 
     Note over AdminDB: UNIQUE 제약 위반!
 
-    AdminDB-->>Admin: 하나만 성공, 하나는 실패
+    Admin-->>Relay: 200 OK (성공)
+    Admin-->>Poller: 409 Conflict (충돌)
 
-    Admin-->>AdminClient: 200 OK (성공한 요청)
-    Admin-->>AdminClient: 409 Conflict (실패한 요청)
-
-    Note over EventListener: Success → Outbox 삭제
+    Note over Relay: Success → Outbox 삭제
     Note over Poller: TransientFailure → 재시도 대기
 
-    rect rgb(230, 255, 230)
-        Note over Poller,AdminDB: 다음 폴링 시
+    rect rgb(144, 238, 144)
+        Note over Poller,AdminDB: 다음 폴링 주기
         Poller->>Admin: POST /mission-log (재시도)
-        Admin->>AdminDB: 멱등성 키 체크 → 존재함
+        Admin->>AdminDB: 멱등성 키 존재 확인
         Admin-->>Poller: 200 OK (ALREADY_EXISTS)
         Note over Poller: Success → Outbox 삭제
     end
@@ -176,7 +133,7 @@ sequenceDiagram
 
 ---
 
-## 5. 전체 아키텍처
+## 전체 아키텍처
 
 ```mermaid
 flowchart TB

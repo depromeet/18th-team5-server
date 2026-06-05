@@ -32,6 +32,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -180,7 +183,14 @@ public class UserMissionCompletionService {
 
     private OutboxEvent saveOutboxEvent(User user, Long missionId, MissionType missionType,
                                          SolarTerm solarTerm, UserMissionCompletion completion) {
+        String idempotencyKey = generateIdempotencyKey(
+                user.getDeviceUuid(),
+                missionId,
+                completion.getCreatedAt().toLocalDate()
+        );
+
         MissionLogPayload payload = MissionLogPayload.of(
+                idempotencyKey,
                 user.getDeviceUuid(),
                 missionId,
                 missionType,
@@ -188,6 +198,28 @@ public class UserMissionCompletionService {
                 completion.getCreatedAt()
         );
         return outboxRepository.save(new OutboxEvent(toJson(payload)));
+    }
+
+    private String generateIdempotencyKey(String userUuid, Long missionId, LocalDate completedDate) {
+        String raw = userUuid + ":" + missionId + ":" + completedDate;
+        String hash = sha256(raw).substring(0, 8);
+        return raw + ":" + hash;
+    }
+
+    private String sha256(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 알고리즘을 찾을 수 없습니다", e);
+        }
     }
 
     private void publishMissionCompletedEvent(Long completionId, Long outboxId) {

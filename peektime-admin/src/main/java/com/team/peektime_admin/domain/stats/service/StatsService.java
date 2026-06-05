@@ -9,9 +9,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 
 @Slf4j
@@ -24,33 +21,20 @@ public class StatsService {
     /**
      * 미션 로그 저장 (멱등성 보장)
      *
+     * 클라이언트(API 서버)가 생성한 멱등성 키를 그대로 사용하여 중복 요청을 방지합니다.
+     *
      * @return true: 새로 저장됨, false: 이미 존재하여 무시됨
      */
     @Transactional
     public boolean saveMissionLog(MissionLogRequest request) {
+        String idempotencyKey = request.idempotencyKey();
         LocalDate completedDate = request.completedAt().toLocalDate();
-        String idempotencyKey = generateIdempotencyKey(request.userUuid(), request.missionId(), completedDate);
-
 
         if (userMissionLogRepository.existsByIdempotencyKey(idempotencyKey)) {
             log.info("이미 존재하는 미션 로그 (멱등성 처리): idempotencyKey={}", idempotencyKey);
-            return false;  // 200 OK 반환, 저장 안 함
-        }
-
-        UserMissionLog missionLog = createMissionLogBy(request, idempotencyKey, completedDate);
-
-        try {
-            userMissionLogRepository.save(missionLog);
-            log.info("미션 로그 저장 완료: idempotencyKey={}", idempotencyKey);
-            return true;
-        } catch (DataIntegrityViolationException e) {
-            // 동시 요청으로 UNIQUE 위반 → 이미 다른 요청이 처리 완료 → 멱등성 보장
-            log.info("동시 요청으로 인한 제약 조건 위반 (멱등성 처리): idempotencyKey={}", idempotencyKey);
             return false;
         }
-    }
 
-    private static UserMissionLog createMissionLogBy(MissionLogRequest request, String idempotencyKey, LocalDate completedDate) {
         UserMissionLog missionLog = UserMissionLog.create(
                 idempotencyKey,
                 request.userUuid(),
@@ -60,28 +44,14 @@ public class StatsService {
                 completedDate,
                 request.completedAt()
         );
-        return missionLog;
-    }
 
-    private String generateIdempotencyKey(String userUuid, Long missionId, LocalDate completedDate) {
-        String raw = userUuid + ":" + missionId + ":" + completedDate;
-        String hash = sha256(raw).substring(0, 8);
-        return raw + ":" + hash;
-    }
-
-    private String sha256(String input) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hashBytes) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 알고리즘을 찾을 수 없습니다", e);
+            userMissionLogRepository.save(missionLog);
+            log.info("미션 로그 저장 완료: idempotencyKey={}", idempotencyKey);
+            return true;
+        } catch (DataIntegrityViolationException e) {
+            log.info("동시 요청으로 인한 제약 조건 위반 (멱등성 처리): idempotencyKey={}", idempotencyKey);
+            return false;
         }
     }
 }

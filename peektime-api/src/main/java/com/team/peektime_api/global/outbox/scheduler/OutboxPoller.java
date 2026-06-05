@@ -34,7 +34,6 @@ public class OutboxPoller {
         long startTime = System.currentTimeMillis();
         log.info("[Task Start] 시작 시각: {}", LocalDateTime.now());
 
-
         // @Tx 시작
         processer.process();
 

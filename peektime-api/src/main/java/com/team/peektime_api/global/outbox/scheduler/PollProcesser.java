@@ -30,7 +30,6 @@ public class PollProcesser {
 
     @Transactional
     public void process() {
-
         LocalDateTime threshold = LocalDateTime.now().minusSeconds(3);
         List<OutboxEvent> events = outboxRepository.findByCreatedAtBeforeWithSkipLocked(threshold);
 
@@ -40,14 +39,11 @@ public class PollProcesser {
         }
 
         log.info("Outbox 폴링: {}건 처리 시작", events.size());
-        // timeout 이 3초 일 경우 : 3초 * 5 = 15초 동안 커넥션을 소유할 가능성이 존재한다.
         ProcessingResult result = processAllEvents(events);
-
 
         // TX : 성공시 Outbox 테이블에서 삭제
         deleteProcessedEvents(result.toDelete());
         logUnknownEvents(result.unknownCount());
-
     }
 
 

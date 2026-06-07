@@ -2,7 +2,6 @@ package com.team.peektime_api.domain.mission.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.team.peektime_api.domain.home.dto.RecentRecordCache;
 import com.team.peektime_api.domain.mission.dto.MissionCompletionRequest;
 import com.team.peektime_api.domain.mission.dto.MissionRecordPageResponse;
 import com.team.peektime_api.domain.mission.dto.RecommendedMissionCountResponse;
@@ -24,7 +23,6 @@ import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.S3Service;
-import com.team.peektime_api.global.infra.cache.RecentRecordsCacheRepository;
 import com.team.peektime_api.global.outbox.entity.OutboxEvent;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
 import com.team.peektime_api.global.response.ErrorCode;
@@ -34,6 +32,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -51,7 +52,6 @@ public class UserMissionCompletionService {
     private final OutboxRepository outboxRepository;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
-    private final RecentRecordsCacheRepository recentRecordsCacheRepository;
 
     @Transactional
     public UserMissionCompletionResponse completeDailyMission(Long userId, Long missionId, UserMissionCompletionRequest request) {
@@ -70,19 +70,12 @@ public class UserMissionCompletionService {
                         request.objectKey(), request.memo())
         );
 
-        updateRecentRecordsCache(userId, completion);
-
         dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
 
-        MissionLogPayload payload = MissionLogPayload.of(
-                user.getDeviceUuid(),
-                missionId,
-                MissionType.DAILY,
-                solarTerm.getId(),
-                completion.getCreatedAt()
-        );
-        OutboxEvent outbox = outboxRepository.save(new OutboxEvent(toJson(payload)));
-        eventPublisher.publishEvent(MissionCompletedEvent.from(outbox, payload));
+        OutboxEvent outbox = saveOutboxEvent(user, missionId, MissionType.DAILY, solarTerm, completion);
+
+        // 팩트 이벤트 발행 (Pull 방식: ID만 전달)
+        publishMissionCompletedEvent(completion.getId(), outbox.getId());
 
         return UserMissionCompletionResponse.from(completion);
     }
@@ -188,15 +181,49 @@ public class UserMissionCompletionService {
         return UserMissionCompletionResponse.from(completion);
     }
 
-    private void updateRecentRecordsCache(Long userId, UserMissionCompletion completion) {
-        if (completion.getObjectKey() == null) {
-            return;
-        }
+    private OutboxEvent saveOutboxEvent(User user, Long missionId, MissionType missionType,
+                                         SolarTerm solarTerm, UserMissionCompletion completion) {
+        String idempotencyKey = generateIdempotencyKey(
+                user.getDeviceUuid(),
+                missionId,
+                completion.getCreatedAt().toLocalDate()
+        );
+
+        MissionLogPayload payload = MissionLogPayload.of(
+                idempotencyKey,
+                user.getDeviceUuid(),
+                missionId,
+                missionType,
+                solarTerm.getId(),
+                completion.getCreatedAt()
+        );
+        return outboxRepository.save(new OutboxEvent(toJson(payload)));
+    }
+
+    private String generateIdempotencyKey(String userUuid, Long missionId, LocalDate completedDate) {
+        String raw = userUuid + ":" + missionId + ":" + completedDate;
+        String hash = sha256(raw).substring(0, 8);
+        return raw + ":" + hash;
+    }
+
+    private String sha256(String input) {
         try {
-            recentRecordsCacheRepository.addRecord(userId, RecentRecordCache.from(completion));
-        } catch (Exception e) {
-            log.warn("Redis 캐시 업데이트 실패 (userId={}): {}", userId, e.getMessage());
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("SHA-256 알고리즘을 찾을 수 없습니다", e);
         }
+    }
+
+    private void publishMissionCompletedEvent(Long completionId, Long outboxId) {
+        eventPublisher.publishEvent(MissionCompletedEvent.of(completionId, outboxId));
     }
 
     private String toJson(MissionLogPayload payload) {

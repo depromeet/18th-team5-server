@@ -46,9 +46,9 @@ public class AdminClient {
             return new SendResult.Success(eventId);
 
         } catch (HttpClientErrorException.Conflict e) {
-            // 409 Conflict: 이미 처리된 요청 (멱등성) → 성공으로 간주
-            log.info("미션 로그 이미 존재 (409): missionId={}", payload.missionId());
-            return new SendResult.Success(eventId);
+            // 409 Conflict: 동시에 같은 요청이 처리 중 → 일시 실패 (재시도 필요)
+            log.info("미션 로그 처리 중 (409 Conflict): missionId={}", payload.missionId());
+            return new SendResult.TransientFailure(eventId, "409 Conflict: 처리 중");
 
         } catch (HttpClientErrorException e) {
             // 4xx (409 제외): 클라이언트 에러 → 영구 실패 (재시도 무의미)

@@ -4,6 +4,7 @@ import com.team.peektime_api.domain.mission.entity.Mission;
 import com.team.peektime_api.global.common.enums.CategoryType;
 import com.team.peektime_api.global.common.enums.CompanionType;
 import com.team.peektime_api.global.common.enums.SpaceType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,6 +33,7 @@ public class SelectedMissionResponse {
     private CategoryType categoryType;
 
     @Schema(description = "미션 수행 완료 여부", example = "false")
+    @JsonProperty("isCompleted")
     private boolean isCompleted;
 
     public static SelectedMissionResponse from(Mission mission) {

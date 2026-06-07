@@ -11,6 +11,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.LocalDate;
+
 /**
  * 미션 완료 이벤트를 받아 Admin 서버로 로그를 전송하는 리스너
  *
@@ -48,13 +52,42 @@ public class MissionCompletedEventListener {
     }
 
     private MissionLogPayload createPayload(UserMissionCompletion completion) {
+        String userUuid = completion.getUser().getDeviceUuid();
+        Long missionId = completion.getMission().getId();
+        LocalDate completedDate = completion.getCreatedAt().toLocalDate();
+
+        String idempotencyKey = generateIdempotencyKey(userUuid, missionId, completedDate);
+
         return MissionLogPayload.of(
-                completion.getUser().getDeviceUuid(),
-                completion.getMission().getId(),
+                idempotencyKey,
+                userUuid,
+                missionId,
                 completion.getMissionType(),
                 completion.getSolarTerm().getId(),
                 completion.getCreatedAt()
         );
+    }
+
+    private String generateIdempotencyKey(String userUuid, Long missionId, LocalDate completedDate) {
+        String raw = userUuid + ":" + missionId + ":" + completedDate;
+        String hash = sha256(raw).substring(0, 8);
+        return raw + ":" + hash;
+    }
+
+    private String sha256(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : hashBytes) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) hexString.append('0');
+                hexString.append(hex);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            throw new RuntimeException("SHA-256 해싱 실패", e);
+        }
     }
 
     private void sendLogToAdmin(MissionLogPayload payload) {

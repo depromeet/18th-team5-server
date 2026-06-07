@@ -146,7 +146,9 @@ public class CalendarService {
 
         validateCurrentSolarTerm(completion.getCreatedAt().toLocalDate());
 
+        String oldObjectKey = completion.getObjectKey();
         completion.update(request.objectKey(), request.memo());
+        deleteS3ObjectIfPresent(oldObjectKey);
     }
 
     @Transactional
@@ -158,7 +160,9 @@ public class CalendarService {
             throw new BusinessException(ErrorCode.CALENDAR_RECORD_FORBIDDEN);
         }
 
+        String objectKey = completion.getObjectKey();
         completionRepository.delete(completion);
+        deleteS3ObjectIfPresent(objectKey);
     }
 
     @Transactional
@@ -172,7 +176,9 @@ public class CalendarService {
 
         validateCurrentSolarTerm(record.getRecordDate());
 
+        String oldObjectKey = record.getObjectKey();
         record.update(request.objectKey(), request.memo());
+        deleteS3ObjectIfPresent(oldObjectKey);
     }
 
     @Transactional
@@ -184,7 +190,9 @@ public class CalendarService {
             throw new BusinessException(ErrorCode.CALENDAR_RECORD_FORBIDDEN);
         }
 
+        String objectKey = record.getObjectKey();
         userRecordRepository.delete(record);
+        deleteS3ObjectIfPresent(objectKey);
     }
 
     private void validateCurrentSolarTerm(LocalDate recordDate) {
@@ -219,6 +227,12 @@ public class CalendarService {
                 .forEach(r -> result.put(r.getRecordDate(), r.getObjectKey()));
 
         return result;
+    }
+
+    private void deleteS3ObjectIfPresent(String objectKey) {
+        if (objectKey != null) {
+            s3Service.deleteImage(objectKey);
+        }
     }
 
     private String generatePresignedUrl(String objectKey) {

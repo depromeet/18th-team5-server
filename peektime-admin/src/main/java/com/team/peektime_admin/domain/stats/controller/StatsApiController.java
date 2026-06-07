@@ -19,7 +19,11 @@ public class StatsApiController {
 
     @PostMapping("/mission-log")
     public SuccessResponse<Void> saveMissionLog(@RequestBody MissionLogRequest request) {
-        statsService.saveMissionLog(request);
-        return SuccessResponse.of(SuccessCode.MISSION_LOG_SAVED, null);
+        boolean isNewLog = statsService.saveMissionLog(request);
+
+        if (isNewLog) {
+            return SuccessResponse.of(SuccessCode.MISSION_LOG_SAVED, null);
+        }
+        return SuccessResponse.of(SuccessCode.MISSION_LOG_ALREADY_EXISTS, null);
     }
 }

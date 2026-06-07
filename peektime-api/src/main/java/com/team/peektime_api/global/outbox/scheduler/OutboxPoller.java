@@ -27,17 +27,15 @@ public class OutboxPoller {
     private final OutboxRepository outboxRepository;
     private final AdminClient adminClient;
     private final ObjectMapper objectMapper;
-    private final PollProcesser processer;
+    private final PollProcesser processor;
 
     @Scheduled(fixedDelay = 30000)  // 1분마다
     public void pollAndProcess() {
         long startTime = System.currentTimeMillis();
         log.info("[Task Start] 시작 시각: {}", LocalDateTime.now());
 
-
         // @Tx 시작
-        processer.process();
-
+        processor.process();
 
         long endTime = System.currentTimeMillis();
         log.info("[Task End] 끝 시각: {}", LocalDateTime.now());
@@ -45,7 +43,6 @@ public class OutboxPoller {
         // 소요 시간 계산 (끝 시각 - 시작 시각)
         long duration = endTime - startTime;
 
-        // 밀리초(ms) 단위와 초(s) 단위를 보기 편하게 로그로 기록
         log.info("[Performance Result] 작업 완료! 소요 시간: {} ms (약 {} 초)", duration, duration / 1000.0);
     }
 

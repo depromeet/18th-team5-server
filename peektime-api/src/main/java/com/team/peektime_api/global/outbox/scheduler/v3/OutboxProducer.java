@@ -55,14 +55,18 @@ public class OutboxProducer {
         }
 
         if (isProducer) {
+            boolean success = false;
             try {
                 latch.trySetCount(1);
                 doLoadEventsToRedis();
-                latch.countDown();
-                return true;
+                success = true;
+            } catch (Exception e) {
+                log.error("[V3] Redis 장전 실패", e);
             } finally {
+                latch.countDown();
                 lock.unlock();
             }
+            return success;
         } else {
             try {
                 log.info("[V3] Producer 작업 완료 대기 중...");

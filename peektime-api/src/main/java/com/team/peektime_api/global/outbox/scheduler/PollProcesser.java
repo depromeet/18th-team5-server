@@ -30,7 +30,6 @@ public class PollProcesser {
 
     @Transactional
     public void process() {
-
         LocalDateTime threshold = LocalDateTime.now().minusSeconds(3);
         List<OutboxEvent> events = outboxRepository.findByCreatedAtBeforeWithSkipLocked(threshold);
 
@@ -42,11 +41,9 @@ public class PollProcesser {
         log.info("Outbox 폴링: {}건 처리 시작", events.size());
         ProcessingResult result = processAllEvents(events);
 
-
         // TX : 성공시 Outbox 테이블에서 삭제
         deleteProcessedEvents(result.toDelete());
         logUnknownEvents(result.unknownCount());
-
     }
 
 

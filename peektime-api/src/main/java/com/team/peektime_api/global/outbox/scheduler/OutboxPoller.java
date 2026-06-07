@@ -27,7 +27,7 @@ public class OutboxPoller {
     private final OutboxRepository outboxRepository;
     private final AdminClient adminClient;
     private final ObjectMapper objectMapper;
-    private final PollProcesser processer;
+    private final PollProcesser processor;
 
     @Scheduled(fixedDelay = 30000)  // 1분마다
     public void pollAndProcess() {
@@ -35,7 +35,7 @@ public class OutboxPoller {
         log.info("[Task Start] 시작 시각: {}", LocalDateTime.now());
 
         // @Tx 시작
-        processer.process();
+        processor.process();
 
         long endTime = System.currentTimeMillis();
         log.info("[Task End] 끝 시각: {}", LocalDateTime.now());

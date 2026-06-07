@@ -35,15 +35,7 @@ public class StatsService {
             return false;
         }
 
-        UserMissionLog missionLog = UserMissionLog.create(
-                idempotencyKey,
-                request.userUuid(),
-                request.missionId(),
-                request.missionType(),
-                request.solarTermId(),
-                completedDate,
-                request.completedAt()
-        );
+        UserMissionLog missionLog = createMissionLog(request, idempotencyKey, completedDate);
 
         try {
             userMissionLogRepository.save(missionLog);
@@ -53,5 +45,18 @@ public class StatsService {
             log.info("동시 요청으로 인한 제약 조건 위반 (멱등성 처리): idempotencyKey={}", idempotencyKey);
             return false;
         }
+    }
+
+    private static UserMissionLog createMissionLog(MissionLogRequest request, String idempotencyKey, LocalDate completedDate) {
+        UserMissionLog missionLog = UserMissionLog.create(
+                idempotencyKey,
+                request.userUuid(),
+                request.missionId(),
+                request.missionType(),
+                request.solarTermId(),
+                completedDate,
+                request.completedAt()
+        );
+        return missionLog;
     }
 }

@@ -27,7 +27,7 @@ server:
   port: ${SERVER_PORT:8081}
 
 api:
-  base-url: https://13.125.247.7
+  base-url: https://peaktime.swda.cloud
 
 admin:
   username: ${ADMIN_USERNAME}

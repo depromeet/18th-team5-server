@@ -1,5 +1,6 @@
 package com.team.peektime_api.domain.announcement.service;
 
+import com.team.peektime_api.domain.announcement.dto.AnnouncementListResponse;
 import com.team.peektime_api.domain.announcement.dto.AnnouncementRequest;
 import com.team.peektime_api.domain.announcement.dto.AnnouncementResponse;
 import com.team.peektime_api.domain.announcement.entity.Announcement;
@@ -8,12 +9,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AnnouncementService {
 
     private final AnnouncementRepository announcementRepository;
+
+    public List<AnnouncementListResponse> getAnnouncements() {
+        return announcementRepository.findAllByOrderByCreatedAtDesc()
+                .stream()
+                .map(AnnouncementListResponse::from)
+                .toList();
+    }
 
     @Transactional
     public AnnouncementResponse createAnnouncement(AnnouncementRequest request) {

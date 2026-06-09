@@ -148,7 +148,7 @@ public class CalendarService {
 
         String oldObjectKey = completion.getObjectKey();
         completion.update(request.objectKey(), request.memo());
-        deleteS3ObjectIfPresent(oldObjectKey);
+        deleteS3IfChanged(oldObjectKey, request.objectKey());
     }
 
     @Transactional
@@ -178,7 +178,7 @@ public class CalendarService {
 
         String oldObjectKey = record.getObjectKey();
         record.update(request.objectKey(), request.memo());
-        deleteS3ObjectIfPresent(oldObjectKey);
+        deleteS3IfChanged(oldObjectKey, request.objectKey());
     }
 
     @Transactional
@@ -232,6 +232,12 @@ public class CalendarService {
     private void deleteS3ObjectIfPresent(String objectKey) {
         if (objectKey != null) {
             s3Service.deleteImage(objectKey);
+        }
+    }
+
+    private void deleteS3IfChanged(String oldKey, String newKey) {
+        if (oldKey != null && !oldKey.equals(newKey)) {
+            s3Service.deleteImage(oldKey);
         }
     }
 

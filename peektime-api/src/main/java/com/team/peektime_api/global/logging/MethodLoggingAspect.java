@@ -1,5 +1,6 @@
 package com.team.peektime_api.global.logging;
 
+import com.team.peektime_api.global.auth.UserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -7,6 +8,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -43,6 +46,7 @@ public class MethodLoggingAspect {
         String className = joinPoint.getTarget().getClass().getSimpleName();
 
         String requestInfo = "";
+        String userInfo = "";
         if ("Controller".equals(type)) {
             try {
                 ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder
@@ -54,6 +58,8 @@ public class MethodLoggingAspect {
             } catch (Exception e) {
                 // 예외 무시
             }
+
+            userInfo = getUserInfo();
         }
 
         String arguments = Arrays.stream(joinPoint.getArgs())
@@ -69,8 +75,8 @@ public class MethodLoggingAspect {
         boolean isDuplicate = !recentLogCache.add(logKey);
 
         if (!isDuplicate || "Controller".equals(type)) {
-            targetLogger.info("{} 시작: {}.{}{} - 파라미터: [{}]",
-                    type, className, methodName, requestInfo, arguments);
+            targetLogger.info("{} 시작: {}.{}{}{} - 파라미터: [{}]",
+                    type, className, methodName, requestInfo, userInfo, arguments);
         }
 
         StopWatch stopWatch = new StopWatch();
@@ -83,8 +89,8 @@ public class MethodLoggingAspect {
             String resultSummary = result == null ? "null" : summarizeObject(result);
 
             if (!isDuplicate || "Controller".equals(type)) {
-                targetLogger.info("{} 완료: {}.{}{} - 실행시간: {}ms - 결과: {}",
-                        type, className, methodName, requestInfo,
+                targetLogger.info("{} 완료: {}.{}{}{} - 실행시간: {}ms - 결과: {}",
+                        type, className, methodName, requestInfo, userInfo,
                         stopWatch.getTotalTimeMillis(), resultSummary);
             }
 
@@ -92,12 +98,24 @@ public class MethodLoggingAspect {
         } catch (Exception e) {
             stopWatch.stop();
 
-            targetLogger.error("{} 예외: {}.{}{} - 실행시간: {}ms - 예외: {}",
-                    type, className, methodName, requestInfo,
+            targetLogger.error("{} 예외: {}.{}{}{} - 실행시간: {}ms - 예외: {}",
+                    type, className, methodName, requestInfo, userInfo,
                     stopWatch.getTotalTimeMillis(), e.getMessage(), e);
 
             throw e;
         }
+    }
+
+    private String getUserInfo() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.getPrincipal() instanceof UserPrincipal principal) {
+                return String.format(" [userId=%d, uuid=%s]", principal.getUserId(), principal.getDeviceUuid());
+            }
+        } catch (Exception e) {
+            // 예외 무시
+        }
+        return "";
     }
 
     private String summarizeObject(Object obj) {

@@ -44,7 +44,10 @@ public enum ErrorCode {
     REFRESH_TOKEN_MISMATCH(HttpStatus.UNAUTHORIZED, "AUTH_401_MISMATCH", "Refresh Token이 일치하지 않습니다"),
 
     // S3
-    S3_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "S3_400", "허용되지 않는 파일 형식입니다. (image/jpeg, image/png, image/heic)");
+    S3_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "S3_400", "허용되지 않는 파일 형식입니다. (image/jpeg, image/png, image/heic)"),
+
+    // 공지사항
+    ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ANNOUNCEMENT_404", "공지사항을 찾을 수 없습니다");
 
     private final HttpStatus httpStatus;
     private final String code;

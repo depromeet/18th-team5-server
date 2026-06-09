@@ -5,6 +5,8 @@ import com.team.peektime_api.domain.announcement.dto.AnnouncementRequest;
 import com.team.peektime_api.domain.announcement.dto.AnnouncementResponse;
 import com.team.peektime_api.domain.announcement.entity.Announcement;
 import com.team.peektime_api.domain.announcement.repository.AnnouncementRepository;
+import com.team.peektime_api.global.exception.BusinessException;
+import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,12 @@ public class AnnouncementService {
                 .stream()
                 .map(AnnouncementListResponse::from)
                 .toList();
+    }
+
+    public AnnouncementResponse getAnnouncement(Long id) {
+        Announcement announcement = announcementRepository.findById(id)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ANNOUNCEMENT_NOT_FOUND));
+        return AnnouncementResponse.from(announcement);
     }
 
     @Transactional

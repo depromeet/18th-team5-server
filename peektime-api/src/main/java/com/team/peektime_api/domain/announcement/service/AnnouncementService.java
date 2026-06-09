@@ -39,4 +39,12 @@ public class AnnouncementService {
         Announcement saved = announcementRepository.save(announcement);
         return AnnouncementResponse.from(saved);
     }
+
+    @Transactional
+    public void deleteAnnouncement(Long id) {
+        if (!announcementRepository.existsById(id)) {
+            throw new BusinessException(ErrorCode.ANNOUNCEMENT_NOT_FOUND);
+        }
+        announcementRepository.deleteById(id);
+    }
 }

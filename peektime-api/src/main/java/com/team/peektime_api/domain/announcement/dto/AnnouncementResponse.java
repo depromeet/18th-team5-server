@@ -1,5 +1,6 @@
 package com.team.peektime_api.domain.announcement.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.team.peektime_api.domain.announcement.entity.Announcement;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -21,7 +22,8 @@ public class AnnouncementResponse {
     @Schema(description = "공지사항 본문")
     private String content;
 
-    @Schema(description = "생성일시")
+    @Schema(description = "생성일시", example = "2026-06-10T13:14:47")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
     public static AnnouncementResponse from(Announcement announcement) {

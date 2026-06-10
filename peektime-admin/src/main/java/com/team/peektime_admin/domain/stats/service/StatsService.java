@@ -11,7 +11,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,14 +31,17 @@ public class StatsService {
     @Transactional
     public boolean saveMissionLog(MissionLogRequest request) {
         String idempotencyKey = request.idempotencyKey();
-        LocalDate completedDate = request.completedAt().toLocalDate();
 
         if (userMissionLogRepository.existsByIdempotencyKey(idempotencyKey)) {
             log.info("이미 존재하는 미션 로그 (멱등성 처리): idempotencyKey={}", idempotencyKey);
             return false;
         }
 
-        UserMissionLog missionLog = createMissionLog(request, idempotencyKey, completedDate);
+        UserMissionLog missionLog = UserMissionLog.create(
+                idempotencyKey,
+                request.userUuid(),
+                request.solarTermId()
+        );
 
         try {
             userMissionLogRepository.save(missionLog);
@@ -49,19 +51,6 @@ public class StatsService {
             log.info("동시 요청으로 인한 제약 조건 위반 (멱등성 처리): idempotencyKey={}", idempotencyKey);
             return false;
         }
-    }
-
-    private static UserMissionLog createMissionLog(MissionLogRequest request, String idempotencyKey, LocalDate completedDate) {
-        UserMissionLog missionLog = UserMissionLog.create(
-                idempotencyKey,
-                request.userUuid(),
-                request.missionId(),
-                request.missionType(),
-                request.solarTermId(),
-                completedDate,
-                request.completedAt()
-        );
-        return missionLog;
     }
 
     /**

@@ -55,17 +55,11 @@ public class MissionCompletedEventListener {
         String userUuid = completion.getUser().getDeviceUuid();
         Long missionId = completion.getMission().getId();
         LocalDate completedDate = completion.getCreatedAt().toLocalDate();
+        Long solarTermId = completion.getSolarTerm().getId();
 
         String idempotencyKey = generateIdempotencyKey(userUuid, missionId, completedDate);
 
-        return MissionLogPayload.of(
-                idempotencyKey,
-                userUuid,
-                missionId,
-                completion.getMissionType(),
-                completion.getSolarTerm().getId(),
-                completion.getCreatedAt()
-        );
+        return MissionLogPayload.of(idempotencyKey, userUuid, solarTermId);
     }
 
     private String generateIdempotencyKey(String userUuid, Long missionId, LocalDate completedDate) {

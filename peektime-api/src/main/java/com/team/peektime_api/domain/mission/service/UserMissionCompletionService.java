@@ -72,7 +72,7 @@ public class UserMissionCompletionService {
 
         dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
 
-        OutboxEvent outbox = saveOutboxEvent(user, missionId, MissionType.DAILY, solarTerm, completion);
+        OutboxEvent outbox = saveOutboxEvent(user, missionId, solarTerm, completion);
 
         // 팩트 이벤트 발행 (Pull 방식: ID만 전달)
         publishMissionCompletedEvent(completion.getId(), outbox.getId());
@@ -181,7 +181,7 @@ public class UserMissionCompletionService {
         return UserMissionCompletionResponse.from(completion);
     }
 
-    private OutboxEvent saveOutboxEvent(User user, Long missionId, MissionType missionType,
+    private OutboxEvent saveOutboxEvent(User user, Long missionId,
                                          SolarTerm solarTerm, UserMissionCompletion completion) {
         String idempotencyKey = generateIdempotencyKey(
                 user.getDeviceUuid(),
@@ -192,10 +192,7 @@ public class UserMissionCompletionService {
         MissionLogPayload payload = MissionLogPayload.of(
                 idempotencyKey,
                 user.getDeviceUuid(),
-                missionId,
-                missionType,
-                solarTerm.getId(),
-                completion.getCreatedAt()
+                solarTerm.getId()
         );
         return outboxRepository.save(new OutboxEvent(toJson(payload)));
     }

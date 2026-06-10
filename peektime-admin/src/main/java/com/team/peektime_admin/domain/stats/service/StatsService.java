@@ -39,7 +39,7 @@ public class StatsService {
 
         UserMissionLog missionLog = UserMissionLog.create(
                 idempotencyKey,
-                request.userUuid(),
+                request.userId(),
                 request.solarTermId()
         );
 

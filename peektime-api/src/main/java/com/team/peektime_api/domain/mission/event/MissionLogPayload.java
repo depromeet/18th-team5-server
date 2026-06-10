@@ -2,14 +2,14 @@ package com.team.peektime_api.domain.mission.event;
 
 public record MissionLogPayload(
         String idempotencyKey,
-        String userUuid,
+        Long userId,
         Long solarTermId
 ) {
     public static MissionLogPayload of(
             String idempotencyKey,
-            String userUuid,
+            Long userId,
             Long solarTermId
     ) {
-        return new MissionLogPayload(idempotencyKey, userUuid, solarTermId);
+        return new MissionLogPayload(idempotencyKey, userId, solarTermId);
     }
 }

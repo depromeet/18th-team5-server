@@ -52,18 +52,18 @@ public class MissionCompletedEventListener {
     }
 
     private MissionLogPayload createPayload(UserMissionCompletion completion) {
-        String userUuid = completion.getUser().getDeviceUuid();
+        Long userId = completion.getUser().getId();
         Long missionId = completion.getMission().getId();
         LocalDate completedDate = completion.getCreatedAt().toLocalDate();
         Long solarTermId = completion.getSolarTerm().getId();
 
-        String idempotencyKey = generateIdempotencyKey(userUuid, missionId, completedDate);
+        String idempotencyKey = generateIdempotencyKey(userId, missionId, completedDate);
 
-        return MissionLogPayload.of(idempotencyKey, userUuid, solarTermId);
+        return MissionLogPayload.of(idempotencyKey, userId, solarTermId);
     }
 
-    private String generateIdempotencyKey(String userUuid, Long missionId, LocalDate completedDate) {
-        String raw = userUuid + ":" + missionId + ":" + completedDate;
+    private String generateIdempotencyKey(Long userId, Long missionId, LocalDate completedDate) {
+        String raw = userId + ":" + missionId + ":" + completedDate;
         String hash = sha256(raw).substring(0, 8);
         return raw + ":" + hash;
     }

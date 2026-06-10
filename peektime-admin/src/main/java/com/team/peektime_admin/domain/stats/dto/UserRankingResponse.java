@@ -12,8 +12,8 @@ public class UserRankingResponse {
     @Schema(description = "순위")
     private int rank;
 
-    @Schema(description = "사용자 UUID")
-    private String userUuid;
+    @Schema(description = "사용자 ID")
+    private Long userId;
 
     @Schema(description = "미션 완료 횟수")
     private Long completionCount;
@@ -21,7 +21,7 @@ public class UserRankingResponse {
     public static UserRankingResponse of(int rank, UserRankingProjection projection) {
         return UserRankingResponse.builder()
                 .rank(rank)
-                .userUuid(projection.getUserUuid())
+                .userId(projection.getUserId())
                 .completionCount(projection.getCompletionCount())
                 .build();
     }

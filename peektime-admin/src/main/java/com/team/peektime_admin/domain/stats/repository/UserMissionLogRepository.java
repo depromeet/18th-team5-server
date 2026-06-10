@@ -13,18 +13,18 @@ public interface UserMissionLogRepository extends JpaRepository<UserMissionLog, 
     boolean existsByIdempotencyKey(String idempotencyKey);
 
     @Query("""
-        SELECT u.userUuid as userUuid, COUNT(u) as completionCount
+        SELECT u.userId as userId, COUNT(u) as completionCount
         FROM UserMissionLog u
         WHERE u.solarTermId = :solarTermId
-        GROUP BY u.userUuid
+        GROUP BY u.userId
         ORDER BY COUNT(u) DESC
         """)
     List<UserRankingProjection> findRankingBySolarTerm(@Param("solarTermId") Long solarTermId);
 
     @Query("""
-        SELECT u.userUuid as userUuid, COUNT(u) as completionCount
+        SELECT u.userId as userId, COUNT(u) as completionCount
         FROM UserMissionLog u
-        GROUP BY u.userUuid
+        GROUP BY u.userId
         ORDER BY COUNT(u) DESC
         """)
     List<UserRankingProjection> findOverallRanking();

@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "user_mission_log", indexes = {
         @Index(name = "idx_solar_term_id", columnList = "solar_term_id"),
-        @Index(name = "idx_user_uuid", columnList = "user_uuid")
+        @Index(name = "idx_user_id", columnList = "user_id")
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -23,23 +23,23 @@ public class UserMissionLog extends BaseEntity {
     @Column(name = "idempotency_key", nullable = false, unique = true)
     private String idempotencyKey;
 
-    @Column(name = "user_uuid", nullable = false, length = 36)
-    private String userUuid;
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
     @Column(name = "solar_term_id", nullable = false)
     private Long solarTermId;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserMissionLog(String idempotencyKey, String userUuid, Long solarTermId) {
+    private UserMissionLog(String idempotencyKey, Long userId, Long solarTermId) {
         this.idempotencyKey = idempotencyKey;
-        this.userUuid = userUuid;
+        this.userId = userId;
         this.solarTermId = solarTermId;
     }
 
-    public static UserMissionLog create(String idempotencyKey, String userUuid, Long solarTermId) {
+    public static UserMissionLog create(String idempotencyKey, Long userId, Long solarTermId) {
         return UserMissionLog.builder()
                 .idempotencyKey(idempotencyKey)
-                .userUuid(userUuid)
+                .userId(userId)
                 .solarTermId(solarTermId)
                 .build();
     }

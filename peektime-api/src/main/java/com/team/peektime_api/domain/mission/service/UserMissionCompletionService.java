@@ -184,21 +184,21 @@ public class UserMissionCompletionService {
     private OutboxEvent saveOutboxEvent(User user, Long missionId,
                                          SolarTerm solarTerm, UserMissionCompletion completion) {
         String idempotencyKey = generateIdempotencyKey(
-                user.getDeviceUuid(),
+                user.getId(),
                 missionId,
                 completion.getCreatedAt().toLocalDate()
         );
 
         MissionLogPayload payload = MissionLogPayload.of(
                 idempotencyKey,
-                user.getDeviceUuid(),
+                user.getId(),
                 solarTerm.getId()
         );
         return outboxRepository.save(new OutboxEvent(toJson(payload)));
     }
 
-    private String generateIdempotencyKey(String userUuid, Long missionId, LocalDate completedDate) {
-        String raw = userUuid + ":" + missionId + ":" + completedDate;
+    private String generateIdempotencyKey(Long userId, Long missionId, LocalDate completedDate) {
+        String raw = userId + ":" + missionId + ":" + completedDate;
         String hash = sha256(raw).substring(0, 8);
         return raw + ":" + hash;
     }

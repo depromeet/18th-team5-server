@@ -40,7 +40,7 @@
                 color: var(--primary);
             }
 
-            .user-uuid {
+            .user-id {
                 font-family: monospace;
                 font-size: 13px;
                 color: var(--gray-600);
@@ -88,7 +88,7 @@
             <thead>
             <tr>
                 <th style="width: 80px;">순위</th>
-                <th>사용자 UUID</th>
+                <th>사용자 ID</th>
                 <th style="width: 150px;">미션 완료 횟수</th>
             </tr>
             </thead>
@@ -105,7 +105,7 @@
                           th:text="${ranking.rank}">1</span>
                 </td>
                 <td>
-                    <span class="user-uuid" th:text="${ranking.userUuid}">abc-123-def</span>
+                    <span class="user-id" th:text="${ranking.userId}">1</span>
                 </td>
                 <td>
                     <span class="completion-count" th:text="${ranking.completionCount} + '회'">10회</span>

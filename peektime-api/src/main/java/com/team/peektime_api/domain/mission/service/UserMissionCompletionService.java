@@ -148,6 +148,9 @@ public class UserMissionCompletionService {
                         request.objectKey(), request.memo())
         );
 
+        OutboxEvent outbox = saveOutboxEvent(user, missionId, solarTerm, completion);
+        publishMissionCompletedEvent(completion.getId(), outbox.getId());
+
         return UserMissionCompletionResponse.from(completion);
     }
 
@@ -177,6 +180,9 @@ public class UserMissionCompletionService {
                 UserMissionCompletion.create(user, mission, solarTerm, MissionType.SELECTED,
                         request.objectKey(), request.memo())
         );
+
+        OutboxEvent outbox = saveOutboxEvent(user, missionId, solarTerm, completion);
+        publishMissionCompletedEvent(completion.getId(), outbox.getId());
 
         return UserMissionCompletionResponse.from(completion);
     }

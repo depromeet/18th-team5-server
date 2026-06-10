@@ -91,7 +91,7 @@ public class UserRankingResponse {
 
     @Schema(description = "사용자 UUID")
     private String userUuid;
-
+    
     @Schema(description = "미션 완료 횟수")
     private Long completionCount;
 

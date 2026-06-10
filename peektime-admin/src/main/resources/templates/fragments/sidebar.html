@@ -24,6 +24,10 @@
                 <span class="nav-icon">✓</span>
                 선택 미션
             </a>
+            <a th:href="@{/admin/ranking}" class="nav-item" th:classappend="${menu == 'ranking'} ? 'active'">
+                <span class="nav-icon">🏆</span>
+                사용자 랭킹
+            </a>
             <a th:href="@{/admin/settings}" class="nav-item" th:classappend="${menu == 'settings'} ? 'active'">
                 <span class="nav-icon">⚙️</span>
                 설정

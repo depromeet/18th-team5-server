@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/default}">
+<head>
+    <title>사용자 랭킹</title>
+    <th:block layout:fragment="styles">
+        <style>
+            .ranking-filters {
+                display: flex;
+                gap: 16px;
+                margin-bottom: 24px;
+            }
+
+            .ranking-table {
+                background: white;
+                border-radius: 12px;
+                border: 1px solid var(--gray-200);
+                overflow: hidden;
+            }
+
+            .rank-badge {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                font-weight: 700;
+                font-size: 14px;
+            }
+
+            .rank-1 { background: #FFD700; color: #000; }
+            .rank-2 { background: #C0C0C0; color: #000; }
+            .rank-3 { background: #CD7F32; color: #fff; }
+            .rank-default { background: var(--gray-100); color: var(--gray-600); }
+
+            .completion-count {
+                font-weight: 600;
+                color: var(--primary);
+            }
+
+            .user-uuid {
+                font-family: monospace;
+                font-size: 13px;
+                color: var(--gray-600);
+            }
+
+            .filter-select {
+                padding: 8px 12px;
+                border: 1px solid var(--gray-300);
+                border-radius: 8px;
+                font-size: 14px;
+                min-width: 200px;
+            }
+
+            .empty-state {
+                text-align: center;
+                padding: 48px;
+                color: var(--gray-500);
+            }
+        </style>
+    </th:block>
+</head>
+<body>
+<th:block layout:fragment="content">
+    <div class="page-header">
+        <h1 class="page-title">사용자 랭킹</h1>
+        <p class="page-description">미션 완료 횟수 기준 사용자 랭킹입니다</p>
+    </div>
+
+    <!-- 필터 -->
+    <div class="ranking-filters">
+        <select id="solarTermSelect" class="filter-select"
+                onchange="location.href='/admin/ranking' + (this.value ? '?solarTermId=' + this.value : '')">
+            <option value="">전체 기간</option>
+            <option th:each="term : ${solarTerms}"
+                    th:value="${term.id}"
+                    th:text="${term.name}"
+                    th:selected="${term.id == selectedSolarTermId}">
+            </option>
+        </select>
+    </div>
+
+    <!-- 랭킹 테이블 -->
+    <div class="ranking-table">
+        <table class="table">
+            <thead>
+            <tr>
+                <th style="width: 80px;">순위</th>
+                <th>사용자 UUID</th>
+                <th style="width: 150px;">미션 완료 횟수</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(rankings)}">
+                <td colspan="3" class="empty-state">
+                    아직 미션 완료 기록이 없습니다
+                </td>
+            </tr>
+            <tr th:each="ranking : ${rankings}">
+                <td>
+                    <span class="rank-badge"
+                          th:classappend="${ranking.rank == 1} ? 'rank-1' : (${ranking.rank == 2} ? 'rank-2' : (${ranking.rank == 3} ? 'rank-3' : 'rank-default'))"
+                          th:text="${ranking.rank}">1</span>
+                </td>
+                <td>
+                    <span class="user-uuid" th:text="${ranking.userUuid}">abc-123-def</span>
+                </td>
+                <td>
+                    <span class="completion-count" th:text="${ranking.completionCount} + '회'">10회</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</th:block>
+</body>
+</html>

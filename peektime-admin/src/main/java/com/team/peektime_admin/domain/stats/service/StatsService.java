@@ -1,6 +1,8 @@
 package com.team.peektime_admin.domain.stats.service;
 
 import com.team.peektime_admin.domain.stats.dto.MissionLogRequest;
+import com.team.peektime_admin.domain.stats.dto.UserRankingProjection;
+import com.team.peektime_admin.domain.stats.dto.UserRankingResponse;
 import com.team.peektime_admin.domain.stats.entity.UserMissionLog;
 import com.team.peektime_admin.domain.stats.repository.UserMissionLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -58,5 +62,39 @@ public class StatsService {
                 request.completedAt()
         );
         return missionLog;
+    }
+
+    /**
+     * 절기별 사용자 랭킹 조회
+     */
+    @Transactional(readOnly = true)
+    public List<UserRankingResponse> getRankingBySolarTerm(Long solarTermId, int limit) {
+        List<UserRankingProjection> projections = userMissionLogRepository
+                .findRankingBySolarTerm(solarTermId);
+
+        return toRankingResponse(projections, limit);
+    }
+
+    /**
+     * 전체 기간 사용자 랭킹 조회
+     */
+    @Transactional(readOnly = true)
+    public List<UserRankingResponse> getOverallRanking(int limit) {
+        List<UserRankingProjection> projections = userMissionLogRepository
+                .findOverallRanking();
+
+        return toRankingResponse(projections, limit);
+    }
+
+    private List<UserRankingResponse> toRankingResponse(List<UserRankingProjection> projections, int limit) {
+        List<UserRankingResponse> rankings = new ArrayList<>();
+        int rank = 1;
+
+        for (UserRankingProjection projection : projections) {
+            if (rank > limit) break;
+            rankings.add(UserRankingResponse.of(rank++, projection));
+        }
+
+        return rankings;
     }
 }

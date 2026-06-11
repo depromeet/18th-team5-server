@@ -1,6 +1,8 @@
 package com.team.peektime_admin.domain.stats.service;
 
 import com.team.peektime_admin.domain.stats.dto.MissionLogRequest;
+import com.team.peektime_admin.domain.stats.dto.UserRankingProjection;
+import com.team.peektime_admin.domain.stats.dto.UserRankingResponse;
 import com.team.peektime_admin.domain.stats.entity.UserMissionLog;
 import com.team.peektime_admin.domain.stats.repository.UserMissionLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -9,7 +11,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -28,14 +31,17 @@ public class StatsService {
     @Transactional
     public boolean saveMissionLog(MissionLogRequest request) {
         String idempotencyKey = request.idempotencyKey();
-        LocalDate completedDate = request.completedAt().toLocalDate();
 
         if (userMissionLogRepository.existsByIdempotencyKey(idempotencyKey)) {
             log.info("이미 존재하는 미션 로그 (멱등성 처리): idempotencyKey={}", idempotencyKey);
             return false;
         }
 
-        UserMissionLog missionLog = createMissionLog(request, idempotencyKey, completedDate);
+        UserMissionLog missionLog = UserMissionLog.create(
+                idempotencyKey,
+                request.userId(),
+                request.solarTermId()
+        );
 
         try {
             userMissionLogRepository.save(missionLog);
@@ -47,16 +53,37 @@ public class StatsService {
         }
     }
 
-    private static UserMissionLog createMissionLog(MissionLogRequest request, String idempotencyKey, LocalDate completedDate) {
-        UserMissionLog missionLog = UserMissionLog.create(
-                idempotencyKey,
-                request.userUuid(),
-                request.missionId(),
-                request.missionType(),
-                request.solarTermId(),
-                completedDate,
-                request.completedAt()
-        );
-        return missionLog;
+    /**
+     * 절기별 사용자 랭킹 조회
+     */
+    @Transactional(readOnly = true)
+    public List<UserRankingResponse> getRankingBySolarTerm(Long solarTermId, int limit) {
+        List<UserRankingProjection> projections = userMissionLogRepository
+                .findRankingBySolarTerm(solarTermId);
+
+        return toRankingResponse(projections, limit);
+    }
+
+    /**
+     * 전체 기간 사용자 랭킹 조회
+     */
+    @Transactional(readOnly = true)
+    public List<UserRankingResponse> getOverallRanking(int limit) {
+        List<UserRankingProjection> projections = userMissionLogRepository
+                .findOverallRanking();
+
+        return toRankingResponse(projections, limit);
+    }
+
+    private List<UserRankingResponse> toRankingResponse(List<UserRankingProjection> projections, int limit) {
+        List<UserRankingResponse> rankings = new ArrayList<>();
+        int rank = 1;
+
+        for (UserRankingProjection projection : projections) {
+            if (rank > limit) break;
+            rankings.add(UserRankingResponse.of(rank++, projection));
+        }
+
+        return rankings;
     }
 }

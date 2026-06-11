@@ -72,7 +72,7 @@ public class UserMissionCompletionService {
 
         dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
 
-        OutboxEvent outbox = saveOutboxEvent(user, missionId, MissionType.DAILY, solarTerm, completion);
+        OutboxEvent outbox = saveOutboxEvent(user, missionId, solarTerm, completion);
 
         // 팩트 이벤트 발행 (Pull 방식: ID만 전달)
         publishMissionCompletedEvent(completion.getId(), outbox.getId());
@@ -148,6 +148,9 @@ public class UserMissionCompletionService {
                         request.objectKey(), request.memo())
         );
 
+        OutboxEvent outbox = saveOutboxEvent(user, missionId, solarTerm, completion);
+        publishMissionCompletedEvent(completion.getId(), outbox.getId());
+
         return UserMissionCompletionResponse.from(completion);
     }
 
@@ -178,30 +181,30 @@ public class UserMissionCompletionService {
                         request.objectKey(), request.memo())
         );
 
+        OutboxEvent outbox = saveOutboxEvent(user, missionId, solarTerm, completion);
+        publishMissionCompletedEvent(completion.getId(), outbox.getId());
+
         return UserMissionCompletionResponse.from(completion);
     }
 
-    private OutboxEvent saveOutboxEvent(User user, Long missionId, MissionType missionType,
+    private OutboxEvent saveOutboxEvent(User user, Long missionId,
                                          SolarTerm solarTerm, UserMissionCompletion completion) {
         String idempotencyKey = generateIdempotencyKey(
-                user.getDeviceUuid(),
+                user.getId(),
                 missionId,
                 completion.getCreatedAt().toLocalDate()
         );
 
         MissionLogPayload payload = MissionLogPayload.of(
                 idempotencyKey,
-                user.getDeviceUuid(),
-                missionId,
-                missionType,
-                solarTerm.getId(),
-                completion.getCreatedAt()
+                user.getId(),
+                solarTerm.getId()
         );
         return outboxRepository.save(new OutboxEvent(toJson(payload)));
     }
 
-    private String generateIdempotencyKey(String userUuid, Long missionId, LocalDate completedDate) {
-        String raw = userUuid + ":" + missionId + ":" + completedDate;
+    private String generateIdempotencyKey(Long userId, Long missionId, LocalDate completedDate) {
+        String raw = userId + ":" + missionId + ":" + completedDate;
         String hash = sha256(raw).substring(0, 8);
         return raw + ":" + hash;
     }

@@ -25,7 +25,12 @@ public interface UserMissionCompletionRepository extends JpaRepository<UserMissi
             @Param("startOfDay") LocalDateTime startOfDay,
             @Param("startOfNextDay") LocalDateTime startOfNextDay);
 
-    List<UserMissionCompletion> findByUser_IdAndMission_Id(Long userId, Long missionId);
+    @Query("SELECT c FROM UserMissionCompletion c " +
+            "WHERE c.user.id = :userId AND c.mission.id = :missionId " +
+            "ORDER BY c.createdAt DESC")
+    List<UserMissionCompletion> findCompletions(
+            @Param("userId") Long userId,
+            @Param("missionId") Long missionId);
 
     long countByMission_Id(Long missionId);
 

@@ -19,6 +19,7 @@ public class AdminClient {
     private final RestClient adminRestClient;
 
     public SendResult sendMissionLog(MissionLogPayload payload, Long eventId) {
+        log.info("미션 로그 전송 시도: payload={}", payload);
         try {
             AdminApiResponse response = adminRestClient.post()
                     .uri("/api/stats/mission-log")

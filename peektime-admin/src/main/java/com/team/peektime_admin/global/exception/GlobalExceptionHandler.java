@@ -4,6 +4,7 @@ import com.team.peektime_admin.global.response.ErrorCode;
 import com.team.peektime_admin.global.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @Slf4j
 @ControllerAdvice
+@Order(2)
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)

@@ -34,20 +34,16 @@ public class MissionCompletedEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handle(MissionCompletedEvent event) {
-        try {
-            UserMissionCompletion completion = findCompletion(event.getCompletionId());
-            MissionLogPayload payload = createPayload(completion);
+        UserMissionCompletion completion = findCompletion(event.getCompletionId());
+        MissionLogPayload payload = createPayload(completion);
 
-            SendResult result = adminClient.sendMissionLog(payload, event.getOutboxId());
+        SendResult result = adminClient.sendMissionLog(payload, event.getOutboxId());
 
-            if (result instanceof SendResult.Success) {
-                deleteOutbox(event.getOutboxId());
-                log.info("미션 완료 로그 전송 성공: missionId={}", completion.getMission().getId());
-            } else {
-                log.warn("미션 완료 로그 즉시 전송 실패, 폴러가 재시도 예정: {}", result);
-            }
-        } catch (Exception e) {
-            log.warn("미션 완료 로그 즉시 전송 실패, 폴러가 재시도 예정: {}", e.getMessage());
+        if (result instanceof SendResult.Success) {
+            deleteOutbox(event.getOutboxId());
+            log.info("미션 완료 로그 전송 성공: missionId={}", completion.getMission().getId());
+        } else {
+            log.warn("미션 완료 로그 즉시 전송 실패, 폴러가 재시도 예정: {}", result);
         }
     }
 

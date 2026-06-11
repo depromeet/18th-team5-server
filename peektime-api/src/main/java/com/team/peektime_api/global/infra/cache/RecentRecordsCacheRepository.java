@@ -33,7 +33,7 @@ public class RecentRecordsCacheRepository {
         String key = getKey(userId);
         try {
             String value = objectMapper.writeValueAsString(record);
-            redisTemplate.opsForList().leftPush(key, value);
+            redisTemplate.opsForList().rightPush(key, value);
             redisTemplate.opsForList().trim(key, 0, MAX_RECORDS - 1);
             redisTemplate.expire(key, TTL);
             log.debug("Redis 캐시 추가: key={}, record={}", key, record);

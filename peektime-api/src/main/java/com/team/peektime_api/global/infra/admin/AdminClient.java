@@ -18,22 +18,7 @@ public class AdminClient {
 
     private final RestClient adminRestClient;
 
-    public void sendMissionLog(MissionLogPayload payload) {
-        try {
-            AdminApiResponse response = adminRestClient.post()
-                    .uri("/api/stats/mission-log")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(payload)
-                    .retrieve()
-                    .body(AdminApiResponse.class);
-            log.info("미션 로그 전송 성공: idempotencyKey={}, message={}", payload.idempotencyKey(), response.message());
-        } catch (Exception e) {
-            log.error("미션 로그 전송 실패: {}", e.getMessage());
-            throw new RuntimeException("미션 로그 전송 실패", e);
-        }
-    }
-
-    public SendResult sendMissionLogWithResult(MissionLogPayload payload, Long eventId) {
+    public SendResult sendMissionLog(MissionLogPayload payload, Long eventId) {
         try {
             AdminApiResponse response = adminRestClient.post()
                     .uri("/api/stats/mission-log")

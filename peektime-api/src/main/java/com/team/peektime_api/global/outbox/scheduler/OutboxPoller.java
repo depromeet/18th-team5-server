@@ -90,7 +90,7 @@ public class OutboxPoller {
             MissionLogPayload payload = objectMapper.readValue(
                     event.getPayload(), MissionLogPayload.class);
 
-            return adminClient.sendMissionLogWithResult(payload, event.getId());
+            return adminClient.sendMissionLog(payload, event.getId());
 
         } catch (Exception e) {
             // 파싱 실패 등은 영구 실패로 처리

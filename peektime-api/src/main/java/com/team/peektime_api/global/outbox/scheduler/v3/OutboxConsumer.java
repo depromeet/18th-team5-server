@@ -90,7 +90,7 @@ public class OutboxConsumer {
             MissionLogPayload payload = objectMapper.readValue(
                     event.getPayload(), MissionLogPayload.class);
 
-            return adminClient.sendMissionLogWithResult(payload, event.getId());
+            return adminClient.sendMissionLog(payload, event.getId());
 
         } catch (JsonProcessingException e) {
             // 파싱 실패는 재시도해도 같은 결과 → 영구 실패

@@ -3,6 +3,7 @@ package com.team.peektime_api.domain.mission.event;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
 import com.team.peektime_api.global.infra.admin.AdminClient;
+import com.team.peektime_api.global.outbox.SendResult;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,10 +38,14 @@ public class MissionCompletedEventListener {
             UserMissionCompletion completion = findCompletion(event.getCompletionId());
             MissionLogPayload payload = createPayload(completion);
 
-            sendLogToAdmin(payload);
-            deleteOutbox(event.getOutboxId());
+            SendResult result = adminClient.sendMissionLog(payload, event.getOutboxId());
 
-            log.info("미션 완료 로그 전송 성공: missionId={}", completion.getMission().getId());
+            if (result instanceof SendResult.Success) {
+                deleteOutbox(event.getOutboxId());
+                log.info("미션 완료 로그 전송 성공: missionId={}", completion.getMission().getId());
+            } else {
+                log.warn("미션 완료 로그 즉시 전송 실패, 폴러가 재시도 예정: {}", result);
+            }
         } catch (Exception e) {
             log.warn("미션 완료 로그 즉시 전송 실패, 폴러가 재시도 예정: {}", e.getMessage());
         }
@@ -82,10 +87,6 @@ public class MissionCompletedEventListener {
         } catch (Exception e) {
             throw new RuntimeException("SHA-256 해싱 실패", e);
         }
-    }
-
-    private void sendLogToAdmin(MissionLogPayload payload) {
-        adminClient.sendMissionLog(payload);
     }
 
     private void deleteOutbox(Long outboxId) {

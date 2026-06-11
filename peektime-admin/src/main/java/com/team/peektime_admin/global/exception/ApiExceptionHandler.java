@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Slf4j
-@RestControllerAdvice(basePackages = "com.team.peektime_admin.domain.stats.controller")
+@RestControllerAdvice
 @Order(1)
 public class ApiExceptionHandler {
 

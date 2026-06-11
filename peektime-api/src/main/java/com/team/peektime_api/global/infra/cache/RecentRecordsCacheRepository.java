@@ -33,7 +33,7 @@ public class RecentRecordsCacheRepository {
         String key = getKey(userId);
         try {
             String value = objectMapper.writeValueAsString(record);
-            redisTemplate.opsForList().leftPush(key, value);
+            redisTemplate.opsForList().rightPush(key, value);
             redisTemplate.opsForList().trim(key, 0, MAX_RECORDS - 1);
             redisTemplate.expire(key, TTL);
             log.debug("Redis 캐시 추가: key={}, record={}", key, record);
@@ -65,8 +65,8 @@ public class RecentRecordsCacheRepository {
     public void delete(Long userId) {
         String key = getKey(userId);
         try {
-            redisTemplate.delete(key);
-            log.debug("Redis 캐시 삭제: key={}", key);
+            Boolean deleted = redisTemplate.delete(key);
+            log.info("Redis 캐시 삭제: key={}, deleted={}", key, deleted);
         } catch (Exception e) {
             log.warn("Redis 캐시 삭제 실패: {}", e.getMessage());
         }

@@ -99,7 +99,7 @@ public class UserMissionCompletionService {
 
     @Transactional(readOnly = true)
     public List<UserMissionCompletionDetailResponse> getMissionCompletions(Long userId, Long missionId) {
-        return userMissionCompletionRepository.findByUser_IdAndMission_Id(userId, missionId)
+        return userMissionCompletionRepository.findCompletions(userId, missionId)
                 .stream()
                 .map(this::toDetailResponse)
                 .toList();

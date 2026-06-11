@@ -36,7 +36,7 @@ public class RecentRecordsCacheInvalidationEventListener {
         Long userId = completion.getUser().getId();
         try {
             cacheRepository.delete(userId);
-            log.debug("최근 기록 캐시 삭제 완료: userId={}", userId);
+            log.info("최근 기록 캐시 삭제 완료: userId={}, completionId={}", userId, completion.getId());
         } catch (Exception e) {
             log.warn("최근 기록 캐시 삭제 실패 (userId={}): {}", userId, e.getMessage());
         }

@@ -70,7 +70,7 @@ public class SeasonalRecordsService {
         try {
             List<RecentRecordCache> cached = cacheRepository.findAll(userId);
             if (!cached.isEmpty()) {
-                log.debug("Redis 캐시 히트: userId={}", userId);
+                log.info("Redis 캐시 히트: userId={}, count={}", userId, cached.size());
                 return cached;
             }
         } catch (Exception e) {
@@ -78,7 +78,7 @@ public class SeasonalRecordsService {
         }
 
 
-        log.debug("Redis 캐시 미스, DB 조회: userId={}", userId);
+        log.info("Redis 캐시 미스, DB 조회: userId={}", userId);
         List<RecentRecordCache> fromDb = completionRepository
                 .findRecentRecordsWithImageByPeriod(userId, startDateTime, endDateTime)
                 .stream()

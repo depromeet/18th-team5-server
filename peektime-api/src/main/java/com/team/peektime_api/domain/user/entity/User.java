@@ -2,6 +2,7 @@ package com.team.peektime_api.domain.user.entity;
 
 import com.team.peektime_api.global.common.BaseEntity;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,6 +27,9 @@ public class User extends BaseEntity {
     @Column(name = "push_token", length = 255)
     private String pushToken;
 
+    @Column(name = "withdrawn_at")
+    private LocalDateTime withdrawnAt;
+
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private UserOnboarding onboarding;
 
@@ -42,5 +46,14 @@ public class User extends BaseEntity {
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public void withdraw(String anonymizedUuid) {
+        this.deviceUuid = anonymizedUuid;
+        this.withdrawnAt = LocalDateTime.now();
+    }
+
+    public boolean isWithdrawn() {
+        return this.withdrawnAt != null;
     }
 }

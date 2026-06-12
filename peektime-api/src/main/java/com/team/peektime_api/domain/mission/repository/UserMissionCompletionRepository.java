@@ -58,4 +58,6 @@ public interface UserMissionCompletionRepository extends JpaRepository<UserMissi
             @Param("userId") Long userId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
+    void deleteByUser_Id(Long userId);
 }

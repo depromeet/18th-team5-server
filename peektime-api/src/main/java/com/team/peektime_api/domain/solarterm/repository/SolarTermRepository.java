@@ -27,4 +27,8 @@ public interface SolarTermRepository extends JpaRepository<SolarTerm, Long> {
 
     @Query("SELECT s FROM SolarTerm s WHERE s.id < :firstSolarTermId ORDER BY s.id DESC LIMIT 1")
     Optional<SolarTerm> findPrevBefore(@Param("firstSolarTermId") Long firstSolarTermId);
+
+    Optional<SolarTerm> findByStartDate(LocalDate startDate);
+
+    Optional<SolarTerm> findByEndDate(LocalDate endDate);
 }

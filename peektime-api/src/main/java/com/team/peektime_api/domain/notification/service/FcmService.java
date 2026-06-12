@@ -34,10 +34,10 @@ public class FcmService {
     /**
      * 오늘의 미션 알림 전송 (daily_mission 토픽 구독자에게만)
      */
-    public void sendDailyMissionNotification() {
+    public void sendDailyMissionNotification(String title, String body) {
         PushNotificationRequest request = PushNotificationRequest.builder()
-                .title("오늘의 미션이 도착했어요!")
-                .body("지금 바로 확인하고 제철을 즐겨보세요")
+                .title(title)
+                .body(body)
                 .data(Map.of("type", "DAILY_MISSION"))
                 .build();
 
@@ -47,10 +47,10 @@ public class FcmService {
     /**
      * 절기 마지막 날 알림 전송 (solar_term_end 토픽 구독자에게만)
      */
-    public void sendSolarTermEndNotification(String solarTermName) {
+    public void sendSolarTermEndNotification(String title, String body, String solarTermName) {
         PushNotificationRequest request = PushNotificationRequest.builder()
-                .title(solarTermName + "의 마지막 날이에요")
-                .body("이번 절기의 미션들을 마무리해보세요")
+                .title(title)
+                .body(body)
                 .data(Map.of("type", "SOLAR_TERM_END", "solarTerm", solarTermName))
                 .build();
 
@@ -60,11 +60,11 @@ public class FcmService {
     /**
      * 절기 시작 알림 전송 (solar_term_start 토픽 구독자에게만)
      */
-    public void sendSolarTermStartNotification(String newSolarTermName, String description) {
+    public void sendSolarTermStartNotification(String title, String body, String solarTermName) {
         PushNotificationRequest request = PushNotificationRequest.builder()
-                .title("새로운 절기, " + newSolarTermName + "이 시작되었어요!")
-                .body(description)
-                .data(Map.of("type", "SOLAR_TERM_START", "solarTerm", newSolarTermName))
+                .title(title)
+                .body(body)
+                .data(Map.of("type", "SOLAR_TERM_START", "solarTerm", solarTermName))
                 .build();
 
         sendToTopic(TOPIC_SOLAR_TERM_START, request);

@@ -25,6 +25,9 @@ dependencies {
 
     // Firebase Admin SDK
     implementation 'com.google.firebase:firebase-admin:9.4.3'
+
+    // Slack Logback Appender
+    implementation 'com.github.maricn:logback-slack-appender:1.6.1'
 }
 bootRun {
     systemProperty 'spring.profiles.active', 'local'

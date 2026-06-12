@@ -19,7 +19,3 @@ admin:
 
 firebase:
   credentials: ${FIREBASE_CREDENTIALS}
-
-slack:
-  webhook:
-    url: ${SLACK_WEBHOOK_URL}

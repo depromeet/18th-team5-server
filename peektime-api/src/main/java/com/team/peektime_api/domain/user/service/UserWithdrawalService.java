@@ -40,6 +40,7 @@ public class UserWithdrawalService {
         String originalUuid = user.getDeviceUuid();
         String anonymizedUuid = originalUuid + "_withdrawn_" + System.currentTimeMillis();
         user.withdraw(anonymizedUuid);
+        userRepository.flush();
 
         userRepository.save(User.builder()
                 .deviceUuid(originalUuid)

@@ -129,6 +129,8 @@ public class CalendarService {
             throw new BusinessException(ErrorCode.CALENDAR_FREE_RECORD_LIMIT_EXCEEDED);
         }
 
+        s3Service.validateObjectExists(request.objectKey());
+
         UserRecord saved = userRecordRepository.save(
                 UserRecord.create(user, date, request.objectKey(), request.memo())
         );
@@ -149,6 +151,11 @@ public class CalendarService {
 
         String oldObjectKey = completion.getObjectKey();
         String newObjectKey = request.objectKey() != null ? request.objectKey() : oldObjectKey;
+
+        if (request.objectKey() != null) {
+            s3Service.validateObjectExists(newObjectKey);
+        }
+
         completion.update(newObjectKey, request.memo());
         deleteS3IfChanged(oldObjectKey, newObjectKey);
     }
@@ -180,6 +187,11 @@ public class CalendarService {
 
         String oldObjectKey = record.getObjectKey();
         String newObjectKey = request.objectKey() != null ? request.objectKey() : oldObjectKey;
+
+        if (request.objectKey() != null) {
+            s3Service.validateObjectExists(newObjectKey);
+        }
+
         record.update(newObjectKey, request.memo());
         deleteS3IfChanged(oldObjectKey, newObjectKey);
     }

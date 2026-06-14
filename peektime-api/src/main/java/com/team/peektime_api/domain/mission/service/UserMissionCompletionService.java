@@ -63,6 +63,8 @@ public class UserMissionCompletionService {
 
         validateSameMission(missionId, user);
 
+        s3Service.validateObjectExists(request.objectKey());
+
         SolarTerm solarTerm = getCurrentSolarTerm(today);
 
         UserMissionCompletion completion = userMissionCompletionRepository.save(
@@ -138,6 +140,8 @@ public class UserMissionCompletionService {
             throw new BusinessException(ErrorCode.RECOMMENDED_MISSION_LIMIT_EXCEEDED);
         }
 
+        s3Service.validateObjectExists(request.objectKey());
+
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
 
@@ -170,6 +174,8 @@ public class UserMissionCompletionService {
         if (todayCount >= SELECTED_DAILY_LIMIT) {
             throw new BusinessException(ErrorCode.SELECTED_MISSION_LIMIT_EXCEEDED);
         }
+
+        s3Service.validateObjectExists(request.objectKey());
 
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));

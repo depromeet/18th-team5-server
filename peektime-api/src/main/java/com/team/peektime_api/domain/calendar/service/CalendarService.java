@@ -14,6 +14,7 @@ import com.team.peektime_api.global.aop.DistributedLock;
 import com.team.peektime_api.global.common.enums.MissionType;
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.S3Service;
+import com.team.peektime_api.global.infra.cache.RecentRecordsCacheRepository;
 import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class CalendarService {
     private final UserMissionCompletionRepository completionRepository;
     private final SolarTermRepository solarTermRepository;
     private final S3Service s3Service;
+    private final RecentRecordsCacheRepository recentRecordsCacheRepository;
 
     private static final List<MissionType> CARD_TYPE_ORDER = List.of(
             MissionType.DAILY, MissionType.RECOMMENDED, MissionType.SELECTED
@@ -172,6 +174,7 @@ public class CalendarService {
         String objectKey = completion.getObjectKey();
         completionRepository.delete(completion);
         deleteS3ObjectIfPresent(objectKey);
+        recentRecordsCacheRepository.delete(userId);
     }
 
     @Transactional
@@ -208,6 +211,7 @@ public class CalendarService {
         String objectKey = record.getObjectKey();
         userRecordRepository.delete(record);
         deleteS3ObjectIfPresent(objectKey);
+        recentRecordsCacheRepository.delete(userId);
     }
 
     private void validateCurrentSolarTerm(LocalDate recordDate) {

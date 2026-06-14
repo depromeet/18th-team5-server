@@ -514,12 +514,12 @@
                     <div class="modal-body">
                         <div class="form-group">
                             <label class="form-label">미션명 *</label>
-                            <input type="text" id="missionTitle" name="title" class="form-input" placeholder="미션 제목을 입력하세요" required>
+                            <input type="text" id="missionTitle" name="title" class="form-input" placeholder="미션 제목을 입력하세요" maxlength="16" required>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">미션 설명</label>
-                            <textarea id="missionDescription" name="description" class="form-textarea" rows="3" placeholder="미션에 대한 상세 설명을 입력하세요"></textarea>
+                            <textarea id="missionDescription" name="description" class="form-textarea" rows="3" maxlength="20" placeholder="미션에 대한 상세 설명을 입력하세요"></textarea>
                         </div>
 
                         <h4 style="font-size: 14px; margin: 20px 0 12px; color: var(--gray-700);">필터링용 태그</h4>
@@ -863,12 +863,15 @@
                     }
 
                     const data = await response.json();
+                    const skippedMessage = data.skippedCount > 0
+                        ? `\n\n제외된 미션: ${data.skippedCount}개\n${data.skippedReasons.join('\n')}`
+                        : '';
 
                     // 동기화 결과에 따라 메시지 표시
                     if (data.syncSuccess) {
-                        alert(`${data.missions.length}개의 미션이 생성되었습니다.\n\n✅ ${data.syncMessage}`);
+                        alert(`${data.missions.length}개의 미션이 저장되었습니다.${skippedMessage}\n\n✅ ${data.syncMessage}`);
                     } else {
-                        alert(`${data.missions.length}개의 미션이 생성되었습니다.\n\n⚠️ ${data.syncMessage}\n\n수동으로 API 동기화 버튼을 눌러주세요.`);
+                        alert(`${data.missions.length}개의 미션이 저장되었습니다.${skippedMessage}\n\n⚠️ ${data.syncMessage}\n\n수동으로 API 동기화 버튼을 눌러주세요.`);
                     }
                     location.reload();
                 } catch (error) {

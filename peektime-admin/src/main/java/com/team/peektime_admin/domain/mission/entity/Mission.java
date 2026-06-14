@@ -1,6 +1,7 @@
 package com.team.peektime_admin.domain.mission.entity;
 
 import com.team.peektime_admin.domain.mission.dto.MissionRequest;
+import com.team.peektime_admin.domain.mission.validation.MissionTextPolicy;
 import com.team.peektime_admin.global.common.BaseEntity;
 import com.team.peektime_admin.global.common.enums.*;
 import jakarta.persistence.*;
@@ -63,6 +64,8 @@ public class Mission extends BaseEntity {
     private Mission(String title, String description, SpaceType spaceType,
                    CategoryType categoryType, CompanionType companionType,
                    EnjoyType enjoyType, UserType userType) {
+        MissionTextPolicy.validateTitle(title);
+        MissionTextPolicy.validateDescription(description);
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;
@@ -97,6 +100,8 @@ public class Mission extends BaseEntity {
     public void update(String title, String description, SpaceType spaceType,
                        CategoryType categoryType, CompanionType companionType,
                        EnjoyType enjoyType, UserType userType) {
+        MissionTextPolicy.validateTitle(title);
+        MissionTextPolicy.validateDescription(description);
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;

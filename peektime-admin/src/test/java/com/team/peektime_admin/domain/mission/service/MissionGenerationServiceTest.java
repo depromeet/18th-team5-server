@@ -1,6 +1,7 @@
 package com.team.peektime_admin.domain.mission.service;
 
 import com.team.peektime_admin.domain.mission.dto.GeneratedMissionDto;
+import com.team.peektime_admin.domain.mission.dto.MissionGenerationResult;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,8 @@ class MissionGenerationServiceTest {
     @Test
     void 미션_3개_생성_테스트() {
         // when
-        List<GeneratedMissionDto> missions = missionGenerationService.generateMissions(5);
+        MissionGenerationResult result = missionGenerationService.generateMissions(5);
+        List<GeneratedMissionDto> missions = result.getMissions();
 
         // then
         assertThat(missions).hasSize(5);

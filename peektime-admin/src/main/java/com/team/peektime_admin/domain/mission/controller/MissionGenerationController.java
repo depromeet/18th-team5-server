@@ -40,7 +40,6 @@ public class MissionGenerationController {
             result = missionGenerationService.generateMissions(request.getCount());
         }
 
-        return ResponseEntity.ok(MissionGenerationResponse.of(
-                result.getMissions(), result.isSyncSuccess(), result.getSyncMessage()));
+        return ResponseEntity.ok(MissionGenerationResponse.of(result));
     }
 }

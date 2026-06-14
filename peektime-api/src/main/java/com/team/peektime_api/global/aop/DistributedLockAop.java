@@ -1,5 +1,7 @@
 package com.team.peektime_api.global.aop;
 
+import com.team.peektime_api.global.exception.BusinessException;
+import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -43,7 +45,7 @@ public class DistributedLockAop {
                     distributedLock.timeUnit()
             );
             if (!available) {
-                return false;
+                throw new BusinessException(ErrorCode.LOCK_ACQUISITION_FAILED);
             }
 
             return aopForTransaction.proceed(joinPoint);

@@ -1,5 +1,6 @@
 package com.team.peektime_api.domain.home.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record SeasonalRecordsResponse(
@@ -8,10 +9,11 @@ public record SeasonalRecordsResponse(
 ) {
     public record RecentRecord(
             Long completionId,
-            String imageUrl
+            String imageUrl,
+            LocalDateTime recordedAt
     ) {
-        public static RecentRecord of(Long completionId, String presignedUrl) {
-            return new RecentRecord(completionId, presignedUrl);
+        public static RecentRecord of(Long completionId, String presignedUrl, LocalDateTime recordedAt) {
+            return new RecentRecord(completionId, presignedUrl, recordedAt);
         }
     }
 

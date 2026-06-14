@@ -58,7 +58,8 @@ public class SeasonalRecordsService {
         List<RecentRecord> recentRecordResponses = recentRecords.stream()
                 .map(record -> RecentRecord.of(
                         record.completionId(),
-                        s3Service.generatePresignedViewUrl(record.objectKey())
+                        s3Service.generatePresignedViewUrl(record.objectKey()),
+                        record.recordedAt()
                 ))
                 .toList();
 

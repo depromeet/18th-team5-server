@@ -7,6 +7,7 @@ import com.team.peektime_admin.domain.mission.dto.MissionRequest;
 import com.team.peektime_admin.domain.mission.entity.Mission;
 import com.team.peektime_admin.domain.mission.repository.MissionRepository;
 import com.team.peektime_admin.domain.mission.service.MissionBulkService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,7 +61,7 @@ public class MissionBulkController {
 
     @PostMapping
     @Transactional
-    public ResponseEntity<Map<String, Object>> createMission(@RequestBody MissionRequest request) {
+    public ResponseEntity<Map<String, Object>> createMission(@RequestBody @Valid MissionRequest request) {
 
 
         Mission mission = Mission.create(request);
@@ -76,7 +77,7 @@ public class MissionBulkController {
     @Transactional
     public ResponseEntity<Map<String, String>> updateMission(
             @PathVariable Long id,
-            @RequestBody MissionRequest request) {
+            @RequestBody @Valid MissionRequest request) {
         Mission mission = missionRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("미션을 찾을 수 없습니다: " + id));
 

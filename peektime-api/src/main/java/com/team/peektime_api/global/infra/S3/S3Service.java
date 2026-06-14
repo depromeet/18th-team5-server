@@ -1,6 +1,7 @@
 package com.team.peektime_api.global.infra.S3;
 
 import com.team.peektime_api.global.infra.S3.dto.PresignedUrlResponse;
+import com.team.peektime_api.global.infra.cache.PresignedUrlCacheRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -21,12 +22,13 @@ public class S3Service {
 
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
+    private final PresignedUrlCacheRepository presignedUrlCacheRepository;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
     private static final Duration UPLOAD_URL_EXPIRY = Duration.ofMinutes(10);
-    private static final Duration VIEW_URL_EXPIRY = Duration.ofDays(1);
+    private static final Duration VIEW_URL_EXPIRY = Duration.ofDays(7);
 
     public PresignedUrlResponse generatePresignedUrl(String fileName, String contentType) {
         String objectKey = "images/" + UUID.randomUUID() + "_" + fileName;
@@ -46,17 +48,22 @@ public class S3Service {
     }
 
     public String generatePresignedViewUrl(String objectKey) {
-        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(objectKey)
-                .build();
+        return presignedUrlCacheRepository.get(objectKey)
+                .orElseGet(() -> {
+                    GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(objectKey)
+                            .build();
 
-        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(r -> r
-                .signatureDuration(VIEW_URL_EXPIRY)
-                .getObjectRequest(getObjectRequest)
-        );
+                    PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(r -> r
+                            .signatureDuration(VIEW_URL_EXPIRY)
+                            .getObjectRequest(getObjectRequest)
+                    );
 
-        return presignedRequest.url().toString();
+                    String url = presignedRequest.url().toString();
+                    presignedUrlCacheRepository.put(objectKey, url);
+                    return url;
+                });
     }
 
     public String getObjectUrl(String objectKey) {

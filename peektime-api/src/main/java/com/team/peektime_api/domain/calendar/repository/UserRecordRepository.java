@@ -13,4 +13,6 @@ public interface UserRecordRepository extends JpaRepository<UserRecord, Long> {
     List<UserRecord> findByUser_IdAndRecordDateBetween(Long userId, LocalDate startDate, LocalDate endDate);
 
     long countByUser_IdAndRecordDate(Long userId, LocalDate recordDate);
+
+    void deleteByUser_Id(Long userId);
 }

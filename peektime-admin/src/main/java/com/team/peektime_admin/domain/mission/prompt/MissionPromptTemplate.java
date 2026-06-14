@@ -1,5 +1,6 @@
 package com.team.peektime_admin.domain.mission.prompt;
 
+import com.team.peektime_admin.domain.mission.validation.MissionTextPolicy;
 import com.team.peektime_admin.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_admin.global.common.enums.EnjoyType;
 import com.team.peektime_admin.global.common.enums.UserType;
@@ -88,14 +89,16 @@ public class MissionPromptTemplate {
             반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
 
             ### 중요 규칙
-            - title: 반드시 "~하기" 형식으로 끝나야 합니다. (예: "봄나물 캐러 가기", "벚꽃 사진 찍기")
-            - description: 20자 이내로 간결하게 작성하세요.
+            - title: 반드시 "~하기" 형식으로 끝나야 하며, 공백 포함 %d자 이내로 작성하세요. (예: "봄나물 캐러 가기", "벚꽃 사진 찍기")
+            - description: 미션에 대한 설명을 공백 포함 %d자 이내로 작성하세요.
+              사용자가 무엇을 어떻게 하면 되는지 알 수 있어야 하며, title을 그대로 반복하지 마세요.
+              계절감이나 기록 포인트를 짧게 담되, 앱 안내 문구처럼 자연스럽게 작성하세요.
 
             {
               "missions": [
                 {
-                  "title": "미션 제목 (~하기 형식, 20자 이내)",
-                  "description": "간결한 미션 설명 (20자 이내)",
+                  "title": "미션 제목 (~하기 형식, 공백 포함 %d자 이내)",
+                  "description": "미션 설명 (공백 포함 %d자 이내)",
                   "spaceType": "INDOOR 또는 OUTDOOR",
                   "companionType": "SOLO 또는 TOGETHER",
                   "categoryType": "FOOD, NATURE, CONTENT, PLACE, MUSIC 중 하나",
@@ -104,7 +107,11 @@ public class MissionPromptTemplate {
                 }
               ]
             }
-            """;
+            """.formatted(
+                    MissionTextPolicy.TITLE_MAX_LENGTH,
+                    MissionTextPolicy.DESCRIPTION_MAX_LENGTH,
+                    MissionTextPolicy.TITLE_MAX_LENGTH,
+                    MissionTextPolicy.DESCRIPTION_MAX_LENGTH);
 
     public static String generate(int count) {
         return SYSTEM_PROMPT +

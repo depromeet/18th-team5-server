@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -77,20 +78,39 @@ public class MissionGenerationService {
     }
 
     private MissionGenerationResult saveMissionsAndSync(List<GeneratedMissionDto> missionDtos) {
-        List<Mission> missions = missionDtos.stream()
-                .map(this::toEntity)
-                .toList();
+        List<Mission> missions = new ArrayList<>();
+        List<GeneratedMissionDto> savedMissionDtos = new ArrayList<>();
+        List<String> skippedReasons = new ArrayList<>();
+
+        for (int i = 0; i < missionDtos.size(); i++) {
+            GeneratedMissionDto dto = missionDtos.get(i);
+            try {
+                missions.add(toEntity(dto));
+                savedMissionDtos.add(dto);
+            } catch (IllegalArgumentException e) {
+                String title = dto.getTitle() != null ? dto.getTitle() : "(제목 없음)";
+                String reason = (i + 1) + "번째 미션 제외: " + title + " - " + e.getMessage();
+                skippedReasons.add(reason);
+                log.warn(reason);
+            }
+        }
+
+        if (missions.isEmpty()) {
+            log.warn("저장 가능한 미션이 없습니다. 제외 사유: {}", skippedReasons);
+            return MissionGenerationResult.allSkipped(skippedReasons);
+        }
+
         missionRepository.saveAll(missions);
-        log.info("{}개의 미션이 저장되었습니다.", missions.size());
+        log.info("{}개의 미션이 저장되었습니다. 제외된 미션: {}개", missions.size(), skippedReasons.size());
 
         // API 서버로 자동 동기화
         try {
             syncService.syncAllMissions();
             log.info("API 서버로 미션 동기화 완료");
-            return MissionGenerationResult.success(missionDtos);
+            return MissionGenerationResult.success(savedMissionDtos, skippedReasons);
         } catch (Exception e) {
             log.warn("API 서버 동기화 실패 (미션 저장은 완료됨): {}", e.getMessage());
-            return MissionGenerationResult.syncFailed(missionDtos, e.getMessage());
+            return MissionGenerationResult.syncFailed(savedMissionDtos, skippedReasons, e.getMessage());
         }
     }
 

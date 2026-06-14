@@ -47,7 +47,10 @@ public enum ErrorCode {
     S3_INVALID_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "S3_400", "허용되지 않는 파일 형식입니다. (image/jpeg, image/png, image/heic)"),
 
     // 공지사항
-    ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ANNOUNCEMENT_404", "공지사항을 찾을 수 없습니다");
+    ANNOUNCEMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ANNOUNCEMENT_404", "공지사항을 찾을 수 없습니다"),
+
+    // 동시성
+    LOCK_ACQUISITION_FAILED(HttpStatus.CONFLICT, "COMMON_409", "현재 처리 중인 요청이 있습니다. 잠시 후 다시 시도해주세요");
 
     private final HttpStatus httpStatus;
     private final String code;

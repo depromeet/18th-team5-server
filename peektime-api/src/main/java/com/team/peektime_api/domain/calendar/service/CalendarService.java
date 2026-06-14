@@ -10,6 +10,7 @@ import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
+import com.team.peektime_api.global.aop.DistributedLock;
 import com.team.peektime_api.global.common.enums.MissionType;
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.S3Service;
@@ -116,7 +117,7 @@ public class CalendarService {
         return cards;
     }
 
-    @Transactional
+    @DistributedLock(key = "'free-record:' + #userId + ':' + #request.recordDate()")
     public CalendarRecordCreateResponse createFreeRecord(Long userId, CalendarRecordCreateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -147,8 +148,9 @@ public class CalendarService {
         validateCurrentSolarTerm(completion.getCreatedAt().toLocalDate());
 
         String oldObjectKey = completion.getObjectKey();
-        completion.update(request.objectKey(), request.memo());
-        deleteS3IfChanged(oldObjectKey, request.objectKey());
+        String newObjectKey = request.objectKey() != null ? request.objectKey() : oldObjectKey;
+        completion.update(newObjectKey, request.memo());
+        deleteS3IfChanged(oldObjectKey, newObjectKey);
     }
 
     @Transactional
@@ -177,8 +179,9 @@ public class CalendarService {
         validateCurrentSolarTerm(record.getRecordDate());
 
         String oldObjectKey = record.getObjectKey();
-        record.update(request.objectKey(), request.memo());
-        deleteS3IfChanged(oldObjectKey, request.objectKey());
+        String newObjectKey = request.objectKey() != null ? request.objectKey() : oldObjectKey;
+        record.update(newObjectKey, request.memo());
+        deleteS3IfChanged(oldObjectKey, newObjectKey);
     }
 
     @Transactional
@@ -236,8 +239,7 @@ public class CalendarService {
     }
 
     private void deleteS3IfChanged(String oldKey, String newKey) {
-        if (oldKey != null && !oldKey.equals(newKey)) {
-            s3Service.deleteImage(oldKey);
+        if (oldKey != null && !oldKey.equals(newKey)) { s3Service.deleteImage(oldKey);
         }
     }
 

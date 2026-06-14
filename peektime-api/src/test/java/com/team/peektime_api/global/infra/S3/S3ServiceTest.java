@@ -13,7 +13,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -59,11 +59,20 @@ class S3ServiceTest {
     @Test
     void S3에_객체가_없으면_BusinessException이_발생한다() {
         given(s3Client.headObject(any(HeadObjectRequest.class)))
-                .willThrow(NoSuchKeyException.builder().message("Not Found").build());
+                .willThrow(S3Exception.builder().statusCode(404).message("Not Found").build());
 
         assertThatThrownBy(() -> s3Service.validateObjectExists("images/invalid-key.jpg"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.S3_OBJECT_NOT_FOUND);
+    }
+
+    @Test
+    void S3_403_에러는_S3Exception이_그대로_전파된다() {
+        given(s3Client.headObject(any(HeadObjectRequest.class)))
+                .willThrow(S3Exception.builder().statusCode(403).message("Forbidden").build());
+
+        assertThatThrownBy(() -> s3Service.validateObjectExists("images/some-key.jpg"))
+                .isInstanceOf(S3Exception.class);
     }
 }

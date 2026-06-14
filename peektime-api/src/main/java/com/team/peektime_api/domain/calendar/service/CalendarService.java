@@ -147,8 +147,9 @@ public class CalendarService {
         validateCurrentSolarTerm(completion.getCreatedAt().toLocalDate());
 
         String oldObjectKey = completion.getObjectKey();
-        completion.update(request.objectKey(), request.memo());
-        deleteS3IfChanged(oldObjectKey, request.objectKey());
+        String newObjectKey = request.objectKey() != null ? request.objectKey() : oldObjectKey;
+        completion.update(newObjectKey, request.memo());
+        deleteS3IfChanged(oldObjectKey, newObjectKey);
     }
 
     @Transactional
@@ -177,8 +178,9 @@ public class CalendarService {
         validateCurrentSolarTerm(record.getRecordDate());
 
         String oldObjectKey = record.getObjectKey();
-        record.update(request.objectKey(), request.memo());
-        deleteS3IfChanged(oldObjectKey, request.objectKey());
+        String newObjectKey = request.objectKey() != null ? request.objectKey() : oldObjectKey;
+        record.update(newObjectKey, request.memo());
+        deleteS3IfChanged(oldObjectKey, newObjectKey);
     }
 
     @Transactional

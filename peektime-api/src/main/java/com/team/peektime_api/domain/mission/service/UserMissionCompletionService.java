@@ -140,10 +140,10 @@ public class UserMissionCompletionService {
             throw new BusinessException(ErrorCode.RECOMMENDED_MISSION_LIMIT_EXCEEDED);
         }
 
-        s3Service.validateObjectExists(request.objectKey());
-
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
+
+        s3Service.validateObjectExists(request.objectKey());
 
         SolarTerm solarTerm = getCurrentSolarTerm(today);
 
@@ -175,10 +175,10 @@ public class UserMissionCompletionService {
             throw new BusinessException(ErrorCode.SELECTED_MISSION_LIMIT_EXCEEDED);
         }
 
-        s3Service.validateObjectExists(request.objectKey());
-
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
+
+        s3Service.validateObjectExists(request.objectKey());
 
         SolarTerm solarTerm = getCurrentSolarTerm(today);
 

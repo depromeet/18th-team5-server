@@ -19,6 +19,8 @@ import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -174,7 +176,12 @@ public class CalendarService {
         String objectKey = completion.getObjectKey();
         completionRepository.delete(completion);
         deleteS3ObjectIfPresent(objectKey);
-        recentRecordsCacheRepository.delete(userId);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                recentRecordsCacheRepository.delete(userId);
+            }
+        });
     }
 
     @Transactional
@@ -211,7 +218,12 @@ public class CalendarService {
         String objectKey = record.getObjectKey();
         userRecordRepository.delete(record);
         deleteS3ObjectIfPresent(objectKey);
-        recentRecordsCacheRepository.delete(userId);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                recentRecordsCacheRepository.delete(userId);
+            }
+        });
     }
 
     private void validateCurrentSolarTerm(LocalDate recordDate) {

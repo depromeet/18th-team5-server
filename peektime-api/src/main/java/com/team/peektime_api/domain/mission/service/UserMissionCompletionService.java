@@ -63,6 +63,8 @@ public class UserMissionCompletionService {
 
         validateSameMission(missionId, user);
 
+        s3Service.validateObjectExists(request.objectKey());
+
         SolarTerm solarTerm = getCurrentSolarTerm(today);
 
         UserMissionCompletion completion = userMissionCompletionRepository.save(
@@ -141,6 +143,8 @@ public class UserMissionCompletionService {
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
 
+        s3Service.validateObjectExists(request.objectKey());
+
         SolarTerm solarTerm = getCurrentSolarTerm(today);
 
         UserMissionCompletion completion = userMissionCompletionRepository.save(
@@ -173,6 +177,8 @@ public class UserMissionCompletionService {
 
         Mission mission = missionRepository.findById(missionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
+
+        s3Service.validateObjectExists(request.objectKey());
 
         SolarTerm solarTerm = getCurrentSolarTerm(today);
 

@@ -1,13 +1,17 @@
 package com.team.peektime_api.global.infra.S3;
 
+import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.dto.PresignedUrlResponse;
 import com.team.peektime_api.global.infra.cache.PresignedUrlCacheRepository;
+import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
@@ -68,6 +72,21 @@ public class S3Service {
 
     public String getObjectUrl(String objectKey) {
         return String.format("https://%s.s3.ap-northeast-2.amazonaws.com/%s", bucket, objectKey);
+    }
+
+    public void validateObjectExists(String objectKey) {
+        if (objectKey == null) return;
+        try {
+            s3Client.headObject(HeadObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(objectKey)
+                    .build());
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
+                throw new BusinessException(ErrorCode.S3_OBJECT_NOT_FOUND);
+            }
+            throw e;
+        }
     }
 
     public void deleteImage(String objectKey) {

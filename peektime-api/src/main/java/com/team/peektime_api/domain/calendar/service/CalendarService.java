@@ -15,11 +15,14 @@ import com.team.peektime_api.global.aop.DistributedLock;
 import com.team.peektime_api.global.common.enums.MissionType;
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.S3Service;
+import com.team.peektime_api.global.infra.cache.RecentRecordsCacheRepository;
 import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -35,6 +38,7 @@ public class CalendarService {
     private final SolarTermRepository solarTermRepository;
     private final S3Service s3Service;
     private final ApplicationEventPublisher eventPublisher;
+    private final RecentRecordsCacheRepository recentRecordsCacheRepository;
 
     private static final List<MissionType> CARD_TYPE_ORDER = List.of(
             MissionType.DAILY, MissionType.RECOMMENDED, MissionType.SELECTED
@@ -132,6 +136,8 @@ public class CalendarService {
             throw new BusinessException(ErrorCode.CALENDAR_FREE_RECORD_LIMIT_EXCEEDED);
         }
 
+        s3Service.validateObjectExists(request.objectKey());
+
         UserRecord saved = userRecordRepository.save(
                 UserRecord.create(user, date, request.objectKey(), request.memo())
         );
@@ -155,6 +161,11 @@ public class CalendarService {
 
         String oldObjectKey = completion.getObjectKey();
         String newObjectKey = request.objectKey() != null ? request.objectKey() : oldObjectKey;
+
+        if (request.objectKey() != null) {
+            s3Service.validateObjectExists(newObjectKey);
+        }
+
         completion.update(newObjectKey, request.memo());
         deleteS3IfChanged(oldObjectKey, newObjectKey);
     }
@@ -171,6 +182,12 @@ public class CalendarService {
         String objectKey = completion.getObjectKey();
         completionRepository.delete(completion);
         deleteS3ObjectIfPresent(objectKey);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                recentRecordsCacheRepository.delete(userId);
+            }
+        });
     }
 
     @Transactional
@@ -186,6 +203,11 @@ public class CalendarService {
 
         String oldObjectKey = record.getObjectKey();
         String newObjectKey = request.objectKey() != null ? request.objectKey() : oldObjectKey;
+
+        if (request.objectKey() != null) {
+            s3Service.validateObjectExists(newObjectKey);
+        }
+
         record.update(newObjectKey, request.memo());
         deleteS3IfChanged(oldObjectKey, newObjectKey);
     }
@@ -202,6 +224,12 @@ public class CalendarService {
         String objectKey = record.getObjectKey();
         userRecordRepository.delete(record);
         deleteS3ObjectIfPresent(objectKey);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                recentRecordsCacheRepository.delete(userId);
+            }
+        });
     }
 
     private void validateCurrentSolarTerm(LocalDate recordDate) {

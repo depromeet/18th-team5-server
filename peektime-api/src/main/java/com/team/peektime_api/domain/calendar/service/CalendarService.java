@@ -3,6 +3,7 @@ package com.team.peektime_api.domain.calendar.service;
 import com.team.peektime_api.domain.calendar.CalendarCardPolicy;
 import com.team.peektime_api.domain.calendar.dto.*;
 import com.team.peektime_api.domain.calendar.entity.UserRecord;
+import com.team.peektime_api.domain.calendar.event.FreeRecordCreatedEvent;
 import com.team.peektime_api.domain.calendar.repository.UserRecordRepository;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
@@ -17,6 +18,7 @@ import com.team.peektime_api.global.infra.S3.S3Service;
 import com.team.peektime_api.global.infra.cache.RecentRecordsCacheRepository;
 import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -35,6 +37,7 @@ public class CalendarService {
     private final UserMissionCompletionRepository completionRepository;
     private final SolarTermRepository solarTermRepository;
     private final S3Service s3Service;
+    private final ApplicationEventPublisher eventPublisher;
     private final RecentRecordsCacheRepository recentRecordsCacheRepository;
 
     private static final List<MissionType> CARD_TYPE_ORDER = List.of(
@@ -138,6 +141,9 @@ public class CalendarService {
         UserRecord saved = userRecordRepository.save(
                 UserRecord.create(user, date, request.objectKey(), request.memo())
         );
+
+        // 홈 최근 기록 캐시 무효화 (트랜잭션 커밋 후 실행)
+        eventPublisher.publishEvent(FreeRecordCreatedEvent.of(userId, saved.getId()));
 
         return new CalendarRecordCreateResponse(saved.getId());
     }

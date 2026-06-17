@@ -50,6 +50,9 @@ public class S3Service {
     }
 
     public String generatePresignedViewUrl(String objectKey) {
+        // 응급처치: Redis 캐시에 저장된 만료(ExpiredToken)된 URL이 계속 응답되는 문제로
+        // 캐시 조회/저장을 우회하고 매 요청마다 새 presigned URL을 생성한다.
+        // (캐시 코드는 추후 CloudFront 전환 시 정리 예정)
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucket)
                 .key(objectKey)

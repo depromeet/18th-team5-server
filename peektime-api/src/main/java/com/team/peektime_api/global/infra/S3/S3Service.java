@@ -2,7 +2,6 @@ package com.team.peektime_api.global.infra.S3;
 
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.dto.PresignedUrlResponse;
-import com.team.peektime_api.global.infra.cache.PresignedUrlCacheRepository;
 import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +25,6 @@ public class S3Service {
 
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
-    private final PresignedUrlCacheRepository presignedUrlCacheRepository;
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;

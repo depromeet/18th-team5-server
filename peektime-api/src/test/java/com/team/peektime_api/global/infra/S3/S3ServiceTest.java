@@ -1,7 +1,6 @@
 package com.team.peektime_api.global.infra.S3;
 
 import com.team.peektime_api.global.exception.BusinessException;
-import com.team.peektime_api.global.infra.cache.PresignedUrlCacheRepository;
 import com.team.peektime_api.global.response.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,9 +28,6 @@ class S3ServiceTest {
 
     @Mock
     private S3Presigner s3Presigner;
-
-    @Mock
-    private PresignedUrlCacheRepository presignedUrlCacheRepository;
 
     @InjectMocks
     private S3Service s3Service;

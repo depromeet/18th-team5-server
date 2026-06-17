@@ -52,22 +52,20 @@ public class S3Service {
     }
 
     public String generatePresignedViewUrl(String objectKey) {
-        return presignedUrlCacheRepository.get(objectKey)
-                .orElseGet(() -> {
-                    GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                            .bucket(bucket)
-                            .key(objectKey)
-                            .build();
+        // 응급처치: Redis 캐시에 저장된 만료(ExpiredToken)된 URL이 계속 응답되는 문제로
+        // 캐시 조회/저장을 우회하고 매 요청마다 새 presigned URL을 생성한다.
+        // (캐시 코드는 추후 CloudFront 전환 시 정리 예정)
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(objectKey)
+                .build();
 
-                    PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(r -> r
-                            .signatureDuration(VIEW_URL_EXPIRY)
-                            .getObjectRequest(getObjectRequest)
-                    );
+        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(r -> r
+                .signatureDuration(VIEW_URL_EXPIRY)
+                .getObjectRequest(getObjectRequest)
+        );
 
-                    String url = presignedRequest.url().toString();
-                    presignedUrlCacheRepository.put(objectKey, url);
-                    return url;
-                });
+        return presignedRequest.url().toString();
     }
 
     public String getObjectUrl(String objectKey) {

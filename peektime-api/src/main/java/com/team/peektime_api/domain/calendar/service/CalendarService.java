@@ -174,6 +174,7 @@ public class CalendarService {
 
         completion.update(newObjectKey, request.memo());
         deleteS3IfChanged(oldObjectKey, newObjectKey);
+        evictRecentRecordsCacheAfterCommit(userId);
     }
 
     @Transactional
@@ -188,12 +189,7 @@ public class CalendarService {
         String objectKey = completion.getObjectKey();
         completionRepository.delete(completion);
         deleteS3ObjectIfPresent(objectKey);
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                recentRecordsCacheRepository.delete(userId);
-            }
-        });
+        evictRecentRecordsCacheAfterCommit(userId);
     }
 
     @Transactional
@@ -216,6 +212,7 @@ public class CalendarService {
 
         record.update(newObjectKey, request.memo());
         deleteS3IfChanged(oldObjectKey, newObjectKey);
+        evictRecentRecordsCacheAfterCommit(userId);
     }
 
     @Transactional
@@ -230,6 +227,10 @@ public class CalendarService {
         String objectKey = record.getObjectKey();
         userRecordRepository.delete(record);
         deleteS3ObjectIfPresent(objectKey);
+        evictRecentRecordsCacheAfterCommit(userId);
+    }
+
+    private void evictRecentRecordsCacheAfterCommit(Long userId) {
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {

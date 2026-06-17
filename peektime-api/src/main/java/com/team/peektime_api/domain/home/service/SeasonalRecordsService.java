@@ -1,5 +1,6 @@
 package com.team.peektime_api.domain.home.service;
 
+import com.team.peektime_api.domain.calendar.repository.UserRecordRepository;
 import com.team.peektime_api.domain.home.dto.RecentRecordCache;
 import com.team.peektime_api.domain.home.dto.SeasonalRecordsResponse;
 import com.team.peektime_api.domain.home.dto.SeasonalRecordsResponse.RecentRecord;
@@ -17,8 +18,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -26,8 +29,11 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class SeasonalRecordsService {
 
+    private static final int RECENT_RECORDS_LIMIT = 3;
+
     private final RecentRecordsCacheRepository cacheRepository;
     private final UserMissionCompletionRepository completionRepository;
+    private final UserRecordRepository userRecordRepository;
     private final S3Service s3Service;
     private final SolarTermRepository solarTermRepository;
 
@@ -50,8 +56,9 @@ public class SeasonalRecordsService {
         //절기의 끝
         LocalDateTime endDateTime = solarTerm.getEndDate().atTime(LocalTime.MAX);
 
-        long recordCount = completionRepository.countByUserIdAndPeriod(
-                userId, startDateTime, endDateTime);
+        // 절기 내 기록 횟수 = 미션 기록 + 자유 기록
+        long recordCount = completionRepository.countByUserIdAndPeriod(userId, startDateTime, endDateTime)
+                + userRecordRepository.countByUserIdAndPeriod(userId, startDateTime, endDateTime);
 
         List<RecentRecordCache> recentRecords = getRecentRecordsFromCacheOrDb(userId, startDateTime, endDateTime);
 
@@ -80,10 +87,21 @@ public class SeasonalRecordsService {
 
 
         log.info("Redis 캐시 미스, DB 조회: userId={}", userId);
-        List<RecentRecordCache> fromDb = completionRepository
+
+        // 미션 기록과 자유 기록을 각각 최근순으로 조회한 뒤 병합 → recordedAt 기준 상위 3개
+        Stream<RecentRecordCache> missionRecords = completionRepository
                 .findRecentRecordsWithImageByPeriod(userId, startDateTime, endDateTime)
                 .stream()
-                .map(RecentRecordCache::from)
+                .map(RecentRecordCache::from);
+
+        Stream<RecentRecordCache> freeRecords = userRecordRepository
+                .findRecentRecordsWithImageByPeriod(userId, startDateTime, endDateTime)
+                .stream()
+                .map(RecentRecordCache::from);
+
+        List<RecentRecordCache> fromDb = Stream.concat(missionRecords, freeRecords)
+                .sorted(Comparator.comparing(RecentRecordCache::recordedAt).reversed())
+                .limit(RECENT_RECORDS_LIMIT)
                 .toList();
 
         if (!fromDb.isEmpty()) {

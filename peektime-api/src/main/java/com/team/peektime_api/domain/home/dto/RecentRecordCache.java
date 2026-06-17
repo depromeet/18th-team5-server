@@ -1,5 +1,6 @@
 package com.team.peektime_api.domain.home.dto;
 
+import com.team.peektime_api.domain.calendar.entity.UserRecord;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
 
 import java.time.LocalDateTime;
@@ -14,6 +15,14 @@ public record RecentRecordCache(
                 completion.getId(),
                 completion.getObjectKey(),
                 completion.getCreatedAt()
+        );
+    }
+
+    public static RecentRecordCache from(UserRecord userRecord) {
+        return new RecentRecordCache(
+                userRecord.getId(),
+                userRecord.getObjectKey(),
+                userRecord.getCreatedAt()
         );
     }
 }

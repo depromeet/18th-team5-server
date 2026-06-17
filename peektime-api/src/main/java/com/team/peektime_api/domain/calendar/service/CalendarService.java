@@ -11,13 +11,13 @@ import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
-import com.team.peektime_api.global.aop.DistributedLock;
 import com.team.peektime_api.global.common.enums.MissionType;
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.S3Service;
 import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -120,21 +120,28 @@ public class CalendarService {
         return cards;
     }
 
-    @DistributedLock(key = "'free-record:' + #userId + ':' + #request.recordDate()")
+    @Transactional
     public CalendarRecordCreateResponse createFreeRecord(Long userId, CalendarRecordCreateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         LocalDate date = request.recordDate();
 
+        // 일반적인 초과 케이스는 선조회로 처리, 동시 요청 경합은 (user_id, record_date) 유니크 제약으로 차단
         long freeCount = userRecordRepository.countByUser_IdAndRecordDate(userId, date);
         if (freeCount >= CalendarCardPolicy.MAX_FREE) {
             throw new BusinessException(ErrorCode.CALENDAR_FREE_RECORD_LIMIT_EXCEEDED);
         }
 
-        UserRecord saved = userRecordRepository.save(
-                UserRecord.create(user, date, request.objectKey(), request.memo())
-        );
+        UserRecord saved;
+        try {
+            saved = userRecordRepository.save(
+                    UserRecord.create(user, date, request.objectKey(), request.memo())
+            );
+        } catch (DataIntegrityViolationException e) {
+            // 동시 요청으로 유니크 제약 위반 → 하루 1개 제한 초과로 변환
+            throw new BusinessException(ErrorCode.CALENDAR_FREE_RECORD_LIMIT_EXCEEDED);
+        }
 
         // 홈 최근 기록 캐시 무효화 (트랜잭션 커밋 후 실행)
         eventPublisher.publishEvent(FreeRecordCreatedEvent.of(userId, saved.getId()));

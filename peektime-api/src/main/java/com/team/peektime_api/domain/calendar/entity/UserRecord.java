@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "user_record", indexes = {
-        @Index(name = "idx_user_record_user_date", columnList = "user_id, record_date")
+@Table(name = "user_record", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_user_record_user_date", columnNames = {"user_id", "record_date"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

@@ -10,7 +10,9 @@ public record CalendarCardResponse(
 
         Long id,
         MissionType cardType,
+        Long missionId,
         String missionTitle,
+        String missionDescription,
         String presignedImageUrl,
         String memo,
         LocalDateTime recordedAt
@@ -20,7 +22,9 @@ public record CalendarCardResponse(
         return new CalendarCardResponse(
                 completion.getId(),
                 completion.getMissionType(),
+                completion.getMission().getId(),
                 completion.getMission().getTitle(),
+                completion.getMission().getDescription(),
                 presignedImageUrl,
                 completion.getMemo(),
                 completion.getCreatedAt()
@@ -31,6 +35,8 @@ public record CalendarCardResponse(
         return new CalendarCardResponse(
                 record.getId(),
                 MissionType.FREE,
+                null,
+                null,
                 null,
                 presignedImageUrl,
                 record.getMemo(),

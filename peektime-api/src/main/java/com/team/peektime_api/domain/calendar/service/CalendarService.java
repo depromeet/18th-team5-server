@@ -11,8 +11,8 @@ import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
 import com.team.peektime_api.domain.user.entity.User;
 import com.team.peektime_api.domain.user.repository.UserRepository;
-import com.team.peektime_api.global.aop.DistributedLock;
 import com.team.peektime_api.global.common.enums.MissionType;
+import org.springframework.dao.DataIntegrityViolationException;
 import com.team.peektime_api.global.exception.BusinessException;
 import com.team.peektime_api.global.infra.S3.S3Service;
 import com.team.peektime_api.global.infra.cache.RecentRecordsCacheRepository;
@@ -124,7 +124,7 @@ public class CalendarService {
         return cards;
     }
 
-    @DistributedLock(key = "'free-record:' + #userId + ':' + #request.recordDate()")
+    @Transactional
     public CalendarRecordCreateResponse createFreeRecord(Long userId, CalendarRecordCreateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
@@ -138,13 +138,19 @@ public class CalendarService {
 
         s3Service.validateObjectExists(request.objectKey());
 
-        UserRecord saved = userRecordRepository.save(
-                UserRecord.create(user, date, request.objectKey(), request.memo())
-        );
+        UserRecord saved;
+        try {
+            saved = userRecordRepository.saveAndFlush(
+                    UserRecord.create(user, date, request.objectKey(), request.memo())
+            );
+        } catch (DataIntegrityViolationException e) {
+            if (e.getMessage() != null && e.getMessage().contains("uq_user_record_user_date")) {
+                throw new BusinessException(ErrorCode.CALENDAR_FREE_RECORD_LIMIT_EXCEEDED);
+            }
+            throw e;
+        }
 
-        // 홈 최근 기록 캐시 무효화 (트랜잭션 커밋 후 실행)
         eventPublisher.publishEvent(FreeRecordCreatedEvent.of(userId, saved.getId()));
-
         return new CalendarRecordCreateResponse(saved.getId());
     }
 

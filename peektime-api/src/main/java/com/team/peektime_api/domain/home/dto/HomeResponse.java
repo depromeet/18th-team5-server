@@ -11,11 +11,8 @@ public record HomeResponse(
         DailyMissionInfo dailyMission
 ) {
 
-    public static HomeResponse from(DailyMission dailyMission, boolean isCompleted) {
-        return new HomeResponse(
-                SolarTermInfo.from(dailyMission.getSolarTerm()),
-                DailyMissionInfo.from(dailyMission, isCompleted)
-        );
+    public static HomeResponse of(SolarTermInfo solarTerm, DailyMissionInfo dailyMission) {
+        return new HomeResponse(solarTerm, dailyMission);
     }
 
     public record SolarTermInfo(

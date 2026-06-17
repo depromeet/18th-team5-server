@@ -138,15 +138,20 @@ public class CalendarService {
 
         s3Service.validateObjectExists(request.objectKey());
 
+        UserRecord saved;
         try {
-            UserRecord saved = userRecordRepository.saveAndFlush(
+            saved = userRecordRepository.saveAndFlush(
                     UserRecord.create(user, date, request.objectKey(), request.memo())
             );
-            eventPublisher.publishEvent(FreeRecordCreatedEvent.of(userId, saved.getId()));
-            return new CalendarRecordCreateResponse(saved.getId());
         } catch (DataIntegrityViolationException e) {
-            throw new BusinessException(ErrorCode.CALENDAR_FREE_RECORD_LIMIT_EXCEEDED);
+            if (e.getMessage() != null && e.getMessage().contains("uq_user_record_user_date")) {
+                throw new BusinessException(ErrorCode.CALENDAR_FREE_RECORD_LIMIT_EXCEEDED);
+            }
+            throw e;
         }
+
+        eventPublisher.publishEvent(FreeRecordCreatedEvent.of(userId, saved.getId()));
+        return new CalendarRecordCreateResponse(saved.getId());
     }
 
     @Transactional

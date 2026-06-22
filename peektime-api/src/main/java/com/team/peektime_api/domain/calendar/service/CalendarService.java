@@ -49,11 +49,13 @@ public class CalendarService {
         SolarTerm current = solarTermRepository.findByDate(LocalDate.now())
                 .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
 
-        Long startId = solarTermRepository.findPrevBefore(current.getId())
-                .map(SolarTerm::getId)
-                .orElse(current.getId());
+        Optional<SolarTerm> prev = solarTermRepository.findPrevBefore(current.getId());
 
-        return getSolarTermCalendar(userId, startId);
+        if (prev.isPresent()) {
+            return getSolarTermCalendar(userId, prev.get().getId());
+        }
+
+        return buildCalendarResponse(userId, List.of(current));
     }
 
     @Transactional(readOnly = true)
@@ -62,7 +64,10 @@ public class CalendarService {
         if (solarTerms.isEmpty()) {
             throw new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND);
         }
+        return buildCalendarResponse(userId, solarTerms);
+    }
 
+    private CalendarSolarTermResponse buildCalendarResponse(Long userId, List<SolarTerm> solarTerms) {
         LocalDate startDate = solarTerms.get(0).getStartDate();
         LocalDate endDate = solarTerms.get(solarTerms.size() - 1).getEndDate();
 

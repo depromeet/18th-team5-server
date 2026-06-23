@@ -19,6 +19,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Service
@@ -55,14 +57,69 @@ public class MissionGenerationService {
         return saveMissionsAndSync(missions);
     }
 
+    /**
+     * 절기 + 사용자 타입이 주어지면, enjoyType(자연/야외, 제철음식, 감성콘텐츠) 3종을 각각 단일 역할로
+     * 병렬 호출하여 생성한다. 한 번의 호출에 모든 enjoyType을 섞어 요구하는 대신 역할을 좁혀
+     * 본문 품질과 태그 정확도를 높인다. enjoyType/userType 태그는 LLM 응답 대신 요청값으로 확정한다.
+     */
     @Transactional
     public MissionGenerationResult generateMissionsWithSolarTermAndUserType(Long solarTermId, UserType userType, int count) {
         SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
                 .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
 
-        String prompt = MissionPromptTemplate.generateWithSolarTermAndUserType(solarTerm, userType, count);
-        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
+        EnjoyType[] enjoyTypes = EnjoyType.values();
+        int[] counts = distribute(count, enjoyTypes.length);
+
+        List<GeneratedMissionDto> missions = callPerEnjoyTypeInParallel(solarTerm, userType, enjoyTypes, counts);
         return saveMissionsAndSync(missions);
+    }
+
+    private List<GeneratedMissionDto> callPerEnjoyTypeInParallel(
+            SolarTerm solarTerm, UserType userType, EnjoyType[] enjoyTypes, int[] counts) {
+
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<CompletableFuture<List<GeneratedMissionDto>>> futures = new ArrayList<>();
+
+            for (int i = 0; i < enjoyTypes.length; i++) {
+                EnjoyType enjoyType = enjoyTypes[i];
+                int subCount = counts[i];
+                if (subCount <= 0) {
+                    continue;
+                }
+
+                String prompt = MissionPromptTemplate.generateWithSolarTermAndUserTypeAndEnjoyType(
+                        solarTerm, userType, enjoyType, subCount);
+
+                futures.add(CompletableFuture
+                        .supplyAsync(() -> callGeminiAndParse(prompt), executor)
+                        .thenApply(dtos -> {
+                            dtos.forEach(dto -> dto.overrideTags(userType, enjoyType));
+                            return dtos;
+                        })
+                        .exceptionally(e -> {
+                            log.error("enjoyType={} 미션 생성 실패: {}", enjoyType, e.getMessage());
+                            return List.of();
+                        }));
+            }
+
+            return futures.stream()
+                    .flatMap(future -> future.join().stream())
+                    .toList();
+        }
+    }
+
+    /**
+     * total 개수를 size 등분한다. 나누어떨어지지 않는 나머지는 앞쪽 그룹부터 1개씩 더 배분한다.
+     * 예) distribute(10, 3) -> [4, 3, 3]
+     */
+    private int[] distribute(int total, int size) {
+        int[] result = new int[size];
+        int base = total / size;
+        int remainder = total % size;
+        for (int i = 0; i < size; i++) {
+            result[i] = base + (i < remainder ? 1 : 0);
+        }
+        return result;
     }
 
     @Transactional

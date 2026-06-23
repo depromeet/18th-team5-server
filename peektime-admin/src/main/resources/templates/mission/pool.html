@@ -21,7 +21,7 @@
 
             .filter-grid {
                 display: grid;
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(3, 1fr);
                 gap: 12px;
                 align-items: end;
             }
@@ -351,16 +351,6 @@
                             <option value="NATURE_OUTDOOR" th:selected="${enjoyType == 'NATURE_OUTDOOR'}">자연/야외</option>
                             <option value="SEASONAL_FOOD" th:selected="${enjoyType == 'SEASONAL_FOOD'}">제철음식</option>
                             <option value="CULTURE_CONTENT" th:selected="${enjoyType == 'CULTURE_CONTENT'}">감성콘텐츠</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>유저 타입</label>
-                        <select name="userType" class="form-select">
-                            <option value="">전체</option>
-                            <option value="EXPLORER" th:selected="${userType == 'EXPLORER'}">제철을 쫓는 탐험가</option>
-                            <option value="WALKER" th:selected="${userType == 'WALKER'}">일상 속 제철 산책가</option>
-                            <option value="LIFE_CREATOR" th:selected="${userType == 'LIFE_CREATOR'}">제철을 채우는 라이프 크리에이터</option>
-                            <option value="AESTHETE" th:selected="${userType == 'AESTHETE'}">제철을 음미하는 감상가</option>
                         </select>
                     </div>
                 </div>

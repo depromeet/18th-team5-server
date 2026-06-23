@@ -21,7 +21,7 @@
 
             .filter-grid {
                 display: grid;
-                grid-template-columns: repeat(4, 1fr);
+                grid-template-columns: repeat(3, 1fr);
                 gap: 12px;
                 align-items: end;
             }
@@ -117,6 +117,31 @@
                 flex-wrap: wrap;
             }
 
+            /* 미션 테이블이 화면 폭을 넘지 않도록 고정 레이아웃 + 줄바꿈 */
+            .table-wrapper {
+                overflow-x: auto;
+            }
+
+            .mission-table {
+                table-layout: fixed;
+            }
+
+            .mission-table th,
+            .mission-table td {
+                padding: 10px 12px;
+                word-break: keep-all;
+                overflow-wrap: anywhere;
+                vertical-align: top;
+            }
+
+            .mission-table .tag {
+                white-space: normal;
+            }
+
+            .mission-table .table-actions {
+                flex-wrap: wrap;
+            }
+
             /* EnjoyType 색상 */
             .tag-enjoy-nature {
                 background: #DCFCE7;
@@ -129,24 +154,6 @@
             .tag-enjoy-culture {
                 background: #F3E8FF;
                 color: #9333EA;
-            }
-
-            /* UserType 색상 */
-            .tag-user-explorer {
-                background: #D1FAE5;
-                color: #047857;
-            }
-            .tag-user-walker {
-                background: #DBEAFE;
-                color: #1D4ED8;
-            }
-            .tag-user-gourmet {
-                background: #FFEDD5;
-                color: #C2410C;
-            }
-            .tag-user-observer {
-                background: #FCE7F3;
-                color: #BE185D;
             }
 
             .tag-daily {
@@ -286,22 +293,11 @@
         <div class="ai-section">
             <div class="ai-section-content">
                 <h3>AI 미션 생성</h3>
-                <p>절기와 사용자 타입을 선택하면 AI가 미션을 자동 생성합니다.</p>
+                <p>절기를 선택하면 AI가 즐기기 타입(자연/야외·제철음식·감성콘텐츠) 3종을 자동으로 나눠 미션을 생성합니다.</p>
             </div>
             <div class="ai-section-actions">
                 <select class="form-select" id="aiSolarTerm" style="width: 120px;">
                     <option th:each="term : ${solarTerms}" th:value="${term.id}" th:text="${term.name}">입춘</option>
-                </select>
-                <select class="form-select" id="aiUserType" style="width: 140px;">
-                    <option value="EXPLORER">제철을 쫓는 탐험가</option>
-                    <option value="WALKER">일상 속 제철 산책가</option>
-                    <option value="LIFE_CREATOR">제철을 채우는 라이프 크리에이터</option>
-                    <option value="AESTHETE">제철을 음미하는 감상가</option>
-                </select>
-                <select class="form-select" id="aiEnjoyType" style="width: 120px;">
-                    <option value="NATURE_OUTDOOR">자연/야외</option>
-                    <option value="SEASONAL_FOOD">제철음식</option>
-                    <option value="CULTURE_CONTENT">감성콘텐츠</option>
                 </select>
                 <input type="number" id="aiCount" class="form-input" style="width: 80px;" value="5" min="1" max="20" placeholder="개수">
                 <button class="btn btn-primary" id="generateBtn" onclick="generateMissions()">
@@ -357,16 +353,6 @@
                             <option value="CULTURE_CONTENT" th:selected="${enjoyType == 'CULTURE_CONTENT'}">감성콘텐츠</option>
                         </select>
                     </div>
-                    <div class="filter-group">
-                        <label>유저 타입</label>
-                        <select name="userType" class="form-select">
-                            <option value="">전체</option>
-                            <option value="EXPLORER" th:selected="${userType == 'EXPLORER'}">제철을 쫓는 탐험가</option>
-                            <option value="WALKER" th:selected="${userType == 'WALKER'}">일상 속 제철 산책가</option>
-                            <option value="LIFE_CREATOR" th:selected="${userType == 'LIFE_CREATOR'}">제철을 채우는 라이프 크리에이터</option>
-                            <option value="AESTHETE" th:selected="${userType == 'AESTHETE'}">제철을 음미하는 감상가</option>
-                        </select>
-                    </div>
                 </div>
                 <div class="filter-actions">
                     <button type="submit" class="btn btn-primary">필터 적용</button>
@@ -374,10 +360,20 @@
             </form>
 
             <!-- Table -->
-            <table class="table">
+            <div class="table-wrapper">
+            <table class="table mission-table">
+                <colgroup>
+                    <col style="width: 36px;">
+                    <col style="width: 20%;">
+                    <col style="width: 22%;">
+                    <col style="width: 18%;">
+                    <col style="width: 84px;">
+                    <col style="width: 92px;">
+                    <col style="width: 112px;">
+                </colgroup>
                 <thead>
                     <tr>
-                        <th style="width: 40px;">
+                        <th>
                             <input type="checkbox" id="selectAll">
                         </th>
                         <th>미션명</th>
@@ -385,7 +381,7 @@
                         <th>추천미션 분류</th>
                         <th>배정</th>
                         <th>생성일</th>
-                        <th style="width: 100px;">관리</th>
+                        <th>관리</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -402,11 +398,7 @@
                                   class="tag"
                                   th:classappend="${mission.enjoyType.name() == 'NATURE_OUTDOOR'} ? 'tag-enjoy-nature' : (${mission.enjoyType.name() == 'SEASONAL_FOOD'} ? 'tag-enjoy-food' : 'tag-enjoy-culture')"
                                   th:text="${mission.enjoyType.shortLabel}">즐기기</span>
-                            <span th:if="${mission.userType != null}"
-                                  class="tag"
-                                  th:classappend="${mission.userType.name() == 'EXPLORER'} ? 'tag-user-explorer' : (${mission.userType.name() == 'WALKER'} ? 'tag-user-walker' : (${mission.userType.name() == 'LIFE_CREATOR'} ? 'tag-user-gourmet' : 'tag-user-observer'))"
-                                  th:text="${mission.userType.label}">사용자</span>
-                            <span th:if="${mission.enjoyType == null && mission.userType == null}" class="text-gray text-sm">-</span>
+                            <span th:if="${mission.enjoyType == null}" class="text-gray text-sm">-</span>
                         </td>
                         <td>
                             <span th:if="${assignmentMap.get(mission.id) != null && assignmentMap.get(mission.id).name() == 'DAILY'}"
@@ -430,6 +422,7 @@
                     </tr>
                 </tbody>
             </table>
+            </div>
 
             <!-- Pagination -->
             <div class="pagination" th:if="${totalPages > 1}">
@@ -826,8 +819,6 @@
             // AI 미션 생성
             async function generateMissions() {
                 const solarTermId = document.getElementById('aiSolarTerm').value;
-                const userType = document.getElementById('aiUserType').value;
-                const enjoyType = document.getElementById('aiEnjoyType').value;
                 const count = parseInt(document.getElementById('aiCount').value) || 5;
                 const generateBtn = document.getElementById('generateBtn');
 
@@ -852,8 +843,6 @@
                         },
                         body: JSON.stringify({
                             solarTermId: parseInt(solarTermId),
-                            userType: userType,
-                            enjoyType: enjoyType,
                             count: count
                         })
                     });

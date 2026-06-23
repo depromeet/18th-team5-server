@@ -19,6 +19,8 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Service
@@ -31,50 +33,69 @@ public class MissionGenerationService {
     private final MissionRepository missionRepository;
     private final SyncService syncService;
 
-    @Transactional
-    public MissionGenerationResult generateMissions(int count) {
-        String prompt = MissionPromptTemplate.generate(count);
-        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        return saveMissionsAndSync(missions);
-    }
-
-    @Transactional
-    public MissionGenerationResult generateMissionsWithTheme(String theme, int count) {
-        String prompt = MissionPromptTemplate.generateWithTheme(theme, count);
-        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        return saveMissionsAndSync(missions);
-    }
-
+    /**
+     * 절기가 주어지면 enjoyType(자연/야외, 제철음식, 감성콘텐츠) 3종을 각각 단일 역할로 병렬 호출하여
+     * 생성한다. 한 번의 호출에 모든 enjoyType을 섞어 요구하는 대신 역할을 좁혀 본문 품질과 태그
+     * 정확도를 높인다. enjoyType 태그는 LLM 응답 대신 요청값으로 확정한다.
+     */
     @Transactional
     public MissionGenerationResult generateMissionsWithSolarTerm(Long solarTermId, int count) {
         SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
                 .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
 
-        String prompt = MissionPromptTemplate.generateWithSolarTerm(solarTerm, count);
-        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
+        EnjoyType[] enjoyTypes = EnjoyType.values();
+        int[] counts = distribute(count, enjoyTypes.length);
+
+        List<GeneratedMissionDto> missions = callPerEnjoyTypeInParallel(solarTerm, enjoyTypes, counts);
         return saveMissionsAndSync(missions);
     }
 
-    @Transactional
-    public MissionGenerationResult generateMissionsWithSolarTermAndUserType(Long solarTermId, UserType userType, int count) {
-        SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
-                .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
+    private List<GeneratedMissionDto> callPerEnjoyTypeInParallel(
+            SolarTerm solarTerm, EnjoyType[] enjoyTypes, int[] counts) {
 
-        String prompt = MissionPromptTemplate.generateWithSolarTermAndUserType(solarTerm, userType, count);
-        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        return saveMissionsAndSync(missions);
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<CompletableFuture<List<GeneratedMissionDto>>> futures = new ArrayList<>();
+
+            for (int i = 0; i < enjoyTypes.length; i++) {
+                EnjoyType enjoyType = enjoyTypes[i];
+                int subCount = counts[i];
+                if (subCount <= 0) {
+                    continue;
+                }
+
+                String prompt = MissionPromptTemplate.generateWithSolarTermAndEnjoyType(
+                        solarTerm, enjoyType, subCount);
+
+                futures.add(CompletableFuture
+                        .supplyAsync(() -> callGeminiAndParse(prompt), executor)
+                        .thenApply(dtos -> {
+                            dtos.forEach(dto -> dto.overrideEnjoyType(enjoyType));
+                            return dtos;
+                        })
+                        .exceptionally(e -> {
+                            log.error("enjoyType={} 미션 생성 실패: {}", enjoyType, e.getMessage());
+                            return List.of();
+                        }));
+            }
+
+            return futures.stream()
+                    .flatMap(future -> future.join().stream())
+                    .toList();
+        }
     }
 
-    @Transactional
-    public MissionGenerationResult generateMissionsWithSolarTermAndUserTypeAndEnjoyType(
-            Long solarTermId, UserType userType, EnjoyType enjoyType, int count) {
-        SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
-                .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
-
-        String prompt = MissionPromptTemplate.generateWithSolarTermAndUserTypeAndEnjoyType(
-                solarTerm, userType, enjoyType, count);
-        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        return saveMissionsAndSync(missions);
+    /**
+     * total 개수를 size 등분한다. 나누어떨어지지 않는 나머지는 앞쪽 그룹부터 1개씩 더 배분한다.
+     * 예) distribute(10, 3) -> [4, 3, 3]
+     */
+    private int[] distribute(int total, int size) {
+        int[] result = new int[size];
+        int base = total / size;
+        int remainder = total % size;
+        for (int i = 0; i < size; i++) {
+            result[i] = base + (i < remainder ? 1 : 0);
+        }
+        return result;
     }
 
     private MissionGenerationResult saveMissionsAndSync(List<GeneratedMissionDto> missionDtos) {
@@ -122,7 +143,6 @@ public class MissionGenerationService {
                 .companionType(parseEnum(CompanionType.class, dto.getCompanionType()))
                 .categoryType(parseEnum(CategoryType.class, dto.getCategoryType()))
                 .enjoyType(parseEnumOrNull(EnjoyType.class, dto.getEnjoyType()))
-                .userType(parseEnumOrNull(UserType.class, dto.getUserType()))
                 .build();
     }
 

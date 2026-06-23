@@ -44,7 +44,6 @@ public class MissionPageController {
             @RequestParam(required = false) String spaceType,
             @RequestParam(required = false) String categoryType,
             @RequestParam(required = false) String enjoyType,
-            @RequestParam(required = false) String userType,
             @RequestParam(defaultValue = "0") int page,
             Model model
     ) {
@@ -54,10 +53,9 @@ public class MissionPageController {
         SpaceType spaceTypeEnum = parseEnum(spaceType, SpaceType.class);
         CategoryType categoryTypeEnum = parseEnum(categoryType, CategoryType.class);
         EnjoyType enjoyTypeEnum = parseEnum(enjoyType, EnjoyType.class);
-        UserType userTypeEnum = parseEnum(userType, UserType.class);
 
         Page<Mission> missionPage = missionRepository.findAllWithFilters(
-                spaceTypeEnum, categoryTypeEnum, enjoyTypeEnum, userTypeEnum, pageable);
+                spaceTypeEnum, categoryTypeEnum, enjoyTypeEnum, pageable);
         List<Mission> missions = missionPage.getContent();
 
         // 배정 상태 조회
@@ -73,7 +71,6 @@ public class MissionPageController {
         model.addAttribute("spaceType", spaceType);
         model.addAttribute("categoryType", categoryType);
         model.addAttribute("enjoyType", enjoyType);
-        model.addAttribute("userType", userType);
 
         model.addAttribute("solarTerms", solarTermRepository.findAll());
         model.addAttribute("userTypes", UserType.values());

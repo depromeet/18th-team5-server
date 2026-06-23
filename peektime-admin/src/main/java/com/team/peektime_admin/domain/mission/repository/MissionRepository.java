@@ -4,7 +4,6 @@ import com.team.peektime_admin.domain.mission.entity.Mission;
 import com.team.peektime_admin.global.common.enums.CategoryType;
 import com.team.peektime_admin.global.common.enums.EnjoyType;
 import com.team.peektime_admin.global.common.enums.SpaceType;
-import com.team.peektime_admin.global.common.enums.UserType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,13 +23,11 @@ public interface MissionRepository extends JpaRepository<Mission, Long> {
     @Query("SELECT m FROM Mission m WHERE m.deleted = false " +
             "AND (:spaceType IS NULL OR m.spaceType = :spaceType) " +
             "AND (:categoryType IS NULL OR m.categoryType = :categoryType) " +
-            "AND (:enjoyType IS NULL OR m.enjoyType = :enjoyType) " +
-            "AND (:userType IS NULL OR m.userType = :userType)")
+            "AND (:enjoyType IS NULL OR m.enjoyType = :enjoyType)")
     Page<Mission> findAllWithFilters(
             @Param("spaceType") SpaceType spaceType,
             @Param("categoryType") CategoryType categoryType,
             @Param("enjoyType") EnjoyType enjoyType,
-            @Param("userType") UserType userType,
             Pageable pageable
     );
 }

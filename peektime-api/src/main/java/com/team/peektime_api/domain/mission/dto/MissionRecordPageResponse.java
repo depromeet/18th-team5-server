@@ -1,6 +1,7 @@
 package com.team.peektime_api.domain.mission.dto;
 
 import com.team.peektime_api.domain.mission.entity.Mission;
+import com.team.peektime_api.global.common.enums.CategoryType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,11 +20,15 @@ public class MissionRecordPageResponse {
     @Schema(description = "미션 설명", example = "입하 제철 토마토로 상큼한 여름 음료를 만들어보세요")
     private String description;
 
+    @Schema(description = "미션 카테고리", example = "FOOD")
+    private CategoryType categoryType;
+
     public static MissionRecordPageResponse from(Mission mission) {
         return MissionRecordPageResponse.builder()
                 .id(mission.getId())
                 .title(mission.getTitle())
                 .description(mission.getDescription())
+                .categoryType(mission.getCategoryType())
                 .build();
     }
 }

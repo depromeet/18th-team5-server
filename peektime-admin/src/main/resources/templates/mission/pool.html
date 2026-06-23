@@ -156,24 +156,6 @@
                 color: #9333EA;
             }
 
-            /* UserType 색상 */
-            .tag-user-explorer {
-                background: #D1FAE5;
-                color: #047857;
-            }
-            .tag-user-walker {
-                background: #DBEAFE;
-                color: #1D4ED8;
-            }
-            .tag-user-gourmet {
-                background: #FFEDD5;
-                color: #C2410C;
-            }
-            .tag-user-observer {
-                background: #FCE7F3;
-                color: #BE185D;
-            }
-
             .tag-daily {
                 background: #DCFCE7;
                 color: #16A34A;
@@ -426,11 +408,7 @@
                                   class="tag"
                                   th:classappend="${mission.enjoyType.name() == 'NATURE_OUTDOOR'} ? 'tag-enjoy-nature' : (${mission.enjoyType.name() == 'SEASONAL_FOOD'} ? 'tag-enjoy-food' : 'tag-enjoy-culture')"
                                   th:text="${mission.enjoyType.shortLabel}">즐기기</span>
-                            <span th:if="${mission.userType != null}"
-                                  class="tag"
-                                  th:classappend="${mission.userType.name() == 'EXPLORER'} ? 'tag-user-explorer' : (${mission.userType.name() == 'WALKER'} ? 'tag-user-walker' : (${mission.userType.name() == 'LIFE_CREATOR'} ? 'tag-user-gourmet' : 'tag-user-observer'))"
-                                  th:text="${mission.userType.label}">사용자</span>
-                            <span th:if="${mission.enjoyType == null && mission.userType == null}" class="text-gray text-sm">-</span>
+                            <span th:if="${mission.enjoyType == null}" class="text-gray text-sm">-</span>
                         </td>
                         <td>
                             <span th:if="${assignmentMap.get(mission.id) != null && assignmentMap.get(mission.id).name() == 'DAILY'}"

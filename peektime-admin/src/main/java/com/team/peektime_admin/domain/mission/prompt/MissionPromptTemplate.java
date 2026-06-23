@@ -3,7 +3,6 @@ package com.team.peektime_admin.domain.mission.prompt;
 import com.team.peektime_admin.domain.mission.validation.MissionTextPolicy;
 import com.team.peektime_admin.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_admin.global.common.enums.EnjoyType;
-import com.team.peektime_admin.global.common.enums.UserType;
 
 public class MissionPromptTemplate {
 
@@ -62,20 +61,6 @@ public class MissionPromptTemplate {
             - NATURE_OUTDOOR (자연/야외 활동): 자연이나 야외에서 즐기는 활동
             - SEASONAL_FOOD (제철 음식/요리): 제철 음식을 맛보거나 요리하는 활동
             - CULTURE_CONTENT (감성 콘텐츠/문화): 감성적인 콘텐츠나 문화 활동
-
-            ### 5. 추천 사용자 타입 (userType)
-            - EXPLORER (제철을 쫓는 탐험가)
-              성향: 적극적으로 계절의 변화를 찾아 나서는 타입
-              미션 방향: 외부 공간 이동, 적극적인 탐색, 시각적 발견 중심
-            - WALKER (일상 속 제철 산책가)
-              성향: 출퇴근길 등 일상 동선 안에서 계절을 가볍게 즐기는 타입
-              미션 방향: 걷기, 일상 동선에서의 소소한 주변 관찰 중심
-            - LIFE_CREATOR (제철을 채우는 라이프 크리에이터)
-              성향: 집, 방, 개인 공간 안에서 제철 요소를 연출하는 것을 좋아하는 타입
-              미션 방향: 공간 연출, 소품 배치, 홈카페/음료 등 실내 감성 중심
-            - AESTHETE (제철을 음미하는 감상가)
-              성향: 음악, 영화, 책, 전시처럼 감성적인 콘텐츠로 계절을 깊게 즐기는 타입
-              미션 방향: 플레이리스트, 영화, 독서 및 필사 등 정적이고 감성적인 미션 중심
             """;
 
     private static final String OUTPUT_FORMAT = """
@@ -102,8 +87,7 @@ public class MissionPromptTemplate {
                   "spaceType": "INDOOR 또는 OUTDOOR",
                   "companionType": "SOLO 또는 TOGETHER",
                   "categoryType": "FOOD, NATURE, CONTENT, PLACE, MUSIC 중 하나",
-                  "enjoyType": "NATURE_OUTDOOR, SEASONAL_FOOD, CULTURE_CONTENT 중 하나",
-                  "userType": "EXPLORER, WALKER, LIFE_CREATOR, AESTHETE 중 하나"
+                  "enjoyType": "NATURE_OUTDOOR, SEASONAL_FOOD, CULTURE_CONTENT 중 하나"
                 }
               ]
             }
@@ -113,66 +97,17 @@ public class MissionPromptTemplate {
                     MissionTextPolicy.TITLE_MAX_LENGTH,
                     MissionTextPolicy.DESCRIPTION_MAX_LENGTH);
 
-    public static String generate(int count) {
-        return SYSTEM_PROMPT +
-                MISSION_PRINCIPLES +
-                ATTRIBUTE_DESCRIPTION +
-                OUTPUT_FORMAT +
-                "\n## 요청\n" +
-                count + "개의 미션을 생성해주세요.";
-    }
-
-    public static String generateWithTheme(String theme, int count) {
-        return SYSTEM_PROMPT +
-                "\n## 테마: " + theme + "\n" +
-                MISSION_PRINCIPLES +
-                ATTRIBUTE_DESCRIPTION +
-                OUTPUT_FORMAT +
-                "\n## 요청\n" +
-                "'" + theme + "' 테마에 맞는 " + count + "개의 미션을 생성해주세요.";
-    }
-
-    public static String generateWithSolarTerm(SolarTerm solarTerm, int count) {
+    public static String generateWithSolarTermAndEnjoyType(SolarTerm solarTerm, EnjoyType enjoyType, int count) {
         String solarTermInfo = buildSolarTermInfo(solarTerm);
-        return SYSTEM_PROMPT +
-                solarTermInfo +
-                MISSION_PRINCIPLES +
-                ATTRIBUTE_DESCRIPTION +
-                OUTPUT_FORMAT +
-                "\n## 요청\n" +
-                "'" + solarTerm.getName() + "' 절기에 맞는 " + count + "개의 미션을 생성해주세요.";
-    }
-
-    public static String generateWithSolarTermAndUserType(SolarTerm solarTerm, UserType userType, int count) {
-        String solarTermInfo = buildSolarTermInfo(solarTerm);
-        String userTypeInfo = buildUserTypeInfo(userType);
-        return SYSTEM_PROMPT +
-                solarTermInfo +
-                MISSION_PRINCIPLES +
-                userTypeInfo +
-                ATTRIBUTE_DESCRIPTION +
-                OUTPUT_FORMAT +
-                "\n## 요청\n" +
-                "'" + solarTerm.getName() + "' 절기에 맞고, '" + userType.getLabel() + "' 타입의 사용자를 위한 " + count + "개의 미션을 생성해주세요.\n" +
-                "생성되는 모든 미션의 userType은 반드시 '" + userType.name() + "'이어야 합니다.";
-    }
-
-    public static String generateWithSolarTermAndUserTypeAndEnjoyType(
-            SolarTerm solarTerm, UserType userType, EnjoyType enjoyType, int count) {
-        String solarTermInfo = buildSolarTermInfo(solarTerm);
-        String userTypeInfo = buildUserTypeInfo(userType);
         String enjoyTypeInfo = buildEnjoyTypeInfo(enjoyType);
         return SYSTEM_PROMPT +
                 solarTermInfo +
                 MISSION_PRINCIPLES +
-                userTypeInfo +
                 enjoyTypeInfo +
                 ATTRIBUTE_DESCRIPTION +
                 OUTPUT_FORMAT +
                 "\n## 요청\n" +
-                "'" + solarTerm.getName() + "' 절기에 맞고, '" + userType.getLabel() + "' 타입의 사용자를 위한 " +
-                "'" + enjoyType.getShortLabel() + "' 카테고리의 미션 " + count + "개를 생성해주세요.\n" +
-                "생성되는 모든 미션의 userType은 반드시 '" + userType.name() + "'이어야 합니다.\n" +
+                "'" + solarTerm.getName() + "' 절기에 맞는 '" + enjoyType.getShortLabel() + "' 카테고리의 미션 " + count + "개를 생성해주세요.\n" +
                 "생성되는 모든 미션의 enjoyType은 반드시 '" + enjoyType.name() + "'이어야 합니다.";
     }
 
@@ -181,13 +116,6 @@ public class MissionPromptTemplate {
                 "- 타입: " + enjoyType.getLabel() + "\n" +
                 "- 설명: " + enjoyType.getDescription() + "\n" +
                 "\n이 즐기는 방식에 맞는 미션만 생성해주세요.\n";
-    }
-
-    private static String buildUserTypeInfo(UserType userType) {
-        return "\n## 대상 사용자 타입\n" +
-                "- 타입: " + userType.getLabel() + "\n" +
-                "- 설명: " + userType.getDescription() + "\n" +
-                "\n이 사용자 타입에 맞는 미션을 생성해주세요.\n";
     }
 
     private static String buildSolarTermInfo(SolarTerm solarTerm) {

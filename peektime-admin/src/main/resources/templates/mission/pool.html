@@ -286,22 +286,11 @@
         <div class="ai-section">
             <div class="ai-section-content">
                 <h3>AI 미션 생성</h3>
-                <p>절기와 사용자 타입을 선택하면 AI가 미션을 자동 생성합니다.</p>
+                <p>절기를 선택하면 AI가 즐기기 타입(자연/야외·제철음식·감성콘텐츠) 3종을 자동으로 나눠 미션을 생성합니다.</p>
             </div>
             <div class="ai-section-actions">
                 <select class="form-select" id="aiSolarTerm" style="width: 120px;">
                     <option th:each="term : ${solarTerms}" th:value="${term.id}" th:text="${term.name}">입춘</option>
-                </select>
-                <select class="form-select" id="aiUserType" style="width: 140px;">
-                    <option value="EXPLORER">제철을 쫓는 탐험가</option>
-                    <option value="WALKER">일상 속 제철 산책가</option>
-                    <option value="LIFE_CREATOR">제철을 채우는 라이프 크리에이터</option>
-                    <option value="AESTHETE">제철을 음미하는 감상가</option>
-                </select>
-                <select class="form-select" id="aiEnjoyType" style="width: 120px;">
-                    <option value="NATURE_OUTDOOR">자연/야외</option>
-                    <option value="SEASONAL_FOOD">제철음식</option>
-                    <option value="CULTURE_CONTENT">감성콘텐츠</option>
                 </select>
                 <input type="number" id="aiCount" class="form-input" style="width: 80px;" value="5" min="1" max="20" placeholder="개수">
                 <button class="btn btn-primary" id="generateBtn" onclick="generateMissions()">
@@ -826,8 +815,6 @@
             // AI 미션 생성
             async function generateMissions() {
                 const solarTermId = document.getElementById('aiSolarTerm').value;
-                const userType = document.getElementById('aiUserType').value;
-                const enjoyType = document.getElementById('aiEnjoyType').value;
                 const count = parseInt(document.getElementById('aiCount').value) || 5;
                 const generateBtn = document.getElementById('generateBtn');
 
@@ -852,8 +839,6 @@
                         },
                         body: JSON.stringify({
                             solarTermId: parseInt(solarTermId),
-                            userType: userType,
-                            enjoyType: enjoyType,
                             count: count
                         })
                     });

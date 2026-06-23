@@ -33,49 +33,25 @@ public class MissionGenerationService {
     private final MissionRepository missionRepository;
     private final SyncService syncService;
 
-    @Transactional
-    public MissionGenerationResult generateMissions(int count) {
-        String prompt = MissionPromptTemplate.generate(count);
-        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        return saveMissionsAndSync(missions);
-    }
-
-    @Transactional
-    public MissionGenerationResult generateMissionsWithTheme(String theme, int count) {
-        String prompt = MissionPromptTemplate.generateWithTheme(theme, count);
-        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        return saveMissionsAndSync(missions);
-    }
-
-    @Transactional
-    public MissionGenerationResult generateMissionsWithSolarTerm(Long solarTermId, int count) {
-        SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
-                .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
-
-        String prompt = MissionPromptTemplate.generateWithSolarTerm(solarTerm, count);
-        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        return saveMissionsAndSync(missions);
-    }
-
     /**
-     * 절기 + 사용자 타입이 주어지면, enjoyType(자연/야외, 제철음식, 감성콘텐츠) 3종을 각각 단일 역할로
-     * 병렬 호출하여 생성한다. 한 번의 호출에 모든 enjoyType을 섞어 요구하는 대신 역할을 좁혀
-     * 본문 품질과 태그 정확도를 높인다. enjoyType/userType 태그는 LLM 응답 대신 요청값으로 확정한다.
+     * 절기가 주어지면 enjoyType(자연/야외, 제철음식, 감성콘텐츠) 3종을 각각 단일 역할로 병렬 호출하여
+     * 생성한다. 한 번의 호출에 모든 enjoyType을 섞어 요구하는 대신 역할을 좁혀 본문 품질과 태그
+     * 정확도를 높인다. enjoyType 태그는 LLM 응답 대신 요청값으로 확정한다.
      */
     @Transactional
-    public MissionGenerationResult generateMissionsWithSolarTermAndUserType(Long solarTermId, UserType userType, int count) {
+    public MissionGenerationResult generateMissionsWithSolarTerm(Long solarTermId, int count) {
         SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
                 .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
 
         EnjoyType[] enjoyTypes = EnjoyType.values();
         int[] counts = distribute(count, enjoyTypes.length);
 
-        List<GeneratedMissionDto> missions = callPerEnjoyTypeInParallel(solarTerm, userType, enjoyTypes, counts);
+        List<GeneratedMissionDto> missions = callPerEnjoyTypeInParallel(solarTerm, enjoyTypes, counts);
         return saveMissionsAndSync(missions);
     }
 
     private List<GeneratedMissionDto> callPerEnjoyTypeInParallel(
-            SolarTerm solarTerm, UserType userType, EnjoyType[] enjoyTypes, int[] counts) {
+            SolarTerm solarTerm, EnjoyType[] enjoyTypes, int[] counts) {
 
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<CompletableFuture<List<GeneratedMissionDto>>> futures = new ArrayList<>();
@@ -87,13 +63,13 @@ public class MissionGenerationService {
                     continue;
                 }
 
-                String prompt = MissionPromptTemplate.generateWithSolarTermAndUserTypeAndEnjoyType(
-                        solarTerm, userType, enjoyType, subCount);
+                String prompt = MissionPromptTemplate.generateWithSolarTermAndEnjoyType(
+                        solarTerm, enjoyType, subCount);
 
                 futures.add(CompletableFuture
                         .supplyAsync(() -> callGeminiAndParse(prompt), executor)
                         .thenApply(dtos -> {
-                            dtos.forEach(dto -> dto.overrideTags(userType, enjoyType));
+                            dtos.forEach(dto -> dto.overrideEnjoyType(enjoyType));
                             return dtos;
                         })
                         .exceptionally(e -> {
@@ -120,18 +96,6 @@ public class MissionGenerationService {
             result[i] = base + (i < remainder ? 1 : 0);
         }
         return result;
-    }
-
-    @Transactional
-    public MissionGenerationResult generateMissionsWithSolarTermAndUserTypeAndEnjoyType(
-            Long solarTermId, UserType userType, EnjoyType enjoyType, int count) {
-        SolarTerm solarTerm = solarTermRepository.findById(solarTermId)
-                .orElseThrow(() -> new IllegalArgumentException("절기를 찾을 수 없습니다: " + solarTermId));
-
-        String prompt = MissionPromptTemplate.generateWithSolarTermAndUserTypeAndEnjoyType(
-                solarTerm, userType, enjoyType, count);
-        List<GeneratedMissionDto> missions = callGeminiAndParse(prompt);
-        return saveMissionsAndSync(missions);
     }
 
     private MissionGenerationResult saveMissionsAndSync(List<GeneratedMissionDto> missionDtos) {
@@ -179,7 +143,6 @@ public class MissionGenerationService {
                 .companionType(parseEnum(CompanionType.class, dto.getCompanionType()))
                 .categoryType(parseEnum(CategoryType.class, dto.getCategoryType()))
                 .enjoyType(parseEnumOrNull(EnjoyType.class, dto.getEnjoyType()))
-                .userType(parseEnumOrNull(UserType.class, dto.getUserType()))
                 .build();
     }
 

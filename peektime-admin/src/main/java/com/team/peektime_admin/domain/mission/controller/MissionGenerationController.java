@@ -22,23 +22,8 @@ public class MissionGenerationController {
     public ResponseEntity<MissionGenerationResponse> generateMissions(
             @RequestBody MissionGenerationRequest request) {
 
-        MissionGenerationResult result;
-
-        if (request.getSolarTermId() != null && request.getUserType() != null && request.getEnjoyType() != null) {
-            result = missionGenerationService.generateMissionsWithSolarTermAndUserTypeAndEnjoyType(
-                    request.getSolarTermId(), request.getUserType(), request.getEnjoyType(), request.getCount());
-        } else if (request.getSolarTermId() != null && request.getUserType() != null) {
-            result = missionGenerationService.generateMissionsWithSolarTermAndUserType(
-                    request.getSolarTermId(), request.getUserType(), request.getCount());
-        } else if (request.getSolarTermId() != null) {
-            result = missionGenerationService.generateMissionsWithSolarTerm(
-                    request.getSolarTermId(), request.getCount());
-        } else if (request.getTheme() != null && !request.getTheme().isBlank()) {
-            result = missionGenerationService.generateMissionsWithTheme(
-                    request.getTheme(), request.getCount());
-        } else {
-            result = missionGenerationService.generateMissions(request.getCount());
-        }
+        MissionGenerationResult result = missionGenerationService.generateMissionsWithSolarTerm(
+                request.getSolarTermId(), request.getCount());
 
         return ResponseEntity.ok(MissionGenerationResponse.of(result));
     }

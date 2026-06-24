@@ -36,6 +36,7 @@ public record HomeResponse(
     public record DailyMissionInfo(
             Long id,
             String title,
+            String description,
             Integer participantCount,
             MissionType missionType,
             boolean isCompleted
@@ -44,6 +45,7 @@ public record HomeResponse(
             return new DailyMissionInfo(
                     dailyMission.getMission().getId(),
                     dailyMission.getMission().getTitle(),
+                    dailyMission.getMission().getDescription(),
                     dailyMission.getParticipantCount(),
                     MissionType.DAILY,
                     isCompleted

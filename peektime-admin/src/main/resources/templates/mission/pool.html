@@ -142,6 +142,16 @@
                 flex-wrap: wrap;
             }
 
+            .pagination {
+                flex-wrap: wrap;
+            }
+
+            .page-ellipsis {
+                padding: 0 4px;
+                color: var(--gray-400);
+                align-self: center;
+            }
+
             /* EnjoyType 색상 */
             .tag-enjoy-nature {
                 background: #DCFCE7;
@@ -424,15 +434,28 @@
             </table>
             </div>
 
-            <!-- Pagination -->
-            <div class="pagination" th:if="${totalPages > 1}">
+            <!-- Pagination (현재 페이지 주변만 노출) -->
+            <div class="pagination" th:if="${totalPages > 1}"
+                 th:with="startPage=${T(java.lang.Math).max(0, currentPage - 2)},
+                          endPage=${T(java.lang.Math).min(totalPages - 1, currentPage + 2)}">
                 <button class="page-btn" th:disabled="${currentPage == 0}"
                         th:onclick="'goToPage(' + (${currentPage} - 1) + ')'">◀</button>
-                <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+
+                <button th:if="${startPage > 0}" class="page-btn"
+                        th:text="1" th:onclick="'goToPage(0)'">1</button>
+                <span th:if="${startPage > 1}" class="page-ellipsis">…</span>
+
+                <th:block th:each="i : ${#numbers.sequence(startPage, endPage)}">
                     <button class="page-btn" th:classappend="${i == currentPage} ? 'active'"
                             th:text="${i + 1}"
                             th:onclick="'goToPage(' + ${i} + ')'">1</button>
                 </th:block>
+
+                <span th:if="${endPage < totalPages - 2}" class="page-ellipsis">…</span>
+                <button th:if="${endPage < totalPages - 1}" class="page-btn"
+                        th:text="${totalPages}"
+                        th:onclick="'goToPage(' + (${totalPages} - 1) + ')'">163</button>
+
                 <button class="page-btn" th:disabled="${currentPage == totalPages - 1}"
                         th:onclick="'goToPage(' + (${currentPage} + 1) + ')'">▶</button>
             </div>

@@ -27,7 +27,7 @@ public class Mission extends BaseEntity {
 
 
 
-    // 20자 이내로 받아야한다.
+    // 30자 이내로 받아야한다.
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 

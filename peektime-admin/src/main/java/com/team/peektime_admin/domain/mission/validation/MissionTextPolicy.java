@@ -3,7 +3,7 @@ package com.team.peektime_admin.domain.mission.validation;
 public final class MissionTextPolicy {
 
     public static final int TITLE_MAX_LENGTH = 16;
-    public static final int DESCRIPTION_MAX_LENGTH = 20;
+    public static final int DESCRIPTION_MAX_LENGTH = 30;
 
     private MissionTextPolicy() {
     }

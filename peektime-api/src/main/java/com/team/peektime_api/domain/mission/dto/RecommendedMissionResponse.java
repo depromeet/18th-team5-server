@@ -37,6 +37,9 @@ public record RecommendedMissionResponse(
             @Schema(description = "미션 제목")
             String title,
 
+            @Schema(description = "미션 설명")
+            String description,
+
             @Schema(description = "카테고리 타입")
             CategoryType categoryType,
 
@@ -53,6 +56,7 @@ public record RecommendedMissionResponse(
             return new MissionItem(
                     pool.getMission().getId(),
                     pool.getMission().getTitle(),
+                    pool.getMission().getDescription(),
                     pool.getMission().getCategoryType(),
                     pool.getMission().getEnjoyType(),
                     order,

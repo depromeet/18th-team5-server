@@ -291,6 +291,6 @@ public class CalendarService {
 
     private String generatePresignedUrl(String objectKey) {
         if (objectKey == null) return null;
-        return s3Service.generateCloudFrontUrl(objectKey);
+        return s3Service.generatePresignedViewUrl(objectKey);
     }
 }

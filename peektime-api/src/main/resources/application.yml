@@ -27,10 +27,6 @@ cloud:
   aws:
     s3:
       bucket: peaktime-932316879839-ap-northeast-2-an
-    cloudfront:
-      domain: d5visb3gnqmrn.cloudfront.net
-      key-pair-id: K5L3H325LRDDY
-      private-key: ${CLOUDFRONT_PRIVATE_KEY:}
     region: ap-northeast-2
 
 firebase:

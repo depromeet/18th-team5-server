@@ -47,7 +47,10 @@ public enum SuccessCode {
 
     // S3
     S3_PRESIGNED_URL("S3_200", "Presigned URL 발급 성공"),
-    S3_IMAGE_DELETED("S3_200", "이미지 삭제 성공");
+    S3_IMAGE_DELETED("S3_200", "이미지 삭제 성공"),
+
+    // 미디어
+    MEDIA_AUTH_ISSUED("MEDIA_200", "CloudFront Signed Cookie 발급 성공");
 
     private final String code;
     private final String message;

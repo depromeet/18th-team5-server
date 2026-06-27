@@ -245,7 +245,7 @@ public class UserMissionCompletionService {
 
     private UserMissionCompletionDetailResponse toDetailResponse(UserMissionCompletion completion) {
         String presignedUrl = completion.getObjectKey() != null
-                ? s3Service.generatePresignedViewUrl(completion.getObjectKey())
+                ? s3Service.generateCloudFrontUrl(completion.getObjectKey())
                 : null;
 
         return UserMissionCompletionDetailResponse.of(completion, presignedUrl);

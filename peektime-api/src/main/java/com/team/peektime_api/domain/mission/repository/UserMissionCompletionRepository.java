@@ -1,6 +1,7 @@
 package com.team.peektime_api.domain.mission.repository;
 
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -63,6 +64,12 @@ public interface UserMissionCompletionRepository extends JpaRepository<UserMissi
             @Param("userId") Long userId,
             @Param("start") LocalDateTime start,
             @Param("end") LocalDateTime end);
+
+    // 전역 공유 피드: 사진 있는 미션 완료를 작성자 무관하게 최신순으로 (캐시 MISS 시 재적재용)
+    @Query("SELECT c FROM UserMissionCompletion c " +
+            "WHERE c.objectKey IS NOT NULL " +
+            "ORDER BY c.createdAt DESC")
+    List<UserMissionCompletion> findRecentGlobalWithImage(Pageable pageable);
 
     void deleteByUser_Id(Long userId);
 }

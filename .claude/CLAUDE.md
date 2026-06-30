@@ -23,3 +23,6 @@ PeekTime 서비스의 백엔드 API 서버
 
 ## API 문서
 - Swagger UI: http://localhost:8080/swagger-ui.html
+
+## 관련 설계 문서
+- 전역 공유 피드 / 캐시·동시성 작업 시 `docs/global-feed-design.md` 참조 (핵심 결정 D1~D4, 탐색 단계)

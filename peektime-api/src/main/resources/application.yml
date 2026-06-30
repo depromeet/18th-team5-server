@@ -27,6 +27,8 @@ cloud:
   aws:
     s3:
       bucket: peaktime-932316879839-ap-northeast-2-an
+    cloudfront:
+      base-url: ${CLOUDFRONT_BASE_URL:https://d5visb3gnqmrn.cloudfront.net}
     region: ap-northeast-2
 
 firebase:

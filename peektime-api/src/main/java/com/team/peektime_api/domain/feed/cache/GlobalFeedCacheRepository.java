@@ -37,7 +37,8 @@ public class GlobalFeedCacheRepository {
 
     private static final String KEY = "feed:recent:global";
     private static final int MAX_ITEMS = 20;
-    private static final Duration TTL = Duration.ofSeconds(60);
+    // 부하 테스트용: 만료 주기를 짧게 해 stampede/락 대기 spike를 관측 (운영 복귀 시 60s 등으로 환원)
+    private static final Duration TTL = Duration.ofSeconds(10);
 
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;

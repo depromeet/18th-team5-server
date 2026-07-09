@@ -85,11 +85,18 @@ public class MissionBulkService {
                     "다음 미션이 이미 오늘의 미션으로 배정되어 있습니다: " + String.join(", ", conflictingMissions));
         }
 
-        // 2. EnjoyType별 5개 제한 확인
+        // 2. 이미 같은 절기+사용자타입에 배정된 미션은 제외
+        //    (같은 미션이라도 다른 사용자타입으로는 배정 가능해야 함)
+        List<Mission> newMissions = missions.stream()
+                .filter(mission -> !recommendedMissionPoolRepository
+                        .existsByMissionIdAndSolarTermIdAndUserType(mission.getId(), solarTermId, userType))
+                .toList();
+
+        // 3. EnjoyType별 5개 제한 확인
         Map<EnjoyType, Long> currentCounts = new HashMap<>();
         Map<EnjoyType, Long> addCounts = new HashMap<>();
 
-        for (Mission mission : missions) {
+        for (Mission mission : newMissions) {
             if (mission.getEnjoyType() == null) {
                 throw new IllegalStateException(
                         "미션 '" + mission.getTitle() + "'에 즐기기 타입(EnjoyType)이 설정되지 않았습니다.");
@@ -128,17 +135,14 @@ public class MissionBulkService {
                     "초과된 타입: " + String.join(", ", exceededTypes));
         }
 
-        // 3. 모든 검증 통과 후 배정 진행
-        for (Mission mission : missions) {
-            boolean alreadyExists = recommendedMissionPoolRepository.existsByMissionId(mission.getId());
-            if (!alreadyExists) {
-                RecommendedMissionPool recommendedMission = RecommendedMissionPool.builder()
-                        .mission(mission)
-                        .solarTerm(solarTerm)
-                        .userType(userType)
-                        .build();
-                recommendedMissionPoolRepository.save(recommendedMission);
-            }
+        // 4. 모든 검증 통과 후 배정 진행
+        for (Mission mission : newMissions) {
+            RecommendedMissionPool recommendedMission = RecommendedMissionPool.builder()
+                    .mission(mission)
+                    .solarTerm(solarTerm)
+                    .userType(userType)
+                    .build();
+            recommendedMissionPoolRepository.save(recommendedMission);
         }
     }
 

@@ -21,6 +21,8 @@ public interface RecommendedMissionPoolRepository extends JpaRepository<Recommen
 
     boolean existsByMissionId(Long missionId);
 
+    boolean existsByMissionIdAndSolarTermIdAndUserType(Long missionId, Long solarTermId, UserType userType);
+
     List<RecommendedMissionPool> findByMissionIdIn(List<Long> missionIds);
 
     @Query("SELECT COUNT(r) FROM RecommendedMissionPool r " +

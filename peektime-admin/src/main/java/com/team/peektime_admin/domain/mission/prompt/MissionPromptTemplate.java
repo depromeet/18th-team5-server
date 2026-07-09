@@ -88,19 +88,56 @@ public class MissionPromptTemplate {
         int dailyCount = count - seasonalCount;
 
         return "\n## 요청\n" +
-                "'" + solarTerm.getName() + "' 절기에 어울리는 '" + enjoyType.getShortLabel() + "' 미션 " + count + "개를 생성하세요.\n" +
+                "'" + solarTerm.getName() + "' 절기에 어울리는 '" + promptLabel(enjoyType) + "' 미션 " + count + "개를 생성하세요.\n" +
                 "\n### 미션 성격 구성 (반드시 준수)\n" +
                 "- [일상 포착] " + dailyCount + "개: 일상 동선에서 마주치는 제철 오브제·경험을 포착/촬영하는 미션.\n" +
                 "- [절기 의미 연관] " + seasonalCount + "개: '" + solarTerm.getName() + "' 절기의 의미와 연결된, 일상의 행복·정서적 환기를 주는 미션.\n" +
                 "\n생성되는 모든 미션의 enjoyType은 반드시 '" + enjoyType.name() + "'이어야 합니다.\n" +
-                "각 미션은 위 예시와 동등하거나 더 나은 퀄리티여야 하며, title 16자·description 20자 제한을 반드시 지키세요.";
+                "각 미션은 위 예시와 동등하거나 더 나은 퀄리티여야 하며, " +
+                "title " + MissionTextPolicy.TITLE_MAX_LENGTH + "자·description " + MissionTextPolicy.DESCRIPTION_MAX_LENGTH + "자 제한을 반드시 지키세요.";
+    }
+
+    /**
+     * 프롬프트 전용 타입 명칭. EnjoyType의 label/shortLabel(자연/야외, 감성콘텐츠 등)은
+     * 서로 경계가 흐려 LLM이 타입을 섞어 생성하는 문제가 있어, 프롬프트에서만 음식/컨텐츠/활동으로 부른다.
+     */
+    private static String promptLabel(EnjoyType enjoyType) {
+        return switch (enjoyType) {
+            case SEASONAL_FOOD -> "음식";
+            case CULTURE_CONTENT -> "컨텐츠";
+            case NATURE_OUTDOOR -> "활동";
+        };
     }
 
     private static String buildEnjoyTypeInfo(EnjoyType enjoyType) {
-        return "\n## 즐기는 방식 지정\n" +
-                "- 타입: " + enjoyType.getLabel() + "\n" +
-                "- 설명: " + enjoyType.getDescription() + "\n" +
-                "이 즐기는 방식에 해당하는 미션만 생성하세요.\n";
+        String guide = switch (enjoyType) {
+            case SEASONAL_FOOD -> """
+                    - 정의: 제철 먹거리·음료가 미션 소재의 중심인 미션.
+                    - 맛보기·마시기·요리하기는 물론, 제철 식재료를 구경·관찰하는 것도 소재가 먹거리라면 포함한다.
+                    """;
+            case CULTURE_CONTENT -> """
+                    - 정의: 음악·책·글·시·영상 등 '콘텐츠물'을 즐기거나, 필사·일기·플레이리스트처럼 직접 기록물을 만드는 미션.
+                    - 미션의 중심에는 반드시 매체(콘텐츠물)나 기록 행위가 있어야 한다.
+                    - 주의: 모든 미션은 앱에서 사진으로 기록되므로, 자연·풍경을 단순히 '사진 찍기'는 컨텐츠가 아니라 활동이다.
+                    """;
+            case NATURE_OUTDOOR -> """
+                    - 정의: 자연·날씨·계절의 풍경을 몸으로 직접 보고, 만지고, 걷고, 느끼는 미션.
+                    - 매체를 거치지 않은 직접적인 감각 경험이 미션의 중심이어야 한다.
+                    """;
+        };
+
+        return "\n## 즐기는 방식 지정: " + promptLabel(enjoyType) + "\n" +
+                guide +
+                """
+
+                ### 세 가지 타입의 경계 (반드시 준수)
+                - 음식: 제철 먹거리·음료가 소재의 중심 (맛보기, 마시기, 요리하기, 식재료 구경하기)
+                - 컨텐츠: 음악·책·글 등 콘텐츠물을 즐기거나 기록물을 만드는 것이 중심 (듣기, 읽기, 필사하기, 쓰기)
+                - 활동: 자연·날씨·풍경을 몸으로 직접 감각하는 것이 중심 (보기, 느끼기, 만져보기, 걷기)
+
+                """ +
+                "지금은 '" + promptLabel(enjoyType) + "' 타입만 생성합니다. " +
+                "나머지 두 타입에 더 어울리는 미션은 절대 만들지 마세요. 애매하게 걸치는 미션도 금지합니다.\n";
     }
 
     /**
@@ -116,16 +153,16 @@ public class MissionPromptTemplate {
                     - 노란 살구 반으로 갈라보기     (절기 의미 / 시각)
                     """;
             case CULTURE_CONTENT -> """
-                    - 퇴근길 파란 하늘 사진 남기기  (일상 포착 / 시각)
-                    - 골목길에 피어난 꽃 촬영하기   (일상 포착 / 시각)
                     - 청량한 분위기의 음악 듣기     (일상 포착 / 청각)
                     - 책 속 싱그러운 문장 필사하기  (일상 포착 / 시각)
+                    - 여름 담은 플레이리스트 만들기 (일상 포착 / 청각)
                     - 마음을 채우는 시 읽어보기     (절기 의미 / 시각)
+                    - 오늘 느낀 계절 한 줄 남기기   (절기 의미 / 시각)
                     """;
             case NATURE_OUTDOOR -> """
                     - 가로수 잎의 선명한 녹색 보기  (일상 포착 / 시각)
                     - 그늘 속 시원한 바람 느끼기    (일상 포착 / 촉각)
-                    - 바람에 흔들리는 커튼 보기     (일상 포착 / 시각)
+                    - 점심시간 동네 한 바퀴 걷기    (일상 포착 / 촉각)
                     - 화단에 가득 찬 꽃잎 만져보기  (절기 의미 / 촉각)
                     - 창밖 빗소리에 귀 기울이기     (절기 의미 / 청각)
                     """;

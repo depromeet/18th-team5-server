@@ -23,6 +23,11 @@ jwt:
 admin:
   base-url: ${ADMIN_BASE_URL:http://localhost:8081}
 
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-2.5-flash}
+  endpoint: ${GEMINI_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
+
 cloud:
   aws:
     s3:

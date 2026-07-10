@@ -1,8 +1,10 @@
 package com.team.peektime_api.domain.mission.controller;
 
+import com.team.peektime_api.domain.mission.dto.LlmSelectedMissionResponse;
 import com.team.peektime_api.domain.mission.dto.SelectedMissionRequest;
 import com.team.peektime_api.domain.mission.dto.SelectedMissionResponse;
 import com.team.peektime_api.domain.mission.dto.SelectedMissionStatusResponse;
+import com.team.peektime_api.domain.mission.service.LlmSelectedMissionService;
 import com.team.peektime_api.domain.mission.service.SelectedMissionService;
 import com.team.peektime_api.global.auth.UserPrincipal;
 import com.team.peektime_api.global.response.SuccessCode;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SelectedMissionController {
 
     private final SelectedMissionService selectedMissionService;
+    private final LlmSelectedMissionService llmSelectedMissionService;
 
     @Operation(summary = "오늘 선택한 미션 조회", description = "오늘 선택한 미션이 있는지 확인하고, 있으면 미션 정보를 반환합니다.")
     @GetMapping("/selected/today")
@@ -45,6 +48,18 @@ public class SelectedMissionController {
         return SuccessResponse.of(
                 SuccessCode.MISSION_SELECTED,
                 selectedMissionService.getSelectedMission(principal.getUserId(), filter)
+        );
+    }
+
+    @Operation(summary = "LLM 선택 미션 생성", description = "태그 조건(공간/인원/카테고리)을 기반으로 LLM이 현재 절기에 맞는 미션 1개를 생성해 곧바로 반환합니다.")
+    @PostMapping("/selected/llm")
+    public SuccessResponse<LlmSelectedMissionResponse> generateSelectedMission(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @ModelAttribute SelectedMissionRequest filter
+    ) {
+        return SuccessResponse.of(
+                SuccessCode.MISSION_GENERATED,
+                llmSelectedMissionService.generateSelectedMission(filter)
         );
     }
 }

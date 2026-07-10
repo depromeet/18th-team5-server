@@ -3,6 +3,11 @@ spring:
     name: peaktime-api
   profiles:
     active: local
+  # 톰캣 워커를 플랫폼 스레드 풀 대신 요청당 가상 스레드로 처리
+  # (LLM 호출처럼 오래 블로킹하는 요청이 워커 풀을 고갈시키는 문제 방지)
+  threads:
+    virtual:
+      enabled: true
   jpa:
     open-in-view: false
   data:

@@ -1,6 +1,5 @@
 package com.team.peektime_api.domain.mission.controller;
 
-import com.team.peektime_api.domain.mission.dto.LlmSelectedMissionResponse;
 import com.team.peektime_api.domain.mission.dto.SelectedMissionRequest;
 import com.team.peektime_api.domain.mission.dto.SelectedMissionResponse;
 import com.team.peektime_api.domain.mission.dto.SelectedMissionStatusResponse;
@@ -51,15 +50,15 @@ public class SelectedMissionController {
         );
     }
 
-    @Operation(summary = "LLM 선택 미션 생성", description = "태그 조건(공간/인원/카테고리)을 기반으로 LLM이 현재 절기에 맞는 미션 1개를 생성해 곧바로 반환합니다.")
+    @Operation(summary = "LLM 선택 미션 생성", description = "태그 조건(공간/인원/카테고리)을 기반으로 LLM이 현재 절기에 맞는 미션 1개를 생성해 반환합니다. 생성된 미션은 오늘의 선택 미션으로 배정되며, 기존 선택 미션 완료 API로 수행/기록합니다. 오늘 이미 선택한 미션이 있으면 기존 미션을 반환합니다.")
     @PostMapping("/selected/llm")
-    public SuccessResponse<LlmSelectedMissionResponse> generateSelectedMission(
+    public SuccessResponse<SelectedMissionResponse> generateSelectedMission(
             @AuthenticationPrincipal UserPrincipal principal,
             @ModelAttribute SelectedMissionRequest filter
     ) {
         return SuccessResponse.of(
                 SuccessCode.MISSION_GENERATED,
-                llmSelectedMissionService.generateSelectedMission(filter)
+                llmSelectedMissionService.generateSelectedMission(principal.getUserId(), filter)
         );
     }
 }

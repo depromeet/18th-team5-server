@@ -46,10 +46,14 @@ public class Mission extends BaseEntity {
     @Column(name = "deleted", nullable = false)
     private boolean deleted = false;
 
+    // LLM이 특정 사용자를 위해 즉석 생성한 미션 여부. 공용 선택 미션 풀에서 제외된다.
+    @Column(name = "llm_generated", nullable = false)
+    private boolean llmGenerated = false;
+
     @Builder(access = AccessLevel.PRIVATE)
     private Mission(Long id, String title, String description, SpaceType spaceType,
                     CategoryType categoryType, CompanionType companionType,
-                    EnjoyType enjoyType, UserType userType, boolean deleted) {
+                    EnjoyType enjoyType, UserType userType, boolean deleted, boolean llmGenerated) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -59,6 +63,7 @@ public class Mission extends BaseEntity {
         this.enjoyType = enjoyType;
         this.userType = userType;
         this.deleted = deleted;
+        this.llmGenerated = llmGenerated;
     }
 
     public static Mission create(Long id, String title, String description, SpaceType spaceType,
@@ -74,6 +79,21 @@ public class Mission extends BaseEntity {
                 .enjoyType(enjoyType)
                 .userType(userType)
                 .deleted(false)
+                .llmGenerated(false)
+                .build();
+    }
+
+    public static Mission createLlmGenerated(Long id, String title, String description, SpaceType spaceType,
+                                             CategoryType categoryType, CompanionType companionType) {
+        return Mission.builder()
+                .id(id)
+                .title(title)
+                .description(description)
+                .spaceType(spaceType)
+                .categoryType(categoryType)
+                .companionType(companionType)
+                .deleted(false)
+                .llmGenerated(true)
                 .build();
     }
 

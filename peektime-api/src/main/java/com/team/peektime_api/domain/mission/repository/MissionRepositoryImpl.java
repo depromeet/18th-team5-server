@@ -28,6 +28,7 @@ public class MissionRepositoryImpl implements MissionRepositoryCustom {
                 .selectFrom(mission)
                 .where(
                         mission.deleted.isFalse(),
+                        mission.llmGenerated.isFalse(),
                         notInDailyMissions(solarTermId),
                         notInRecommendedMissions(solarTermId, userType),
                         notInUserSelectedMissions(userId, solarTermId),

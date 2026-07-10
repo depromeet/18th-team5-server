@@ -9,9 +9,10 @@ spring:
       ddl-auto: create-drop
     defer-datasource-initialization: true
     database-platform: org.hibernate.dialect.H2Dialect
+  # data.sql은 MySQL 전용 문법(INSERT IGNORE)이라 H2 테스트에서 실행하지 않는다 (local과 동일)
   sql:
     init:
-      mode: always
+      mode: never
   data:
     redis:
       host: localhost
@@ -29,4 +30,17 @@ cloud:
       secret-key: test-secret-key
     s3:
       bucket: test-bucket
+    cloudfront:
+      base-url: https://test.cloudfront.net
     region: ap-northeast-2
+
+gemini:
+  api-key: test-api-key
+  model: test-model
+  endpoint: http://localhost:9999
+
+admin:
+  base-url: http://localhost:8081
+
+firebase:
+  credentials-path: classpath:firebase/firebase-service-account.json

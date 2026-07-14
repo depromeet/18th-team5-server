@@ -26,6 +26,7 @@ public enum ErrorCode {
     DAILY_MISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "MISSION_404_DAILY", "오늘의 미션을 찾을 수 없습니다"),
     RECOMMENDED_MISSION_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "MISSION_409_REC", "추천 미션은 하루 3회까지만 기록할 수 있습니다"),
     SELECTED_MISSION_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "MISSION_409_SEL", "선택 미션은 하루 1회만 기록할 수 있습니다"),
+    MISSION_ALREADY_SELECTED(HttpStatus.CONFLICT, "MISSION_409_SELECTED", "오늘 이미 선택한 미션이 있습니다"),
     MISSION_GENERATION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "MISSION_503_LLM", "미션 생성에 실패했습니다. 잠시 후 다시 시도해주세요"),
 
     // 절기

@@ -53,7 +53,7 @@ public class SelectedMissionController {
         );
     }
 
-    @Operation(summary = "LLM 선택 미션 생성", description = "태그 조건(공간/인원/카테고리)을 기반으로 LLM이 현재 절기에 맞는 미션 1개를 생성해 반환합니다. 생성된 미션은 오늘의 선택 미션으로 배정되며, 기존 선택 미션 완료 API로 수행/기록합니다. 오늘 이미 선택한 미션이 있으면 기존 미션을 반환합니다.")
+    @Operation(summary = "LLM 선택 미션 생성", description = "태그 조건(공간/인원/카테고리)을 기반으로 LLM이 현재 절기에 맞는 미션 1개를 생성해 반환합니다. 생성된 미션은 오늘의 선택 미션으로 배정되며, 기존 선택 미션 완료 API로 수행/기록합니다. 오늘 첫 미션 선택인 사용자만 호출해야 하며, 이미 선택한 미션이 있으면 409(MISSION_409_SELECTED)를 반환합니다. 기존 미션은 선택 미션 조회 API(/selected/today)로 확인하세요.")
     @PostMapping("/selected/llm")
     public CompletableFuture<SuccessResponse<SelectedMissionResponse>> generateSelectedMission(
             @AuthenticationPrincipal UserPrincipal principal,

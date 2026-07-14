@@ -5,9 +5,7 @@ import com.team.peektime_api.domain.mission.dto.GeneratedSelectedMissionDto;
 import com.team.peektime_api.domain.mission.dto.SelectedMissionRequest;
 import com.team.peektime_api.domain.mission.dto.SelectedMissionResponse;
 import com.team.peektime_api.domain.mission.entity.Mission;
-import com.team.peektime_api.domain.mission.entity.UserSelectedMission;
 import com.team.peektime_api.domain.mission.prompt.LlmSelectedMissionPromptTemplate;
-import com.team.peektime_api.domain.mission.repository.MissionRepository;
 import com.team.peektime_api.domain.mission.repository.UserSelectedMissionRepository;
 import com.team.peektime_api.domain.solarterm.entity.SolarTerm;
 import com.team.peektime_api.domain.solarterm.repository.SolarTermRepository;
@@ -23,7 +21,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 // LLM 호출(최대 30초) 동안 DB 커넥션을 점유하지 않도록 트랜잭션을 걸지 않고,
@@ -36,7 +33,6 @@ public class LlmSelectedMissionService {
     private final GeminiClient geminiClient;
     private final ObjectMapper objectMapper;
     private final SolarTermRepository solarTermRepository;
-    private final MissionRepository missionRepository;
     private final UserSelectedMissionRepository userSelectedMissionRepository;
     private final LlmMissionRegistrar llmMissionRegistrar;
 
@@ -47,18 +43,14 @@ public class LlmSelectedMissionService {
     public CompletableFuture<SelectedMissionResponse> generateSelectedMission(Long userId, SelectedMissionRequest filter) {
         LocalDate today = LocalDate.now();
 
-        // 오늘 이미 선택한 미션이 있으면 LLM 호출 없이 기존 미션 반환 (기존 /selected와 동일 정책)
-        Optional<UserSelectedMission> existing =
-                userSelectedMissionRepository.findByUserIdAndSelectedDate(userId, today);
-        if (existing.isPresent()) {
-            Mission todayMission = missionRepository.findById(existing.get().getMission().getId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
-            return CompletableFuture.completedFuture(SelectedMissionResponse.from(todayMission));
+        // 이 API는 오늘 첫 미션 선택인 사용자만 호출한다는 전제.
+        // 이미 선택한 미션은 조회 API(/selected/today)로 제공하므로 여기서는 LLM 호출 전에 409로 차단한다
+        if (userSelectedMissionRepository.findByUserIdAndSelectedDate(userId, today).isPresent()) {
+            throw new BusinessException(ErrorCode.MISSION_ALREADY_SELECTED);
         }
 
         SolarTerm currentSolarTerm = solarTermRepository.findByDate(today)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
-
 
         String prompt = LlmSelectedMissionPromptTemplate.generate(currentSolarTerm, filter);
         String response = geminiClient.generateContent(prompt);

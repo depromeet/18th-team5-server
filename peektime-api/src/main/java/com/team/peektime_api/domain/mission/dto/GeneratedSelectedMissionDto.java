@@ -14,7 +14,4 @@ public class GeneratedSelectedMissionDto {
 
     private String title;
     private String description;
-    private String spaceType;
-    private String companionType;
-    private String categoryType;
 }

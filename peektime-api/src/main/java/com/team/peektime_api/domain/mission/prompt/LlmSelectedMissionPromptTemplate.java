@@ -78,36 +78,25 @@ public class LlmSelectedMissionPromptTemplate {
         return sb.toString();
     }
 
+    // 태그는 요청에서 모두 필수값으로 검증되므로 항상 값이 있다
     private static String buildTagConditions(SelectedMissionRequest filter) {
         StringBuilder sb = new StringBuilder();
         sb.append("\n## 사용자가 선택한 태그 조건 (반드시 준수)\n");
 
         SpaceType spaceType = filter.getSpaceType();
-        if (spaceType != null) {
-            sb.append("- 공간(spaceType): 반드시 ").append(spaceType.name())
-                    .append("(").append(spaceType.getLabel()).append(") — ")
-                    .append(spaceType.getDescription()).append("\n");
-        } else {
-            sb.append("- 공간(spaceType): 제한 없음. INDOOR 또는 OUTDOOR 중 미션에 어울리는 것을 선택\n");
-        }
+        sb.append("- 공간(spaceType): 반드시 ").append(spaceType.name())
+                .append("(").append(spaceType.getLabel()).append(") — ")
+                .append(spaceType.getDescription()).append("\n");
 
         CompanionType companionType = filter.getCompanionType();
-        if (companionType != null) {
-            sb.append("- 동반(companionType): 반드시 ").append(companionType.name())
-                    .append("(").append(companionType.getLabel()).append(") — ")
-                    .append(companionType.getDescription()).append("\n");
-        } else {
-            sb.append("- 동반(companionType): 제한 없음. SOLO 또는 TOGETHER 중 미션에 어울리는 것을 선택\n");
-        }
+        sb.append("- 동반(companionType): 반드시 ").append(companionType.name())
+                .append("(").append(companionType.getLabel()).append(") — ")
+                .append(companionType.getDescription()).append("\n");
 
         CategoryType categoryType = filter.getCategoryType();
-        if (categoryType != null) {
-            sb.append("- 카테고리(categoryType): 반드시 ").append(categoryType.name())
-                    .append("(").append(categoryType.getLabel()).append(") — ")
-                    .append(categoryType.getDescription()).append("\n");
-        } else {
-            sb.append("- 카테고리(categoryType): 제한 없음. FOOD, NATURE, CONTENT, PLACE, MUSIC 중 미션에 어울리는 것을 선택\n");
-        }
+        sb.append("- 카테고리(categoryType): 반드시 ").append(categoryType.name())
+                .append("(").append(categoryType.getLabel()).append(") — ")
+                .append(categoryType.getDescription()).append("\n");
 
         return sb.toString();
     }
@@ -127,10 +116,7 @@ public class LlmSelectedMissionPromptTemplate {
 
                 {
                   "title": "미션 제목 (-기 종결, 공백 포함 %d자 이내)",
-                  "description": "미션 설명 (공백 포함 %d자 이내)",
-                  "spaceType": "INDOOR 또는 OUTDOOR",
-                  "companionType": "SOLO 또는 TOGETHER",
-                  "categoryType": "FOOD, NATURE, CONTENT, PLACE, MUSIC 중 하나"
+                  "description": "미션 설명 (공백 포함 %d자 이내)"
                 }
                 """.formatted(
                 TITLE_MAX_LENGTH,

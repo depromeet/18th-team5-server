@@ -10,6 +10,8 @@ import org.springframework.web.client.RestClient;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Getter
 @Setter
@@ -38,5 +40,12 @@ public class GeminiConfig {
                 .baseUrl(endpoint)
                 .requestFactory(requestFactory)
                 .build();
+    }
+
+    // LLM 엔드포인트 전용 실행기. 톰캣 워커는 요청을 여기 넘기고 즉시 반납되며,
+    // Gemini 응답 대기(최대 30초)는 요청당 생성되는 가상 스레드가 담당한다
+    @Bean
+    public ExecutorService llmExecutor() {
+        return Executors.newVirtualThreadPerTaskExecutor();
     }
 }

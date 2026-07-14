@@ -19,10 +19,12 @@ import com.team.peektime_api.global.infra.llm.GeminiClient;
 import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 // LLM 호출(최대 30초) 동안 DB 커넥션을 점유하지 않도록 트랜잭션을 걸지 않고,
 // 저장은 LlmMissionRegistrar의 트랜잭션에서 처리한다
@@ -38,7 +40,11 @@ public class LlmSelectedMissionService {
     private final UserSelectedMissionRepository userSelectedMissionRepository;
     private final LlmMissionRegistrar llmMissionRegistrar;
 
-    public SelectedMissionResponse generateSelectedMission(Long userId, SelectedMissionRequest filter) {
+    // @Async 프록시가 메서드 전체를 llmExecutor(요청당 가상 스레드)에서 실행하고
+    // CompletableFuture 반환으로 톰캣 워커는 즉시 반납된다.
+    // 메서드가 리턴하는 시점엔 결과가 이미 있으므로 completedFuture로 감싼다
+    @Async("llmExecutor")
+    public CompletableFuture<SelectedMissionResponse> generateSelectedMission(Long userId, SelectedMissionRequest filter) {
         LocalDate today = LocalDate.now();
 
         // 오늘 이미 선택한 미션이 있으면 LLM 호출 없이 기존 미션 반환 (기존 /selected와 동일 정책)
@@ -47,11 +53,12 @@ public class LlmSelectedMissionService {
         if (existing.isPresent()) {
             Mission todayMission = missionRepository.findById(existing.get().getMission().getId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
-            return SelectedMissionResponse.from(todayMission);
+            return CompletableFuture.completedFuture(SelectedMissionResponse.from(todayMission));
         }
 
         SolarTerm currentSolarTerm = solarTermRepository.findByDate(today)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
+
 
         String prompt = LlmSelectedMissionPromptTemplate.generate(currentSolarTerm, filter);
         String response = geminiClient.generateContent(prompt);
@@ -71,7 +78,7 @@ public class LlmSelectedMissionService {
                 spaceType, companionType, categoryType
         );
 
-        return SelectedMissionResponse.from(mission);
+        return CompletableFuture.completedFuture(SelectedMissionResponse.from(mission));
     }
 
     private GeneratedSelectedMissionDto parse(String response) {

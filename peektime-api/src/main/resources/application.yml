@@ -3,11 +3,10 @@ spring:
     name: peaktime-api
   profiles:
     active: local
-  # 톰캣 워커를 플랫폼 스레드 풀 대신 요청당 가상 스레드로 처리
-  # (LLM 호출처럼 오래 블로킹하는 요청이 워커 풀을 고갈시키는 문제 방지)
-  threads:
-    virtual:
-      enabled: true
+  # LLM 엔드포인트가 async servlet으로 동작하므로 Gemini 최대 대기(connect 5s + read 30s)보다 길게 설정
+  mvc:
+    async:
+      request-timeout: 40s
   jpa:
     open-in-view: false
   data:

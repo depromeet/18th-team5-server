@@ -68,7 +68,8 @@ public class LlmSelectedMissionGenerator {
                     filter.getSpaceType(), filter.getCompanionType(), filter.getCategoryType()
             );
         } catch (DataIntegrityViolationException e) {
-            // 락이 만료/우회된 극단적 경쟁에서 다른 요청이 먼저 선택을 저장한 경우
+            // 락 밖의 경로가 LLM 호출 중에 먼저 선택을 저장한 경우:
+            // 락을 공유하지 않는 /selected와의 교차 요청, 락 lease(40s) 만료 후 재시도 등.
             // (user_id, selected_date) unique 제약 위반으로 감지해 409로 응답
             throw new BusinessException(ErrorCode.MISSION_ALREADY_SELECTED);
         }

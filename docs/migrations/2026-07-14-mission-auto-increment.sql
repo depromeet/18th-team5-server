@@ -22,7 +22,11 @@ UPDATE mission SET admin_mission_id = id;
 ALTER TABLE mission ADD CONSTRAINT uk_mission_admin_mission_id UNIQUE (admin_mission_id);
 
 -- 4) PK를 auto increment로 전환 (counter는 MySQL이 max(id)+1로 자동 설정)
+--    mission.id를 참조하는 FK들 때문에 MODIFY가 막히므로(Error 1833) FK 검사를 세션 안에서 잠깐 끈다.
+--    타입은 BIGINT 그대로 유지되므로 FK 정합성에 영향 없음. 반드시 같은 세션에서 연속 실행.
+SET FOREIGN_KEY_CHECKS = 0;
 ALTER TABLE mission MODIFY COLUMN id BIGINT NOT NULL AUTO_INCREMENT;
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- 5) 선택 미션 하루 1개 정책의 DB 레벨 보장 (분산 락의 최종 방어선)
 --    실행 전 중복 데이터 확인:

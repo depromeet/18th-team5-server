@@ -60,16 +60,21 @@ public class LlmSelectedMissionGenerator {
         GeneratedSelectedMissionDto dto = parse(response);
         validate(dto);
 
-        // 태그는 요청에서 모두 필수값으로 검증되므로 요청값을 그대로 사용
+        return registerMission(userId, currentSolarTerm.getId(), today, dto, filter);
+    }
+
+    // 태그는 요청에서 모두 필수값으로 검증되므로 요청값을 그대로 사용
+    private Mission registerMission(Long userId, Long solarTermId, LocalDate today,
+                                    GeneratedSelectedMissionDto dto, SelectedMissionRequest filter) {
         try {
             return llmMissionRegistrar.register(
-                    userId, currentSolarTerm.getId(), today,
+                    userId, solarTermId, today,
                     dto.getTitle(), dto.getDescription(),
                     filter.getSpaceType(), filter.getCompanionType(), filter.getCategoryType()
             );
         } catch (DataIntegrityViolationException e) {
             // 락 밖의 경로가 LLM 호출 중에 먼저 선택을 저장한 경우:
-            // 락을 공유하지 않는 /selected와의 교차 요청, 락 lease(40s) 만료 후 재시도 등.
+            // 락 lease(40s) 만료 후 재시도 등.
             // (user_id, selected_date) unique 제약 위반으로 감지해 409로 응답
             throw new BusinessException(ErrorCode.MISSION_ALREADY_SELECTED);
         }

@@ -28,6 +28,7 @@ public enum SuccessCode {
     RECOMMENDED_MISSION_AVAILABILITY_FOUND("MISSION_200_REC_AVAIL", "추천 미션 가능 여부 조회 성공"),
     MISSION_COMPLETED("MISSION_200", "미션 완료 성공"),
     MISSION_SELECTED("MISSION_201", "미션 선택 성공"),
+    MISSION_GENERATED("MISSION_201_LLM", "LLM 미션 생성 성공"),
 
     // 기록
     RECORD_CREATED("RECORD_201", "기록 생성 성공"),

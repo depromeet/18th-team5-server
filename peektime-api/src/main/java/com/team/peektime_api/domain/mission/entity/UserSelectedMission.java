@@ -12,7 +12,11 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "user_selected_mission")
+// 선택 미션은 하루 1개 정책. 동시 요청이 재확인을 동시에 통과해도 DB 레벨에서 중복 저장을 막는다
+@Table(name = "user_selected_mission",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_user_selected_mission_user_date",
+                columnNames = {"user_id", "selected_date"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class UserSelectedMission extends BaseEntity {

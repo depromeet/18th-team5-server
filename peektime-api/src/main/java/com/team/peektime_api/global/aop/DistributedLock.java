@@ -33,5 +33,11 @@ public @interface DistributedLock {
      */
     long leaseTime() default 3L;
 
-    
+
+    /**
+     * 락 구간을 REQUIRES_NEW 트랜잭션으로 감쌀지 여부 (default - true)
+     * LLM 호출처럼 오래 블로킹하는 구간은 false로 두어 DB 커넥션 점유를 피한다.
+     */
+    boolean transactional() default true;
+
 }

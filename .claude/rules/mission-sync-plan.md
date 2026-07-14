@@ -310,4 +310,6 @@ Phase 5: 기존 로직 정리
 
 - [x] 동기화 방식: 배치 동기화 (버튼 클릭)
 - [ ] 내부 API 보안: API Key 또는 IP 화이트리스트
-- [x] ID 전략: Admin ID = API ID (동일하게 유지)
+- [x] ID 전략: API Mission ID는 auto increment 자체 채번, admin 원본 ID는 `admin_mission_id` 매핑 컬럼(unique)으로 보관
+  - 동기화 upsert와 DailyMission/RecommendedMissionPool의 미션 참조는 `admin_mission_id`로 매칭
+  - (변경 이력: 초기에는 Admin ID = API ID 동일 유지였으나, LLM 생성 미션의 ID 대역 분리·분산 락 채번을 없애기 위해 2026-07 전환)

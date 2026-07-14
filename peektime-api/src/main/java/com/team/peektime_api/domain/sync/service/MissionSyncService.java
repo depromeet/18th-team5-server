@@ -22,7 +22,8 @@ public class MissionSyncService {
         log.info("미션 동기화 시작: {}개", dtos.size());
 
         for (MissionSyncDto dto : dtos) {
-            Mission mission = missionRepository.findById(dto.id())
+            // API mission ID는 자체 채번이므로 admin 원본 ID로 upsert 대상을 매칭한다
+            Mission mission = missionRepository.findByAdminMissionId(dto.id())
                     .orElse(null);
 
             if (mission == null) {

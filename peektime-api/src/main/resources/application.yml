@@ -3,6 +3,10 @@ spring:
     name: peaktime-api
   profiles:
     active: local
+  # LLM 엔드포인트가 async servlet으로 동작하므로 Gemini 최대 대기(connect 5s + read 30s)보다 길게 설정
+  mvc:
+    async:
+      request-timeout: 40s
   jpa:
     open-in-view: false
   data:
@@ -22,6 +26,11 @@ jwt:
 
 admin:
   base-url: ${ADMIN_BASE_URL:http://localhost:8081}
+
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-2.5-flash}
+  endpoint: ${GEMINI_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
 
 cloud:
   aws:

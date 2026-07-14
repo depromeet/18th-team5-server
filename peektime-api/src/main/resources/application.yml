@@ -29,7 +29,8 @@ admin:
 
 gemini:
   api-key: ${GEMINI_API_KEY:}
-  model: ${GEMINI_MODEL:gemini-2.5-flash}
+  # flash-lite: 2.5 패밀리 중 지연시간 최소. 미션 1개 생성(짧은 JSON)에는 품질 충분
+  model: ${GEMINI_MODEL:gemini-2.5-flash-lite}
   endpoint: ${GEMINI_ENDPOINT:https://generativelanguage.googleapis.com/v1beta/models}
 
 cloud:

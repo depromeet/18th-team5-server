@@ -48,7 +48,9 @@ public class DistributedLockAop {
                 throw new BusinessException(ErrorCode.LOCK_ACQUISITION_FAILED);
             }
 
-            return aopForTransaction.proceed(joinPoint);
+            return distributedLock.transactional()
+                    ? aopForTransaction.proceed(joinPoint)
+                    : joinPoint.proceed();
         } catch (InterruptedException e) {
             throw new InterruptedException();
         } finally {

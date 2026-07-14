@@ -35,7 +35,8 @@ public class RecommendedMissionSyncService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
 
         for (RecommendedMissionSyncDto dto : dtos) {
-            Mission mission = missionRepository.findById(dto.missionId())
+            // dto.missionId()는 admin DB의 미션 ID이므로 admin_mission_id로 조회
+            Mission mission = missionRepository.findByAdminMissionId(dto.missionId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.MISSION_NOT_FOUND));
 
             RecommendedMissionPool recommendedMission = RecommendedMissionPool.create(

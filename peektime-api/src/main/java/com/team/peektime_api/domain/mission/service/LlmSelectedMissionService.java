@@ -14,6 +14,7 @@ import com.team.peektime_api.global.infra.llm.GeminiClient;
 import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -57,11 +58,18 @@ public class LlmSelectedMissionService {
         validate(dto);
 
         // 태그는 요청에서 모두 필수값으로 검증되므로 요청값을 그대로 사용
-        Mission mission = llmMissionRegistrar.register(
-                userId, currentSolarTerm.getId(), today,
-                dto.getTitle(), dto.getDescription(),
-                filter.getSpaceType(), filter.getCompanionType(), filter.getCategoryType()
-        );
+        Mission mission;
+        try {
+            mission = llmMissionRegistrar.register(
+                    userId, currentSolarTerm.getId(), today,
+                    dto.getTitle(), dto.getDescription(),
+                    filter.getSpaceType(), filter.getCompanionType(), filter.getCategoryType()
+            );
+        } catch (DataIntegrityViolationException e) {
+            // LLM 호출 동안 같은 사용자의 다른 요청이 먼저 선택을 저장한 경우
+            // (user_id, selected_date) unique 제약 위반으로 감지해 409로 응답
+            throw new BusinessException(ErrorCode.MISSION_ALREADY_SELECTED);
+        }
 
         return CompletableFuture.completedFuture(SelectedMissionResponse.from(mission));
     }

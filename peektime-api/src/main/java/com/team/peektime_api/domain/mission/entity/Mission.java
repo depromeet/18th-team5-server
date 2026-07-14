@@ -15,7 +15,12 @@ import lombok.NoArgsConstructor;
 public class Mission extends BaseEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    // Admin DB에서 동기화된 미션의 원본 ID. 동기화 upsert 매칭 키로 사용하며, LLM 생성 미션은 null
+    @Column(name = "admin_mission_id", unique = true)
+    private Long adminMissionId;
 
     @Column(name = "title", nullable = false, length = 100)
     private String title;
@@ -51,10 +56,10 @@ public class Mission extends BaseEntity {
     private boolean llmGenerated = false;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private Mission(Long id, String title, String description, SpaceType spaceType,
+    private Mission(Long adminMissionId, String title, String description, SpaceType spaceType,
                     CategoryType categoryType, CompanionType companionType,
                     EnjoyType enjoyType, UserType userType, boolean deleted, boolean llmGenerated) {
-        this.id = id;
+        this.adminMissionId = adminMissionId;
         this.title = title;
         this.description = description;
         this.spaceType = spaceType;
@@ -66,11 +71,11 @@ public class Mission extends BaseEntity {
         this.llmGenerated = llmGenerated;
     }
 
-    public static Mission create(Long id, String title, String description, SpaceType spaceType,
+    public static Mission create(Long adminMissionId, String title, String description, SpaceType spaceType,
                                   CategoryType categoryType, CompanionType companionType,
                                   EnjoyType enjoyType, UserType userType) {
         return Mission.builder()
-                .id(id)
+                .adminMissionId(adminMissionId)
                 .title(title)
                 .description(description)
                 .spaceType(spaceType)
@@ -83,10 +88,9 @@ public class Mission extends BaseEntity {
                 .build();
     }
 
-    public static Mission createLlmGenerated(Long id, String title, String description, SpaceType spaceType,
+    public static Mission createLlmGenerated(String title, String description, SpaceType spaceType,
                                              CategoryType categoryType, CompanionType companionType) {
         return Mission.builder()
-                .id(id)
                 .title(title)
                 .description(description)
                 .spaceType(spaceType)

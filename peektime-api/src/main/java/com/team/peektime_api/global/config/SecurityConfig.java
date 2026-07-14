@@ -2,6 +2,7 @@ package com.team.peektime_api.global.config;
 
 import com.team.peektime_api.global.auth.JwtAuthenticationEntryPoint;
 import com.team.peektime_api.global.auth.jwt.JwtAuthenticationFilter;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +33,10 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // CompletableFuture 응답(async servlet)의 ASYNC 재디스패치 허용.
+                        // 최초 REQUEST 디스패치에서 이미 인증을 통과한 요청이며,
+                        // JWT 필터(OncePerRequestFilter)는 ASYNC 디스패치를 건너뛰어 인증이 비어 401이 나던 문제 방지
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/internal/**").permitAll()

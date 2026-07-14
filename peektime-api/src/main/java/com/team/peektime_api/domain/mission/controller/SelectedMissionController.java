@@ -10,6 +10,7 @@ import com.team.peektime_api.global.response.SuccessCode;
 import com.team.peektime_api.global.response.SuccessResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +43,7 @@ public class SelectedMissionController {
     @PostMapping("/selected")
     public SuccessResponse<SelectedMissionResponse> getSelectedMission(
             @AuthenticationPrincipal UserPrincipal principal,
-            @ModelAttribute SelectedMissionRequest filter
+            @Valid @ModelAttribute SelectedMissionRequest filter
     ) {
         return SuccessResponse.of(
                 SuccessCode.MISSION_SELECTED,
@@ -54,7 +55,7 @@ public class SelectedMissionController {
     @PostMapping("/selected/llm")
     public SuccessResponse<SelectedMissionResponse> generateSelectedMission(
             @AuthenticationPrincipal UserPrincipal principal,
-            @ModelAttribute SelectedMissionRequest filter
+            @Valid @ModelAttribute SelectedMissionRequest filter
     ) {
         return SuccessResponse.of(
                 SuccessCode.MISSION_GENERATED,

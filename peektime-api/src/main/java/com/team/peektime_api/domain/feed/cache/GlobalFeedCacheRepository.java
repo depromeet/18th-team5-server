@@ -9,7 +9,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
-import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -19,16 +18,15 @@ import java.util.stream.Collectors;
 /**
  * 전역 공유 피드 캐시 (Redis ZSET). 키 1개를 모든 사용자가 공유(전역 단일 피드). score = 완료 시각 → 최신순.
  *
- * <p>TTL 정책이 핵심이다. "캐시 워밍 유지"와 "TTL 기반 자가 치유"는 상충한다:
- * write-through가 매 쓰기마다 TTL을 리셋하면 잦은 완료로 키가 영영 만료되지 않아, 한 번 적재에 실패한
- * 사진이 무기한 노출되지 않는다. 그래서 둘을 분리했다.
+ * <p>TTL 없이 캐시에 상주시킨다(피드는 최대 20건이라 메모리 부담 없음). 만료가 없으므로 읽기 경로에
+ * 재적재·분산락(single-flight)이 필요 없고, 캐시와 DB의 불일치(write-through 실패, 삭제 반영 등)는
+ * 30초 주기 스케줄러의 {@link #rebuild}(DB 전체 동기화)가 복구한다.
  * <ul>
- *   <li>{@link #addItem} (write-through): TTL을 <b>리셋하지 않는다</b>. 또 콜드(키 없음)면 추가하지 않아
- *       부분 피드 노출을 막는다 → 워밍된 캐시를 보강하는 역할만 한다.</li>
- *   <li>{@link #rebuild} (재적재): <b>여기서만 TTL을 설정</b>한다 → "재적재 시점부터 60초"라는 예측 가능한
- *       만료 주기를 만들어, 적재 실패분이 최대 60초 내 DB에서 복구되도록 보장한다.</li>
+ *   <li>{@link #addItem} (write-through): 워밍된 캐시에 원자적 ZADD로 보강. 콜드(키 없음)면 추가하지 않아
+ *       부분 피드 노출을 막는다 → 스케줄러 동기화가 전체 적재.</li>
+ *   <li>{@link #rebuild} (전체 동기화): 임시 키에 적재 후 RENAME으로 원자 교체 → 교체 순간에도 빈 캐시가
+ *       노출되지 않고, DB에서 사라진 항목도 캐시에 잔존하지 않는다.</li>
  * </ul>
- * 주기 만료마다 발생하는 동시 재적재(cache-stampede)는 서비스의 분산락(single-flight)으로 차단한다.
  */
 @Slf4j
 @Repository
@@ -36,47 +34,45 @@ import java.util.stream.Collectors;
 public class GlobalFeedCacheRepository {
 
     private static final String KEY = "feed:recent:global";
+    private static final String REBUILD_KEY = KEY + ":rebuild";
     private static final int MAX_ITEMS = 20;
-    // 부하 테스트용: 만료 주기를 짧게 해 stampede/락 대기 spike를 관측 (운영 복귀 시 60s 등으로 환원)
-    private static final Duration TTL = Duration.ofSeconds(2);
 
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
 
     /**
      * write-through: 이미 워밍된(존재하는) 캐시에만 항목을 추가한다.
-     * - TTL은 건드리지 않는다 → 재적재가 설정한 60초 윈도우가 그대로 흘러 주기적으로 만료된다(자가 치유 보장).
-     * - 콜드(키 없음/ TTL 없음)면 추가하지 않는다 → 부분 피드가 노출되지 않도록, 다음 읽기 MISS가 전체 재적재.
+     * 콜드(키 없음)면 추가하지 않는다 → 항목 1개짜리 부분 피드가 노출되지 않도록, 스케줄러 동기화가 전체 적재.
      */
     public void addItem(FeedCacheItem item) {
-        Long ttl = redisTemplate.getExpire(KEY); // -2: 키 없음, -1: TTL 없음, >0: 남은 TTL(초)
-        if (ttl == null || ttl < 0) {
-            return; // 콜드 → write-through 스킵 (읽기 MISS가 전체 재적재)
-        }
         try {
+            if (!Boolean.TRUE.equals(redisTemplate.hasKey(KEY))) {
+                return; // 콜드 → write-through 스킵 (스케줄러 동기화가 전체 적재)
+            }
             redisTemplate.opsForZSet().add(KEY, serialize(item), item.recordedAtEpochMilli());
             redisTemplate.opsForZSet().removeRange(KEY, 0, -(MAX_ITEMS + 1));
-            // expire 호출하지 않음 → TTL 리셋 금지 (주기 만료 유지)
         } catch (Exception e) {
             log.warn("피드 캐시 write-through 실패: {}", e.getMessage());
         }
     }
 
     /**
-     * 캐시 MISS 시 DB 결과로 전체 재적재 + TTL 설정. (서비스의 single-flight 안에서만 호출)
-     * 여기서만 TTL을 설정해 "재적재 시점부터 60초"라는 예측 가능한 만료 주기를 만든다.
+     * DB 조회 결과로 캐시를 전체 교체한다. (30초 주기 스케줄러 + 콜드 캐시 읽기 폴백에서 호출)
+     * 기존 키에 병합(ZADD)하면 DB에서 사라진 항목이 잔존하므로, 임시 키에 적재 후 RENAME으로 원자 교체한다.
+     * 스냅샷 조회~교체 사이에 write-through된 항목은 덮일 수 있으나 DB에 있으므로 다음 동기화(≤30초)로 복구된다.
      */
     public void rebuild(List<FeedCacheItem> items) {
         if (items.isEmpty()) {
-            return;
+            return; // DB 결과가 비면 교체하지 않음 (일시 오류로 피드를 비우는 것 방지)
         }
         try {
             Set<ZSetOperations.TypedTuple<String>> tuples = items.stream()
                     .map(i -> ZSetOperations.TypedTuple.of(serialize(i), (double) i.recordedAtEpochMilli()))
                     .collect(Collectors.toSet());
-            redisTemplate.opsForZSet().add(KEY, tuples);
-            redisTemplate.opsForZSet().removeRange(KEY, 0, -(MAX_ITEMS + 1));
-            redisTemplate.expire(KEY, TTL);
+            redisTemplate.delete(REBUILD_KEY);
+            redisTemplate.opsForZSet().add(REBUILD_KEY, tuples);
+            redisTemplate.opsForZSet().removeRange(REBUILD_KEY, 0, -(MAX_ITEMS + 1));
+            redisTemplate.rename(REBUILD_KEY, KEY);
         } catch (Exception e) {
             log.warn("피드 캐시 재적재 실패: {}", e.getMessage());
         }

@@ -33,16 +33,16 @@
 |---|------|------|------------|
 | D1 | **피드 형태** | **전역 단일 피드** (`feed:recent:global` 키 하나) | 캐시 효율 최고(1개만 관리). 단, **hot key·stampede가 극대화**되므로 R3/R4 대응이 필수가 됨 |
 | D2 | **반영 지연 허용** | **수 초** (거의 실시간) | TTL을 짧게(~60초) + **write-through**로 간다. 영구 누락은 불가(F4) |
-| D3 | **무효화/갱신 방식** | **Write-through + 짧은 TTL(자가 치유)** | 완료 시 캐시에 직접 push. 실패해도 TTL로 보정. Outbox는 **선택(Phase 3)** |
+| D3 | **무효화/갱신 방식** | ~~v1: Write-through + 짧은 TTL(자가 치유)~~ → **v2: Write-through + TTL 제거(상주 캐시) + 30초 스케줄러 DB 동기화** | v1은 TTL 만료마다 single-flight 락 대기가 조회 지연(p99 spike)을 유발(TS2). v2는 만료 자체를 없애 락을 제거하고, 불일치 복구는 스케줄러가 담당 |
 | D4 | **무효화 시점** | **AFTER_COMMIT** | 재적재 race(R1) 방지 — 새 데이터가 보인 뒤 갱신 |
 
 ### 확정에 따라 "반드시" 들어가는 장치
 전역 단일 키(D1) + 수 초 실시간(D2)를 동시에 만족하려면 다음이 **선택이 아니라 필수**다:
 
-- ✅ **single-flight** (R3 stampede) — 전역 키 하나라 만료 1회 = 전체 동시 MISS
+- ~~✅ **single-flight** (R3 stampede)~~ → **v2에서 제거.** TTL이 없어 주기 만료 = 전체 동시 MISS 자체가 사라짐(TS2)
 - ✅ **L1 로컬 캐시** (R4 hot key) — 전역 키 하나에 전 트래픽 집중
 - ✅ **원자적 ZADD** (R5 lost update) — 동시 완료가 흔함
-- ✅ **짧은 TTL + 재시도** (R2 dual-write 완화)
+- ✅ ~~짧은 TTL~~ → **30초 주기 스케줄러 동기화** (R2 dual-write 복구, v2)
 
 ---
 
@@ -559,11 +559,33 @@ DB commit 후 캐시 적재가 실패하면 누락분은 키 만료 후 재적�
 
 **[결과]** 60초 주기 만료를 통해, 복구 불가였던 적재 실패 사진이 **최대 60초 내 자동 복구**되도록 개선했다.
 
-> 구현 매핑: TTL 설정은 `GlobalFeedCacheRepository#rebuild`에서만(=재적재 시점), `#addItem`(write-through)은
+> 구현 매핑(v1 당시): TTL 설정은 `GlobalFeedCacheRepository#rebuild`에서만(=재적재 시점), `#addItem`(write-through)은
 > TTL 미변경 + 콜드 스킵. 재적재 stampede는 `GlobalFeedService#loadWithSingleFlight`(분산락 + 더블체크 + DB 폴백).
+>
+> ⚠️ 이 구성(v1)은 이후 TS2에서 **TTL 제거 + 스케줄러 동기화(v2)** 로 대체됐다. 락 대기 지연이 이유.
 
-### TS2. (예정) 부하 테스트로 stampede 정량 증명
-- k6로 조회 부하 → single-flight 제거 시 만료 순간 DB 쿼리 스파이크 측정 → 적용 후 평탄화 비교 (before/after).
+### TS2. single-flight 락 대기로 p99 지연 spike → TTL 제거 + 스케줄러 동기화 전환 (v1→v2)
+
+**[문제]** 홈 화면에 노출되는 피드는 전역 단일 키에 cache-aside 방식으로 캐싱하고 있었고, 조회가 매우 잦았다.
+이 상황에서 TTL 만료로 인한 재캐싱 시 cache stampede가 발생했다. 이를 해결하기 위해 분산락으로 한 요청만
+재캐싱하도록 했지만, **나머지 읽기 요청이 락 대기에 묶여 약 500 req/s 부하에서 p99 지연이 약 90ms까지 튀었다.**
+막는 대상(DB 쇄도)은 막았지만, 만료 주기(TTL)마다 락 대기라는 새 지연원을 만든 셈이다.
+
+**[접근]** 락 대기의 근원은 "주기적 만료 → 전체 동시 MISS"이므로, 만료 자체를 없앴다. write-through는 유지하되
+**TTL을 제거해 피드 데이터를 캐시에 상주**시켰다(최근 20건뿐이라 메모리 부담 없음). 만료가 없으니 재캐싱
+경쟁이 사라져 분산락도 제거했다. 다만 TTL이 해주던 자가 치유(write-through 실패분 복구, DB 측 변경 반영)가
+사라지므로, **30초 주기 스케줄러가 DB 기준으로 캐시를 전체 재적재**해 동기화를 대신 보장한다.
+
+**[결과]** 캐시 만료 시 락 대기를 제거하여, **p99 지연을 약 90ms에서 20ms로 평탄화**했다.
+캐시 반영 실패 역시 최대 30초 내 자동으로 복구된다.
+
+> 구현 매핑(v2):
+> - 읽기: `GlobalFeedService#getRecentFeed` — 캐시 조회만. MISS는 콜드 스타트/Redis 유실 시에만 발생하며 DB 폴백 + 즉시 워밍.
+> - 쓰기: `GlobalFeedWriteThroughListener` → `GlobalFeedCacheRepository#addItem` (AFTER_COMMIT, 원자 ZADD, 콜드 스킵) — v1과 동일.
+> - 동기화: `GlobalFeedCacheSyncScheduler` (30초 fixedDelay) → `GlobalFeedService#syncCacheFromDb` → `#rebuild`.
+> - `#rebuild`는 기존 키에 병합(ZADD)하지 않고 **임시 키 적재 후 RENAME으로 원자 교체** — TTL이 없어진 뒤로는
+>   만료가 "DB에서 사라진 항목"을 청소해 주지 않으므로, 전체 교체로 잔존을 막는다. RENAME이라 교체 순간에도 빈 캐시가 노출되지 않는다.
+> - 트레이드오프: 동기화 스냅샷 조회~교체 사이에 write-through된 항목이 일시적으로 덮일 수 있으나, DB에 있으므로 다음 주기(≤30초)에 복구된다.
 
 ---
 
@@ -572,13 +594,13 @@ DB commit 후 캐시 적재가 실패하면 누락분은 키 만료 후 재적�
 ### ✅ 확정됨
 - [x] **개인화 여부 → 전역 단일 피드** (D1)
 - [x] **반영 지연 허용치 → 수 초** (D2)
-- [x] **무효화 방식 → write-through + 짧은 TTL** (D3), **무효화 시점 → AFTER_COMMIT** (D4)
+- [x] **무효화 방식 → write-through + TTL 제거(상주) + 30초 스케줄러 동기화** (D3 v2, TS2), **무효화 시점 → AFTER_COMMIT** (D4)
 
 ### ⬜ 아직 정할 것 (다음 협의)
 - [ ] **피드 노출 개수 N?** (20개? 50개?) — ZSET trim 기준
 - [ ] **사진 정렬 기준?** (완료 시각순 / 인기순 / 랜덤 섞기) — 시각순이면 ZSET score=timestamp로 단순
 - [ ] **차단/신고 사진 제외 방식?** — 전역 캐시에 박힌 항목을 어떻게 빼낼지 (무효화 복잡도 ↑)
-- [ ] **TTL 구체값?** (D2는 "수 초"로 방향만 확정 → 30초/60초/120초 중 택1)
+- [x] ~~TTL 구체값?~~ → **TTL 제거로 무의미해짐** (v2, TS2). 대신 스케줄러 주기 30초로 확정
 - [ ] **L1 로컬 캐시 TTL?** (1초? 2초? — hot key 완화 강도)
 - [ ] **Outbox 내구성까지 갈지?** (현재는 Phase 3 선택. 누락 0이 정말 필요한가?)
 ```

@@ -1,9 +1,10 @@
 package com.team.peektime_api.domain.mission.event;
 
-import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
-import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.peektime_api.global.infra.admin.AdminClient;
 import com.team.peektime_api.global.outbox.SendResult;
+import com.team.peektime_api.global.outbox.entity.OutboxEvent;
 import com.team.peektime_api.global.outbox.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,14 +13,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.time.LocalDate;
-
 /**
  * 미션 완료 이벤트를 받아 Admin 서버로 로그를 전송하는 리스너
  *
- * - Pull 방식: completionId로 필요한 데이터 직접 조회
+ * - outbox row에 저장된 payload를 그대로 전송 (payload 생성 지점은 서비스 한 곳)
+ * - 폴러와 동일한 payload를 보내므로 멱등키 불일치가 구조적으로 불가능
  * - 비동기 실행 (외부 API 호출이므로)
  */
 @Slf4j
@@ -27,61 +25,42 @@ import java.time.LocalDate;
 @RequiredArgsConstructor
 public class MissionCompletedEventListener {
 
-    private final UserMissionCompletionRepository completionRepository;
     private final OutboxRepository outboxRepository;
     private final AdminClient adminClient;
+    private final ObjectMapper objectMapper;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handle(MissionCompletedEvent event) {
-        UserMissionCompletion completion = findCompletion(event.getCompletionId());
-        MissionLogPayload payload = createPayload(completion);
+        OutboxEvent outbox = outboxRepository.findById(event.getOutboxId()).orElse(null);
+        if (outbox == null) {
+            log.warn("outbox 없음, 전송 스킵: outboxId={}", event.getOutboxId());
+            return;
+        }
 
-        SendResult result = adminClient.sendMissionLog(payload, event.getOutboxId());
+        MissionLogPayload payload = parsePayload(outbox);
+        if (payload == null) {
+            return;
+        }
+
+        SendResult result = adminClient.sendMissionLog(payload, outbox.getId());
 
         if (result instanceof SendResult.Success) {
-            deleteOutbox(event.getOutboxId());
-            log.info("미션 완료 로그 전송 성공: missionId={}", completion.getMission().getId());
+            deleteOutbox(outbox.getId());
+            log.info("미션 완료 로그 전송 성공: outboxId={}", outbox.getId());
         } else {
             log.warn("미션 완료 로그 즉시 전송 실패, 폴러가 재시도 예정: {}", result);
         }
     }
 
-    private UserMissionCompletion findCompletion(Long completionId) {
-        return completionRepository.findById(completionId)
-                .orElseThrow(() -> new IllegalStateException("completion 없음: id=" + completionId));
-    }
-
-    private MissionLogPayload createPayload(UserMissionCompletion completion) {
-        Long userId = completion.getUser().getId();
-        Long missionId = completion.getMission().getId();
-        LocalDate completedDate = completion.getCreatedAt().toLocalDate();
-        Long solarTermId = completion.getSolarTerm().getId();
-
-        String idempotencyKey = generateIdempotencyKey(userId, missionId, completedDate);
-
-        return MissionLogPayload.of(idempotencyKey, userId, solarTermId);
-    }
-
-    private String generateIdempotencyKey(Long userId, Long missionId, LocalDate completedDate) {
-        String raw = userId + ":" + missionId + ":" + completedDate;
-        String hash = sha256(raw).substring(0, 8);
-        return raw + ":" + hash;
-    }
-
-    private String sha256(String input) {
+    private MissionLogPayload parsePayload(OutboxEvent outbox) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hashBytes) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (Exception e) {
-            throw new RuntimeException("SHA-256 해싱 실패", e);
+            return objectMapper.readValue(outbox.getPayload(), MissionLogPayload.class);
+        } catch (JsonProcessingException e) {
+            // 파싱 실패 건은 폴러가 영구 실패로 정리하도록 위임
+            log.error("payload 파싱 실패, 폴러가 정리 예정: outboxId={}, error={}",
+                    outbox.getId(), e.getMessage());
+            return null;
         }
     }
 

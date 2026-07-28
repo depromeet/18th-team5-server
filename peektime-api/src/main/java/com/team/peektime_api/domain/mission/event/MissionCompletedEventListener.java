@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.util.Optional;
+
 /**
  * 미션 완료 이벤트를 받아 Admin 서버로 로그를 전송하는 리스너 — 폴러를 기다리지 않는 "0번째 시도"
  *
@@ -36,17 +38,18 @@ public class MissionCompletedEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Async
     public void handle(MissionCompletedEvent event) {
-        OutboxEvent outbox = outboxRepository.findById(event.getOutboxId()).orElse(null);
-        if (outbox == null) {
-            log.warn("outbox 없음, 전송 스킵: outboxId={}", event.getOutboxId());
-            return;
-        }
+        outboxRepository.findById(event.getOutboxId())
+                .ifPresentOrElse(
+                        this::sendImmediately,
+                        () -> log.warn("outbox 없음, 전송 스킵: outboxId={}", event.getOutboxId())
+                );
+    }
 
-        MissionLogPayload payload = parsePayload(outbox);
-        if (payload == null) {
-            return;
-        }
+    private void sendImmediately(OutboxEvent outbox) {
+        parsePayload(outbox).ifPresent(payload -> send(outbox, payload));
+    }
 
+    private void send(OutboxEvent outbox, MissionLogPayload payload) {
         SendResult result = adminClient.sendMissionLog(payload, outbox.getId());
 
         if (result instanceof SendResult.Success) {
@@ -57,14 +60,14 @@ public class MissionCompletedEventListener {
         }
     }
 
-    private MissionLogPayload parsePayload(OutboxEvent outbox) {
+    private Optional<MissionLogPayload> parsePayload(OutboxEvent outbox) {
         try {
-            return objectMapper.readValue(outbox.getPayload(), MissionLogPayload.class);
+            return Optional.of(objectMapper.readValue(outbox.getPayload(), MissionLogPayload.class));
         } catch (JsonProcessingException e) {
             // 파싱 실패 건은 폴러가 영구 실패(FAILED)로 정리하도록 위임
             log.error("payload 파싱 실패, 폴러가 정리 예정: outboxId={}, error={}",
                     outbox.getId(), e.getMessage());
-            return null;
+            return Optional.empty();
         }
     }
 }

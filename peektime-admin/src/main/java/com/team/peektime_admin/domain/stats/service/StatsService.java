@@ -11,6 +11,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,9 +45,24 @@ public class StatsService {
         UserMissionLog missionLog = UserMissionLog.create(
                 idempotencyKey,
                 request.userId(),
-                request.solarTermId()
+                request.solarTermId(),
+                resolveCompletedDate(request)
         );
 
+        return saveIfAbsent(missionLog, idempotencyKey);
+    }
+
+    // 구버전 payload(completedDate 없음) 호환: 배포 전환기에 outbox에 남아있던 건은
+    // 도착일로 대체 저장하고 경고만 남긴다 (not-null 위반으로 재시도 루프에 빠지지 않도록)
+    private LocalDate resolveCompletedDate(MissionLogRequest request) {
+        if (request.completedDate() != null) {
+            return request.completedDate();
+        }
+        log.warn("completedDate 없는 구버전 payload — 도착일로 대체: idempotencyKey={}", request.idempotencyKey());
+        return LocalDate.now();
+    }
+
+    private boolean saveIfAbsent(UserMissionLog missionLog, String idempotencyKey) {
         try {
             userMissionLogRepository.save(missionLog);
             log.info("미션 로그 저장 완료: idempotencyKey={}", idempotencyKey);

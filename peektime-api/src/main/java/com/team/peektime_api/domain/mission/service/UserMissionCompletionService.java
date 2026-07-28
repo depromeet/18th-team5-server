@@ -195,16 +195,14 @@ public class UserMissionCompletionService {
 
     private OutboxEvent saveOutboxEvent(User user, Long missionId,
                                          SolarTerm solarTerm, UserMissionCompletion completion) {
-        String idempotencyKey = generateIdempotencyKey(
-                user.getId(),
-                missionId,
-                completion.getCreatedAt().toLocalDate()
-        );
+        LocalDate completedDate = completion.getCreatedAt().toLocalDate();
+        String idempotencyKey = generateIdempotencyKey(user.getId(), missionId, completedDate);
 
         MissionLogPayload payload = MissionLogPayload.of(
                 idempotencyKey,
                 user.getId(),
-                solarTerm.getId()
+                solarTerm.getId(),
+                completedDate
         );
         return outboxRepository.save(new OutboxEvent(toJson(payload)));
     }

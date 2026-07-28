@@ -26,9 +26,13 @@ public class StatsService {
      *
      * 클라이언트(API 서버)가 생성한 멱등성 키를 그대로 사용하여 중복 요청을 방지합니다.
      *
+     * 의도적으로 @Transactional을 붙이지 않는다: 트랜잭션 안에서 unique 제약 위반이 나면
+     * 그 시점에 트랜잭션이 rollback-only로 오염되어, 예외를 잡아 정상 리턴해도 커밋 시
+     * UnexpectedRollbackException(500)이 나간다. exists 조회와 save는 원자적일 필요가 없고
+     * (그 사이 레이스는 unique 제약이 막는 구조), save는 리포지토리 자체 트랜잭션으로 돈다.
+     *
      * @return true: 새로 저장됨, false: 이미 존재하여 무시됨
      */
-    @Transactional
     public boolean saveMissionLog(MissionLogRequest request) {
         String idempotencyKey = request.idempotencyKey();
 
@@ -48,8 +52,13 @@ public class StatsService {
             log.info("미션 로그 저장 완료: idempotencyKey={}", idempotencyKey);
             return true;
         } catch (DataIntegrityViolationException e) {
-            log.info("동시 요청으로 인한 제약 조건 위반 (멱등성 처리): idempotencyKey={}", idempotencyKey);
-            return false;
+            // 진짜 중복(동시 요청이 먼저 insert)인지 재확인 —
+            // not-null 등 다른 제약 위반까지 중복으로 오인해 삼키지 않도록 가드
+            if (userMissionLogRepository.existsByIdempotencyKey(idempotencyKey)) {
+                log.info("동시 요청으로 인한 제약 조건 위반 (멱등성 처리): idempotencyKey={}", idempotencyKey);
+                return false;
+            }
+            throw e;
         }
     }
 

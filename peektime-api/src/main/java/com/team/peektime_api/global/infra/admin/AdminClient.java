@@ -32,38 +32,17 @@ public class AdminClient {
             return new SendResult.Success(eventId);
 
         } catch (HttpStatusCodeException e) {
-            return classifyHttpFailure(e, payload, eventId);
+            // 상태코드 무관 전부 재시도 대상 — 수신 측 멱등키 dedup 전제.
+            // 상한 초과 시 폴러가 FAILED로 승격하므로 무한 재시도는 없다
+            log.warn("미션 로그 전송 실패 (재시도): idempotencyKey={}, status={}",
+                    payload.idempotencyKey(), e.getStatusCode().value());
+            return new SendResult.Failure(eventId, "HTTP " + e.getStatusCode().value());
 
         } catch (Exception e) {
-            // 타임아웃, 연결 오류 등 — 전송 여부 불명. Admin 멱등키 dedup 전제로 재시도 안전
-            log.warn("미션 로그 전송 실패 (일시 실패, 재시도): idempotencyKey={}, error={}",
+            // 타임아웃, 연결 오류 등 — 전송 여부 불명이어도 dedup 덕에 재시도 안전
+            log.warn("미션 로그 전송 실패 (재시도): idempotencyKey={}, error={}",
                     payload.idempotencyKey(), e.getMessage());
-            return new SendResult.TransientFailure(eventId, e.getMessage());
+            return new SendResult.Failure(eventId, e.getMessage());
         }
-    }
-
-    /**
-     * 실패 분류 기준은 "재시도하면 성공할 수 있는가"가 아니라 "실패의 원인이 어디에 있는가":
-     * - 시간이 해결하는 실패(5xx, 408, 429, 409) → 일시 실패, 백오프 재시도
-     * - payload 문제(400) 또는 환경 문제(401/403/404 등) → 영구 실패.
-     *   자동 재시도는 무의미하지만 payload를 지우면 안 되므로 폴러가 FAILED로 보존한다
-     */
-    private SendResult classifyHttpFailure(HttpStatusCodeException e, MissionLogPayload payload, Long eventId) {
-        int status = e.getStatusCode().value();
-
-        boolean retryable = e.getStatusCode().is5xxServerError()
-                || status == 408   // Request Timeout
-                || status == 429   // Too Many Requests
-                || status == 409;  // Conflict (경합)
-
-        if (retryable) {
-            log.warn("미션 로그 일시 실패 (재시도): idempotencyKey={}, status={}",
-                    payload.idempotencyKey(), status);
-            return new SendResult.TransientFailure(eventId, "HTTP " + status);
-        }
-
-        log.error("미션 로그 영구 실패 (FAILED 대상): idempotencyKey={}, status={}",
-                payload.idempotencyKey(), status);
-        return new SendResult.PermanentFailure(eventId, "HTTP " + status);
     }
 }

@@ -55,20 +55,15 @@ public class OutboxV4TransactionManager {
             if (result instanceof SendResult.Success) {
                 event.markSent();
 
-            } else if (result instanceof SendResult.TransientFailure tf) {
-                event.recordTransientFailure(tf.reason());
+            } else if (result instanceof SendResult.Failure failure) {
+                event.recordFailure(failure.reason());
                 if (event.isFailed()) {
                     log.error("[V4] Outbox 재시도 상한 초과 (FAILED, 운영자 확인 필요): id={}, retryCount={}, reason={}",
-                            event.getId(), event.getRetryCount(), tf.reason());
+                            event.getId(), event.getRetryCount(), failure.reason());
                 } else {
-                    log.warn("[V4] Outbox 일시 실패 (백오프 재시도): id={}, retryCount={}, nextRetryAt={}, reason={}",
-                            event.getId(), event.getRetryCount(), event.getNextRetryAt(), tf.reason());
+                    log.warn("[V4] Outbox 전송 실패 (백오프 재시도): id={}, retryCount={}, nextRetryAt={}, reason={}",
+                            event.getId(), event.getRetryCount(), event.getNextRetryAt(), failure.reason());
                 }
-
-            } else if (result instanceof SendResult.PermanentFailure pf) {
-                event.markFailed(pf.reason());
-                log.error("[V4] Outbox 영구 실패 (FAILED, payload 보존): id={}, reason={}",
-                        event.getId(), pf.reason());
             }
         }
     }

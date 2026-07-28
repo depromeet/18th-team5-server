@@ -31,6 +31,7 @@ public class PollProcesser {
     @Transactional
     public void process() {
         LocalDateTime threshold = LocalDateTime.now().minusSeconds(3);
+        // 생성된지 3초가 지난것만 조회
         List<OutboxEvent> events = outboxRepository.findByCreatedAtBeforeWithSkipLocked(threshold);
 
         if (events.isEmpty()) {
@@ -57,12 +58,9 @@ public class PollProcesser {
 
             if (result instanceof SendResult.Success s) {
                 toDelete.add(s.eventId());
-            } else if (result instanceof SendResult.PermanentFailure pf) {
-                toDelete.add(pf.eventId());
-                log.warn("Outbox 영구 실패 (삭제): id={}, reason={}", pf.eventId(), pf.reason());
-            } else if (result instanceof SendResult.TransientFailure tf) {
+            } else if (result instanceof SendResult.Failure f) {
                 unknownCount++;
-                log.warn("Outbox 일시 실패 (재시도 대기): id={}, reason={}", tf.eventId(), tf.reason());
+                log.warn("Outbox 전송 실패 (재시도 대기): id={}, reason={}", f.eventId(), f.reason());
             }
         }
 
@@ -92,8 +90,7 @@ public class PollProcesser {
             return adminClient.sendMissionLog(payload, event.getId());
 
         } catch (Exception e) {
-            // 파싱 실패 등은 영구 실패로 처리
-            return new SendResult.PermanentFailure(event.getId(), e.getMessage());
+            return new SendResult.Failure(event.getId(), e.getMessage());
         }
     }
 

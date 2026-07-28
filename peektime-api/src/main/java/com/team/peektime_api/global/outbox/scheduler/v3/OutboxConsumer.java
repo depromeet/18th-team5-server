@@ -74,12 +74,8 @@ public class OutboxConsumer {
 
         return switch (result) {
             case SendResult.Success s -> deleteEvent(s.eventId());
-            case SendResult.PermanentFailure pf -> {
-                log.warn("[V3] 영구 실패 (삭제): id={}, reason={}", pf.eventId(), pf.reason());
-                yield deleteEvent(pf.eventId());
-            }
-            case SendResult.TransientFailure tf -> {
-                log.warn("[V3] 일시 실패 (재시도 대기): id={}, reason={}", tf.eventId(), tf.reason());
+            case SendResult.Failure f -> {
+                log.warn("[V3] 전송 실패 (재시도 대기): id={}, reason={}", f.eventId(), f.reason());
                 yield false;
             }
         };
@@ -93,9 +89,8 @@ public class OutboxConsumer {
             return adminClient.sendMissionLog(payload, event.getId());
 
         } catch (JsonProcessingException e) {
-            // 파싱 실패는 재시도해도 같은 결과 → 영구 실패
-            log.error("[V3] payload 파싱 실패 (영구 실패): id={}, error={}", event.getId(), e.getMessage());
-            return new SendResult.PermanentFailure(event.getId(), "payload 파싱 실패");
+            log.error("[V3] payload 파싱 실패: id={}, error={}", event.getId(), e.getMessage());
+            return new SendResult.Failure(event.getId(), "payload 파싱 실패");
         }
     }
 

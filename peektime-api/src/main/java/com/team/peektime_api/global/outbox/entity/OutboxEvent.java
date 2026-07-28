@@ -82,13 +82,8 @@ public class OutboxEvent extends BaseEntity {
         this.sentAt = LocalDateTime.now();
     }
 
-    public void markFailed(String reason) {
-        this.status = OutboxStatus.FAILED;
-        this.lastError = truncate(reason);
-    }
-
-    // 일시 실패 기록: 백오프 예약, 상한 초과 시 FAILED 승격
-    public void recordTransientFailure(String reason) {
+    // 전송 실패 기록: 백오프 예약, 상한 초과 시 FAILED 승격
+    public void recordFailure(String reason) {
         this.retryCount++;
         this.lastError = truncate(reason);
 

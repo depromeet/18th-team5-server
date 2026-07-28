@@ -17,9 +17,10 @@ import java.util.List;
  *
  * V2(트랜잭션 분리)에서 추가된 것:
  * - 성공 시 삭제 대신 SENT 마킹: 대사(reconciliation) 대비 전송 이력 보존
- * - 영구 실패는 삭제 대신 FAILED 마킹: payload 보존, 원인 수정 후 수동 재전송 가능
- * - 일시 실패는 next_retry_at 백오프: 재시도 폭풍 방지 + 실패 건의 배치 슬롯 독점(starvation) 방지
- * - 재시도 상한(15회) 초과 시 FAILED 승격: 무한 재시도로 문제가 조용히 숨는 것 방지
+ * - 실패는 성공/실패 2분류로 전부 재시도: 이 도메인엔 비즈니스 거절이 없고 수신 측이 멱등해서
+ *   어떤 실패든 대응이 "재시도" 하나로 수렴 (SendResult 주석 참조)
+ * - 실패 시 next_retry_at 백오프: 재시도 폭풍 방지 + 실패 건의 배치 슬롯 독점(starvation) 방지
+ * - 재시도 상한(15회) 초과 시 FAILED 승격: payload 보존한 채 자동 재시도만 정지, 운영자 호출
  *
  * 주기 5분 근거: 해피 패스는 리스너가 커밋 직후 즉시 전송하므로 폴러는 실패 수거 전용이고,
  * 최종 마감이 하루 단위 집계(랭킹/보상)라 실패 건 재시도가 분 단위면 충분하다.
@@ -72,8 +73,8 @@ public class OutboxPollerV4 {
             return adminClient.sendMissionLog(payload, event.getId());
 
         } catch (Exception e) {
-            // payload는 우리가 직렬화한 JSON이므로 파싱 실패는 코드 버그 — 영구 실패
-            return new SendResult.PermanentFailure(event.getId(), "payload 파싱 실패: " + e.getMessage());
+            // 파싱 실패도 일반 실패로 취급 — 재시도가 무의미하지만 상한이 FAILED로 정리해준다
+            return new SendResult.Failure(event.getId(), "payload 파싱 실패: " + e.getMessage());
         }
     }
 }

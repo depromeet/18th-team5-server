@@ -26,6 +26,12 @@ public interface OutboxRepository extends JpaRepository<OutboxEvent, Long> {
             nativeQuery = true)
     List<OutboxEvent> findReadyEventsWithSkipLocked(@Param("threshold") LocalDateTime threshold);
 
+    // V4: 재시도 시각이 도래한 READY만 claim — 백오프 대기 중인 건은 next_retry_at 조건으로 자연 제외.
+    // 신규 이벤트도 next_retry_at(생성+3초)로 시작하므로 리스너 선공 유예가 이 조건 하나에 흡수됨
+    @Query(value = "SELECT * FROM outbox_event WHERE status = 'READY' AND next_retry_at <= :now ORDER BY next_retry_at LIMIT 30 FOR UPDATE SKIP LOCKED",
+            nativeQuery = true)
+    List<OutboxEvent> findClaimableWithSkipLocked(@Param("now") LocalDateTime now);
+
     // stuck PROCESSING 조회 (updatedAt이 threshold 이전인 PROCESSING 상태)
     @Query("SELECT o FROM OutboxEvent o WHERE o.status = com.team.peektime_api.global.outbox.entity.OutboxStatus.PROCESSING AND o.updatedAt < :threshold")
     List<OutboxEvent> findStuckProcessing(@Param("threshold") LocalDateTime threshold);

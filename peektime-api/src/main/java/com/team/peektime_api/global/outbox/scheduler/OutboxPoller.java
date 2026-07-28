@@ -29,7 +29,7 @@ public class OutboxPoller {
     private final ObjectMapper objectMapper;
     private final PollProcesser processor;
 
-    @Scheduled(fixedDelay = 30000)  // 1분마다
+    // @Scheduled(fixedDelay = 30000)  // V4로 대체 — v4/OutboxPollerV4 참조
     public void pollAndProcess() {
         long startTime = System.currentTimeMillis();
         log.info("[Task Start] 시작 시각: {}", LocalDateTime.now());

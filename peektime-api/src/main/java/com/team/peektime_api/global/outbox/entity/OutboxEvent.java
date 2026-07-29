@@ -24,9 +24,11 @@ public class OutboxEvent extends BaseEntity {
     // 리스너(즉시 전송)에게 주는 선공 유예 — 이 시간 안에는 폴러가 잡지 않는다
     private static final int LISTENER_GRACE_SECONDS = 3;
 
-    // 재시도 상한: 백오프 스케줄(5분 × n, 상한 30분) 기준 약 5시간의 장애를 자동 복구로 커버.
-    // 초과는 자동 재시도가 무의미하다고 보고 FAILED로 승격해 운영자를 부른다
-    private static final int MAX_RETRY_COUNT = 15;
+    // 재시도 상한: 백오프(5+10+15분) 기준 총 30분의 장애까지만 자동 복구로 커버.
+    // 그보다 긴 장애는 FAILED 승격 → 알림 → 운영자 수동 재전송(UPDATE status='READY')이 담당한다.
+    // 낮은 상한은 "FAILED 알림이 사람에게 즉시 닿는다"는 전제 위의 선택 — 알림 채널이 깨지면
+    // 30분 이상의 장애가 조용히 수동 복구 대기 상태로 쌓이므로, 알림 인프라와 함께 유지보수할 것
+    private static final int MAX_RETRY_COUNT = 3;
 
     // 폴러 주기(5분)보다 짧은 백오프는 의미가 없으므로 주기를 베이스로 선형 증가
     private static final int BACKOFF_BASE_MINUTES = 5;

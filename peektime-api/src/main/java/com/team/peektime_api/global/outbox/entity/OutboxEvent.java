@@ -30,7 +30,8 @@ public class OutboxEvent extends BaseEntity {
     // 30분 이상의 장애가 조용히 수동 복구 대기 상태로 쌓이므로, 알림 인프라와 함께 유지보수할 것
     private static final int MAX_RETRY_COUNT = 3;
 
-    // 폴러 주기(5분)보다 짧은 백오프는 의미가 없으므로 주기를 베이스로 선형 증가
+    // 백오프는 폴러 주기가 아니라 자동 복구 커버리지(5+10+15분 = 총 30분)에서 역산된 값 —
+    // 상한을 낮추면 재배포 같은 수 분짜리 평범한 장애에도 FAILED가 쏟아지므로 상한(3회)과 세트로 조정할 것
     private static final int BACKOFF_BASE_MINUTES = 5;
     private static final int BACKOFF_MAX_MINUTES = 30;
 

@@ -23,13 +23,13 @@ import java.util.List;
  * - 재시도 상한(3회, 총 30분 커버) 초과 시 FAILED 승격: payload 보존한 채 자동 재시도만 정지,
  *   이후는 FAILED 알림 → 운영자 수동 재전송이 복구 경로 (알림 인프라 전제)
  *
- * 주기 5분 근거: 해피 패스는 리스너가 커밋 직후 즉시 전송하므로 폴러는 실패 수거 전용이고,
- * 최종 마감이 하루 단위 집계(랭킹/보상)라 실패 건 재시도가 분 단위면 충분하다.
+ * 주기 1분 + 호출당 한 배치(30건): 적체 해소는 호출 내 루프가 아니라 스케줄러 반복이 담당한다
+ * (분당 30건 — 장애 후 적체 300건도 10분 내 배수). 해피 패스는 리스너가 커밋 직후 즉시
+ * 전송하므로 폴러는 실패 수거 전용이고, 리스너가 실패한 건의 첫 재시도는 최대 1분 내다.
  *
- * 배수 루프: Admin 장애 시 리스너 전송이 전부 실패해 이벤트가 폴러로 쏟아지므로
- * (초당 1건 가정 시 5분에 최대 300건), 한 사이클 안에서 빌 때까지 배치 단위로 반복 처리한다.
- * 루프는 반드시 종료한다 — 매 배치의 모든 row가 SENT/FAILED(claim 대상 아님) 또는
- * READY+미래 next_retry_at(claim 조건 미달) 중 하나로 전이되기 때문.
+ * fixedDelay라 호출이 길어져도(장애 시 배치 30건 × 타임아웃 10초 = 최대 300초) 다음 호출과
+ * 겹치지 않는다. 백오프(5/10/15분)는 폴러 주기가 아니라 자동 복구 커버리지(총 30분)에서
+ * 역산된 값이므로 주기와 독립 — 주기를 바꿔도 백오프는 재계산 대상이 아니다.
  */
 @Slf4j
 @Component
@@ -40,30 +40,22 @@ public class OutboxPollerV4 {
     private final AdminClient adminClient;
     private final ObjectMapper objectMapper;
 
-    @Scheduled(fixedDelay = 300_000)
+    @Scheduled(fixedDelay = 60_000)
     public void pollAndProcess() {
-        int processedCount = 0;
-
-        while (true) {
-            // Tx1: claim (짧은 트랜잭션)
-            List<OutboxEvent> events = transactionManager.claimBatch();
-            if (events.isEmpty()) {
-                break;
-            }
-
-            // 트랜잭션 없음: 외부 API 호출 구간
-            List<SendResult> results = events.stream()
-                    .map(this::processEvent)
-                    .toList();
-
-            // Tx2: 결과 반영 (짧은 트랜잭션)
-            transactionManager.applyResults(results);
-            processedCount += events.size();
+        // Tx1: claim (짧은 트랜잭션)
+        List<OutboxEvent> events = transactionManager.claimBatch();
+        if (events.isEmpty()) {
+            return;
         }
 
-        if (processedCount > 0) {
-            log.info("[V4] Outbox 폴링 처리 완료: {}건", processedCount);
-        }
+        // 트랜잭션 없음: 외부 API 호출 구간
+        List<SendResult> results = events.stream()
+                .map(this::processEvent)
+                .toList();
+
+        // Tx2: 결과 반영 (짧은 트랜잭션)
+        transactionManager.applyResults(results);
+        log.info("[V4] Outbox 폴링 처리 완료: {}건", events.size());
     }
 
     private SendResult processEvent(OutboxEvent event) {

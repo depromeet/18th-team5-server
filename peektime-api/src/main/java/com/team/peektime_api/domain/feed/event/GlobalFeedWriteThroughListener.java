@@ -17,8 +17,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * - AFTER_COMMIT(D4): 커밋된 변경에 대해서만, 새 데이터가 보이는 시점에 갱신해 재적재 race를 막는다.
  * - 사진 없는 완료는 피드에서 제외(미션 인증 사진만 노출).
  * - Pull 방식: 이벤트의 completionId로 직접 조회.
- * - {@code addItem}은 TTL을 리셋하지 않고, 콜드 캐시면 추가하지 않는다(워밍된 캐시만 보강). 따라서 캐시 적재가
- *   실패하거나 콜드라 누락된 사진은 60초 주기 만료 후 다음 읽기의 DB 재적재로 최대 60초 내 복구된다.
+ * - {@code addItem}은 콜드 캐시면 추가하지 않는다(워밍된 캐시만 보강). 캐시 적재가 실패하거나 콜드라 누락된
+ *   사진은 30초 주기 동기화 스케줄러의 DB 전체 재적재로 최대 30초 내 복구된다.
  */
 @Slf4j
 @Component

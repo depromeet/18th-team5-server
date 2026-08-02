@@ -8,23 +8,22 @@ import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepo
 import com.team.peektime_api.global.infra.S3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 전역 공유 피드 조회 서비스.
  *
- * 읽기 = Cache-aside(lazy loading): 캐시 확인 → MISS면 DB 조회 후 재적재.
- * 쓰기는 {@code GlobalFeedWriteThroughListener}가 담당(write-through) → "Cache-aside 읽기 + Write-through 쓰기" 하이브리드.
+ * 캐시는 TTL 없이 상주하고(피드 20건이라 메모리 부담 없음), 쓰기는 {@code GlobalFeedWriteThroughListener}의
+ * write-through, DB와의 동기화는 30초 주기 스케줄러의 {@link #syncCacheFromDb()}가 담당한다.
+ * 주기 만료가 없으므로 읽기 경로에서 재적재 경쟁(cache-stampede)이 발생하지 않아 분산락(single-flight)이
+ * 필요 없다 — 락 대기로 인한 조회 지연(p99 spike)을 제거하기 위한 전환이다.
  *
- * 캐시 MISS(= 60초 주기 만료 시점)에 동시 요청이 몰리면 cache-stampede가 나므로, 재적재는 분산락 기반
- * single-flight로 한 요청만 수행한다. presigned URL은 캐시에 담지 않고 조회 시점에 생성한다(매 요청 만료되므로).
+ * 캐시 MISS는 콜드 스타트/Redis 데이터 유실 시에만 발생하며, 이때는 DB 폴백 후 즉시 재적재해 워밍한다.
+ * presigned URL은 캐시에 담지 않고 조회 시점에 생성한다(매 요청 만료되므로).
  */
 @Slf4j
 @Service
@@ -32,57 +31,27 @@ import java.util.concurrent.TimeUnit;
 public class GlobalFeedService {
 
     private static final int FEED_SIZE = 20;
-    private static final String LOCK_KEY = "feed:recent:global:lock";
-    private static final long LOCK_WAIT_SECONDS = 2;
-    private static final long LOCK_LEASE_SECONDS = 3;
 
     private final UserMissionCompletionRepository completionRepository;
     private final GlobalFeedCacheRepository feedCacheRepository;
-    private final RedissonClient redissonClient;
     private final S3Service s3Service;
 
     @Transactional(readOnly = true)
     public GlobalFeedResponse getRecentFeed() {
         List<FeedCacheItem> items = feedCacheRepository.findRecent();
         if (items.isEmpty()) {
-            items = loadWithSingleFlight(); // MISS → 한 요청만 DB 재적재
+            // 콜드 캐시(최초 기동/Redis 유실)에서만 도달 → DB 폴백 + 즉시 워밍.
+            // 첫 재적재가 수 ms 내 끝나 이후 요청은 캐시 HIT이므로 락 없이도 쇄도가 지속되지 않는다.
+            items = loadFromDb();
+            feedCacheRepository.rebuild(items);
         }
         return toResponse(items);
     }
 
-    /**
-     * 캐시 MISS 시 single-flight: 락을 잡은 한 요청만 DB를 조회·재적재하고, 나머지는 잠깐 대기 후
-     * 채워진 캐시를 읽는다(cache-stampede 차단). 락 획득 실패/Redis 장애 시에는 DB로 폴백해 조회 가용성을 보장한다.
-     */
-    private List<FeedCacheItem> loadWithSingleFlight() {
-        RLock lock = redissonClient.getLock(LOCK_KEY);
-        boolean acquired = false;
-        try {
-            acquired = lock.tryLock(LOCK_WAIT_SECONDS, LOCK_LEASE_SECONDS, TimeUnit.SECONDS);
-            if (acquired) {
-                // 더블 체크: 대기 동안 다른 요청이 이미 재적재했을 수 있음
-                List<FeedCacheItem> cached = feedCacheRepository.findRecent();
-                if (!cached.isEmpty()) {
-                    return cached;
-                }
-                List<FeedCacheItem> fromDb = loadFromDb();
-                feedCacheRepository.rebuild(fromDb);
-                return fromDb;
-            }
-            // 락 못 잡음 → 채워졌으면 캐시, 아니면 DB 폴백
-            List<FeedCacheItem> cached = feedCacheRepository.findRecent();
-            return cached.isEmpty() ? loadFromDb() : cached;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return loadFromDb();
-        } catch (Exception e) {
-            log.warn("피드 single-flight 처리 실패, DB 폴백: {}", e.getMessage());
-            return loadFromDb();
-        } finally {
-            if (acquired && lock.isHeldByCurrentThread()) {
-                lock.unlock();
-            }
-        }
+    /** DB 기준으로 캐시를 전체 동기화한다. (30초 주기 스케줄러에서 호출 — write-through 실패분 복구) */
+    @Transactional(readOnly = true)
+    public void syncCacheFromDb() {
+        feedCacheRepository.rebuild(loadFromDb());
     }
 
     private List<FeedCacheItem> loadFromDb() {

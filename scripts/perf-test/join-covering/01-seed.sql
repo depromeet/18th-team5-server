@@ -77,19 +77,30 @@ GROUP BY user_type;
 
 
 -- =============================================================
--- 실험 대상 쿼리 (서비스 시나리오: 같은 유저 타입 유저들의 최근 미션 완료 피드)
+-- 실험 대상 쿼리 (서비스 시나리오: 이번 절기 구간 같은 유저 타입 랭킹 TOP 20)
 --
 --   드라이빙 users     : WHERE 등호(user_type) + SELECT nickname
 --   드리븐 mission_log : 조인키(user_id) + 범위(completed_date)
---                        + SELECT solar_term_id + ORDER BY created_at
---   → NLJ + Using temporary + Using filesort + 커버링 실험 요소 전부 포함
+--                        + MAX(created_at) ← 접근 경로엔 불필요하지만
+--                          SELECT에 필요해서 커버링 전엔 행별 테이블 룩업 강제
+--
+--   팬아웃: NATURE_OUTDOOR 2만 명 × 기간 내 평균 10건
+--           → loops=20000, rows≈10 = 랜덤 액세스 약 20만 번
+--
+--   ORDER BY가 집계 결과(mission_count)라 "드리븐을 먼저 정렬 → 조기종료"
+--   지름길이 불가능 → 힌트 없이도 users → log 방향 NLJ가 선택된다.
+--   (ORDER BY l.created_at 같은 드리븐 컬럼 단독 정렬이면 옵티마이저가
+--    정렬을 조인 아래로 내려 조인 순서를 뒤집는다 — 02의 [비교] 단계 참조)
 -- =============================================================
-SELECT u.nickname, l.solar_term_id, l.completed_date
+SELECT u.id, u.nickname,
+       COUNT(l.id) AS mission_count,
+       MAX(l.created_at) AS last_completed_at
 FROM users u
 JOIN user_mission_log l ON l.user_id = u.id
 WHERE u.user_type = 'NATURE_OUTDOOR'
   AND l.completed_date BETWEEN '2026-08-01' AND '2026-10-12'
-ORDER BY l.created_at DESC
+GROUP BY u.id, u.nickname
+ORDER BY mission_count DESC
 LIMIT 20;
 
 

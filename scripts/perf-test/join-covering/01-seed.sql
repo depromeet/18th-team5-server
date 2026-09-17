@@ -4,16 +4,16 @@
 -- 사용법:
 --   mysql -uroot -p < 01-seed.sql
 --   또는 docker: docker exec -i perf-mysql mysql -uroot -proot < 01-seed.sql
---   users 100만 + 로그 약 170만 건, 5~10분 소요.
+--   users 250만 + 로그 약 420만 건, 15~30분 소요.
 --
 -- ★ 핵심 설계 — 옵티마이저가 "잘못" 판단하게 만드는 편중:
 --   member/orders 예시의 실제 원인 재현 — VIP는 전체 회원의 2%인데
 --   주문이 평균 10건, 전체 평균은 1.8건. rec_per_key(인덱스 통계)는
 --   전체 평균만 알아서 EXPLAIN은 rows≈2로 추정하지만 실측은 10.
 --   → 옵티마이저는 NLJ를 싸게 보고 선택하지만, 실제 랜덤 I/O는
---     추정의 5배(2만 루프 × 10행 = 20만 회)로 터진다.
+--     추정의 5배(5만 루프 × 10행 = 50만 회)로 터진다.
 --
---   NATURE_OUTDOOR : 전체의 2% (2만 명) — 로그 8~12건 (평균 10)  ≒ VIP
+--   NATURE_OUTDOOR : 전체의 2% (5만 명) — 로그 8~12건 (평균 10)  ≒ VIP
 --   나머지 4타입   : 98% — 로그 0~3건 (평균 1.5)
 --   → 전체 rec_per_key ≈ 2, NATURE 세그먼트 실제 팬아웃 = 10
 --
@@ -24,7 +24,10 @@
 USE perf_test;
 
 -- -------------------------------------------------------------
--- 1. users (조인 드라이빙 테이블, 100만 건)
+-- 1. users (조인 드라이빙 테이블, 250만 건)
+--   ※ 규모 산정: 루프 수 = NATURE 유저 수(전체의 2%)가 5만이 되도록 250만.
+--     log도 유저 순회로 적재되므로 자동으로 ~420만 건이 되어 드리븐 B-tree가
+--     깊어지고, 룩업(트리 하강)당 단가도 커진다 — 루프 수 × 단가 양쪽 확보.
 -- -------------------------------------------------------------
 DROP TABLE IF EXISTS users;
 CREATE TABLE users (
@@ -73,7 +76,7 @@ END $$
 
 DELIMITER ;
 
-CALL seed_users(1000000);
+CALL seed_users(2500000);
 ANALYZE TABLE users;
 
 -- -------------------------------------------------------------
@@ -178,8 +181,8 @@ GROUP BY u.user_type;
 --     MAX(l.created_at)                    ≒ SUM(o.total_price)
 --
 --   관찰 포인트: EXPLAIN은 드리븐 rows≈2 (전체 평균 통계),
---   EXPLAIN ANALYZE 실측은 rows≈10 loops≈20000 — 추정의 5배.
---   옵티마이저가 싸다고 믿고 고른 NLJ에서 랜덤 I/O 20만 회가 터진다.
+--   EXPLAIN ANALYZE 실측은 rows≈10 loops≈50000 — 추정의 5배.
+--   옵티마이저가 싸다고 믿고 고른 NLJ에서 랜덤 I/O 50만 회가 터진다.
 -- =============================================================
 SELECT u.id, u.nickname,
        COUNT(l.id) AS mission_count,

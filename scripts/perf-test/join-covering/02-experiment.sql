@@ -2,8 +2,8 @@
 -- 조인 + 커버링 인덱스 단계별 실험 스크립트 (편중 분포 버전)
 --
 -- 전제: 01-seed.sql 실행 완료
---   users 100만 (NATURE_OUTDOOR 2% ≈ 2만 명)
---   user_mission_log 약 170만 (NATURE만 평균 10건, 전체 평균 ≈ 2건)
+--   users 250만 (NATURE_OUTDOOR 2% ≈ 5만 명)
+--   user_mission_log 약 420만 (NATURE만 평균 10건, 전체 평균 ≈ 2건)
 --
 -- 대상 쿼리 (같은 유저 타입 미션 랭킹 TOP 20):
 --
@@ -21,13 +21,13 @@
 --   rec_per_key(인덱스 통계)는 "전체 평균 2건"만 안다.
 --   NATURE_OUTDOOR 세그먼트만 10건이라는 편중은 통계에 없다.
 --   → EXPLAIN(추정)은 드리븐 rows≈2, EXPLAIN ANALYZE(실측)는 rows≈10.
---   옵티마이저는 NLJ를 "2만 × 2 = 4만 룩업"으로 싸게 보고 골랐지만
---   실제로는 2만 × 10 = 20만 랜덤 I/O — 추정의 5배가 터진다.
+--   옵티마이저는 NLJ를 "5만 × 2 = 10만 룩업"으로 싸게 보고 골랐지만
+--   실제로는 5만 × 10 = 50만 랜덤 I/O — 추정의 5배가 터진다.
 --   커버링 인덱스는 이 "추정 밖의 랜덤 I/O"를 구조적으로 제거한다.
 --
 -- 각 단계에서 볼 것:
 --   - EXPLAIN의 rows(추정 2.x) vs EXPLAIN ANALYZE의 rows(실측 ≈10) 괴리
---   - 드리븐 lookup의 rows≈10 loops≈20000 (랜덤 액세스 = rows × loops)
+--   - 드리븐 lookup의 rows≈10 loops≈50000 (랜덤 액세스 = rows × loops)
 --   - "Index lookup" → "Covering index lookup" 전환 (테이블 룩업 소멸)
 --
 -- ※ 측정 팁: 버퍼 풀이 데운 상태에선 랜덤 I/O 차이가 시간으로 잘 안 보인다.
@@ -44,7 +44,7 @@ SHOW INDEX FROM user_mission_log;
 
 -- -------------------------------------------------------------
 -- [0단계] users에 인덱스 없음 (log는 idx_user_id만)
--- 예상: WHERE u.user_type을 태울 인덱스가 없어 users 풀스캔(100만 행)
+-- 예상: WHERE u.user_type을 태울 인덱스가 없어 users 풀스캔(250만 행)
 --       → "WHERE 절 풀스캔" 문제 상황. 스캔하며 user_type 행별 필터(2%)
 -- -------------------------------------------------------------
 EXPLAIN ANALYZE
@@ -62,14 +62,14 @@ LIMIT 20;
 -- -------------------------------------------------------------
 -- [1단계] users(user_type) 단일 인덱스 → WHERE 풀스캔 제거
 -- 예상 (member/orders 기준 플랜과 동일 모양):
---   -> Index lookup on u using idx_user_type (rows≈20000)  ≒ idx_member_grade
+--   -> Index lookup on u using idx_user_type (rows≈50000)  ≒ idx_member_grade
 --   -> Index lookup on l using idx_user_id
---      추정 rows≈2 (전체 평균!) / 실측 rows≈10 loops≈20000  ≒ 예시의 2.63 vs 9.98
+--      추정 rows≈2 (전체 평균!) / 실측 rows≈10 loops≈50000  ≒ 예시의 2.63 vs 9.98
 --
 --   ★ 먼저 EXPLAIN(추정만)을 보고, EXPLAIN ANALYZE(실측)와 비교할 것.
---   드라이빙: nickname이 인덱스에 없어 유저당 1회 테이블 룩업 (2만 회)
+--   드라이빙: nickname이 인덱스에 없어 유저당 1회 테이블 룩업 (5만 회)
 --   드리븐  : MAX(l.created_at) 때문에 실측 10행 전부 테이블 룩업
---             → 옵티마이저 예상(4만)의 5배인 랜덤 액세스 약 20만 회
+--             → 옵티마이저 예상(10만)의 5배인 랜덤 액세스 약 50만 회
 -- -------------------------------------------------------------
 ALTER TABLE users ADD INDEX idx_user_type (user_type);
 ANALYZE TABLE users;
@@ -103,7 +103,7 @@ LIMIT 20;
 -- [2단계] 드리븐 커버링: (user_id, created_at)
 -- 예상: 조인키 + MAX(created_at) + COUNT(l.id)(PK 암묵 포함)가 전부
 --       인덱스에서 해결 → "Covering index lookup on l" (≒ idx_order_price)
---       추정 밖에서 터지던 20만 번 테이블 룩업이 0회로 — 핵심 전환.
+--       추정 밖에서 터지던 50만 번 테이블 룩업이 0회로 — 핵심 전환.
 --       유저당 10행이 인덱스 리프에서 연속이라 루프당 1~2페이지로 압축
 -- -------------------------------------------------------------
 ALTER TABLE user_mission_log ADD INDEX idx_uid_ca (user_id, created_at);
@@ -142,7 +142,7 @@ ORDER BY mission_count DESC
 LIMIT 20;
 
 -- 3-b. 커버 안 된 컬럼(solar_term_id)을 SELECT에 추가하면 커버링이
---      깨지는 것 확인 → 드리븐 테이블 룩업 20만 회 부활
+--      깨지는 것 확인 → 드리븐 테이블 룩업 50만 회 부활
 EXPLAIN ANALYZE
 SELECT u.id, u.nickname,
        COUNT(l.id) AS mission_count,

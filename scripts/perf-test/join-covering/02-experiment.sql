@@ -1,7 +1,9 @@
 -- =============================================================
--- 조인 + 커버링 인덱스 단계별 실험 스크립트
+-- 조인 + 커버링 인덱스 단계별 실험 스크립트 (편중 분포 버전)
 --
--- 전제: 01-seed.sql 실행 완료 (users 10만 + user_mission_log 100만, 유저당 10건)
+-- 전제: 01-seed.sql 실행 완료
+--   users 100만 (NATURE_OUTDOOR 2% ≈ 2만 명)
+--   user_mission_log 약 170만 (NATURE만 평균 10건, 전체 평균 ≈ 2건)
 --
 -- 대상 쿼리 (같은 유저 타입 미션 랭킹 TOP 20):
 --
@@ -15,14 +17,18 @@
 --   ORDER BY mission_count DESC
 --   LIMIT 20;
 --
--- 각 단계에서 볼 것:
---   - Nested loop inner join: users(드라이빙) → log(드리븐) 방향인지
---   - 드리븐 lookup의 rows ≈ 10, loops ≈ 20000 (랜덤 액세스 = rows × loops)
---   - "Index lookup" → "Covering index lookup" 전환 (테이블 룩업 소멸)
+-- ★ 이 실험의 주제: 편중 데이터에서 추정과 실측의 괴리
+--   rec_per_key(인덱스 통계)는 "전체 평균 2건"만 안다.
+--   NATURE_OUTDOOR 세그먼트만 10건이라는 편중은 통계에 없다.
+--   → EXPLAIN(추정)은 드리븐 rows≈2, EXPLAIN ANALYZE(실측)는 rows≈10.
+--   옵티마이저는 NLJ를 "2만 × 2 = 4만 룩업"으로 싸게 보고 골랐지만
+--   실제로는 2만 × 10 = 20만 랜덤 I/O — 추정의 5배가 터진다.
+--   커버링 인덱스는 이 "추정 밖의 랜덤 I/O"를 구조적으로 제거한다.
 --
--- ※ 조인이 뒤집히면(l 드라이빙 + u PK lookup rows=1) 손으로 만든
---   인덱스가 남아 있는지부터 확인할 것. l 쪽에 커버링 가능한 인덱스가
---   있으면 "l 인덱스 풀스캔 → u PK 확인" 경로가 싸져서 방향이 뒤집힌다.
+-- 각 단계에서 볼 것:
+--   - EXPLAIN의 rows(추정 2.x) vs EXPLAIN ANALYZE의 rows(실측 ≈10) 괴리
+--   - 드리븐 lookup의 rows≈10 loops≈20000 (랜덤 액세스 = rows × loops)
+--   - "Index lookup" → "Covering index lookup" 전환 (테이블 룩업 소멸)
 --
 -- ※ 측정 팁: 버퍼 풀이 데운 상태에선 랜덤 I/O 차이가 시간으로 잘 안 보인다.
 --   시간 대신 행 터치량으로 비교:
@@ -38,9 +44,8 @@ SHOW INDEX FROM user_mission_log;
 
 -- -------------------------------------------------------------
 -- [0단계] users에 인덱스 없음 (log는 idx_user_id만)
--- 예상: WHERE u.user_type을 태울 인덱스가 없어 users 풀스캔(10만 행)
---       → "WHERE 절 풀스캔" 문제 상황. 스캔하며 user_type 행별 필터(20%)
---       드리븐은 idx_user_id lookup rows≈10
+-- 예상: WHERE u.user_type을 태울 인덱스가 없어 users 풀스캔(100만 행)
+--       → "WHERE 절 풀스캔" 문제 상황. 스캔하며 user_type 행별 필터(2%)
 -- -------------------------------------------------------------
 EXPLAIN ANALYZE
 SELECT u.id, u.nickname,
@@ -56,17 +61,32 @@ LIMIT 20;
 
 -- -------------------------------------------------------------
 -- [1단계] users(user_type) 단일 인덱스 → WHERE 풀스캔 제거
--- 예상 (member/orders "아무것도 안 했을 때" 플랜과 동일 모양):
---   -> Index lookup on u using idx_user_type (rows≈20000)   ≒ idx_member_grade
---   -> Index lookup on l using idx_user_id (rows≈10 loops≈20000)
---                                                            ≒ idx_orders_member_id
+-- 예상 (member/orders 기준 플랜과 동일 모양):
+--   -> Index lookup on u using idx_user_type (rows≈20000)  ≒ idx_member_grade
+--   -> Index lookup on l using idx_user_id
+--      추정 rows≈2 (전체 평균!) / 실측 rows≈10 loops≈20000  ≒ 예시의 2.63 vs 9.98
+--
+--   ★ 먼저 EXPLAIN(추정만)을 보고, EXPLAIN ANALYZE(실측)와 비교할 것.
 --   드라이빙: nickname이 인덱스에 없어 유저당 1회 테이블 룩업 (2만 회)
---   드리븐  : MAX(l.created_at) 때문에 10행 전부 테이블 룩업
---             → 랜덤 액세스 약 20만 회 (10 × 2만) ← 이게 개선 대상
+--   드리븐  : MAX(l.created_at) 때문에 실측 10행 전부 테이블 룩업
+--             → 옵티마이저 예상(4만)의 5배인 랜덤 액세스 약 20만 회
 -- -------------------------------------------------------------
 ALTER TABLE users ADD INDEX idx_user_type (user_type);
 ANALYZE TABLE users;
 
+-- 1-a. 추정치 확인: 드리븐 rows가 2로 찍히는 것 관찰 (편중을 모르는 통계)
+EXPLAIN
+SELECT u.id, u.nickname,
+       COUNT(l.id) AS mission_count,
+       MAX(l.created_at) AS last_completed_at
+FROM users u
+JOIN user_mission_log l ON l.user_id = u.id
+WHERE u.user_type = 'NATURE_OUTDOOR'
+GROUP BY u.id, u.nickname
+ORDER BY mission_count DESC
+LIMIT 20;
+
+-- 1-b. 실측: 같은 노드가 rows≈10 loops≈20000으로 찍히는 것 관찰
 EXPLAIN ANALYZE
 SELECT u.id, u.nickname,
        COUNT(l.id) AS mission_count,
@@ -83,7 +103,7 @@ LIMIT 20;
 -- [2단계] 드리븐 커버링: (user_id, created_at)
 -- 예상: 조인키 + MAX(created_at) + COUNT(l.id)(PK 암묵 포함)가 전부
 --       인덱스에서 해결 → "Covering index lookup on l" (≒ idx_order_price)
---       20만 번 테이블 룩업이 0회로 — 이 실험의 핵심 전환.
+--       추정 밖에서 터지던 20만 번 테이블 룩업이 0회로 — 핵심 전환.
 --       유저당 10행이 인덱스 리프에서 연속이라 루프당 1~2페이지로 압축
 -- -------------------------------------------------------------
 ALTER TABLE user_mission_log ADD INDEX idx_uid_ca (user_id, created_at);
@@ -137,18 +157,23 @@ LIMIT 20;
 
 
 -- -------------------------------------------------------------
--- [교훈 노트] 이전 설계(500만 건 + 날짜 범위)가 실패한 이유
+-- [교훈 노트]
 --
--- "유저당 50건을 completed_date 범위로 10건으로 깎는" 쿼리는
--- 옵티마이저가 users 드라이빙 비용을 rec_per_key(유저당 50건)로만
--- 추정한다 — 조인 값이 상수가 아니라 범위 축소를 비용에 반영 못 함.
--- → u 드라이빙 = "2만 × 50 = 100만 룩업"으로 과대평가되어
---   l 풀스캔 + u PK lookup(드리븐 rows=1) 플랜이 항상 선택됐다.
--- 팬아웃 실험은 쿼리로 깎는 게 아니라 데이터 분포 자체가 팬아웃이어야 한다.
+-- 1. rec_per_key는 세그먼트를 모른다: 인덱스 통계는 "전체 평균 2건"
+--    하나뿐이라, 특정 타입만 10건인 편중은 추정에 반영되지 않는다.
+--    EXPLAIN rows=2 / 실측 rows=10 — 히스토그램(ANALYZE ... UPDATE
+--    HISTOGRAM)도 조인 ref 추정에는 쓰이지 않아 이 괴리는 못 고친다.
+--    통계가 틀려도 플랜 선택은 NLJ로 옳았지만, 비용(랜덤 I/O)은
+--    예상의 5배 — 이런 상황에서 커버링은 "추정이 틀려도 안전한" 방어다.
 --
--- 또한 ORDER BY가 드리븐 컬럼 단독(l.created_at)이면 정렬이 조인
--- 아래로 내려가 조기종료가 가능해져 역시 조인이 뒤집힌다.
--- → 집계 결과 정렬(mission_count)이라 지름길이 봉쇄된 것도 필수 조건.
+-- 2. 팬아웃은 쿼리로 깎는 게 아니라 데이터 분포여야 한다: 이전 설계
+--    (유저당 50건 + 날짜 범위로 10건 축소)는 옵티마이저가 드리븐을
+--    rec_per_key=50으로 과대평가 → users 드라이빙이 비싸 보여서
+--    조인을 뒤집었다(l 풀스캔 + u PK lookup rows=1).
+--
+-- 3. ORDER BY가 드리븐 컬럼 단독이면 정렬이 조인 아래로 내려가
+--    조기종료가 가능해져 역시 조인이 뒤집힌다. 집계 결과 정렬
+--    (mission_count)이라 지름길이 봉쇄된 것도 이 실험의 필수 조건.
 -- -------------------------------------------------------------
 
 

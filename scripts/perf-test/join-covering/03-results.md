@@ -153,6 +153,81 @@ EXPLAIN 시 `Using index` 확인 (users, user_mission_log 양쪽) → 커버링 
 
 ---
 
+## 4단계 — 임시 테이블 집계 제거 (스트리밍 집계)
+
+3단계 EXPLAIN ANALYZE를 다시 확인해보자.
+
+```
+-> Limit: 20 row(s)  (actual time=303..303 rows=20 loops=1)
+    -> Sort: mission_count DESC, limit input to 20 row(s) per chunk  (actual time=303..303 rows=20 loops=1)
+        -> Table scan on <temporary>  (actual time=299..302 rows=49993 loops=1)
+            -> Aggregate using temporary table  (actual time=299..299 rows=49993 loops=1)
+                -> Nested loop inner join  (cost=144818 rows=268850) (actual time=0.599..149 rows=503936 loops=1)
+                    -> Covering index lookup on u using idx_type_name (user_type='NATURE_OUTDOOR')  (cost=14424 rows=103024) (actual time=0.548..11.7 rows=50000 loops=1)
+                    -> Covering index lookup on l using idx_id_created_at_ (user_id=u.id)  (cost=1 rows=2.61) (actual time=0.00129..0.00237 rows=10.1 loops=50000)
+```
+
+**시간 분해:**
+
+| 구간 | 시간 |
+|---|---|
+| Nested loop inner join | 149ms |
+| Aggregate using temporary table | 299 - 149 = **150ms** |
+| Table scan on \<temporary\> + Sort | 4ms |
+
+위의 결과를 보면 **약 50%가 임시 테이블 집계**에 사용된다.
+
+GROUP BY를 할 때 행이 **키 순서로 들어오면** MySQL은 임시 테이블 없이 인덱스 순서만으로 그룹을 묶는다. 인덱스 정렬 순서가 GROUP BY 키와 어긋나면, 임시 테이블에 모아놓고 그룹핑할 수밖에 없다.
+
+**현재 상태:**
+
+```sql
+CREATE INDEX idx_type_name ON users (user_type, nickname);
+CREATE INDEX idx_id_created_at_ ON user_mission_log (user_id, created_at);
+```
+
+현재 GROUP BY는 users 테이블의 `id, nickname`으로 그룹핑을 한다. 그럼 GROUP BY 순서에 맞게 선행 컬럼을 id → nickname 순으로 맞춰야 할까? 기존의 user_type은 인덱스 순서를 어떻게 둬야 할까?
+
+인덱스를 `(user_type, id, nickname)` 순으로 만들면 — id, nickname은 user_type 선행 컬럼을 **기준으로** 정렬되어 있다. 하지만 우리의 쿼리는 WHERE가 user_type을 `'NATURE_OUTDOOR'` **상수로 고정**한다. 이 쿼리가 읽는 구간은 전부 NATURE_OUTDOOR 타입이다.
+
+즉, 인덱스 `(user_type, id, nickname)`은 쿼리 안에서 **"id, nickname 순서로 정렬된 NATURE_OUTDOOR 명단"처럼 동작**한다. 상수 user_type을 걷어낸 나머지가 GROUP BY 키 순서(`id, nickname`)와 정확히 일치한다.
+
+인덱스를 다시 만들어보자.
+
+```sql
+CREATE INDEX idx_type_id_nickname ON users (user_type, id, nickname);
+```
+
+**실행계획:**
+
+```
+-> Limit: 20 row(s)  (actual time=245..245 rows=20 loops=1)
+    -> Sort: mission_count DESC, limit input to 20 row(s) per chunk  (actual time=245..245 rows=20 loops=1)
+        -> Stream results  (cost=176746 rows=79045) (actual time=0.373..242 rows=49993 loops=1)
+            -> Group aggregate: count(l.id), max(l.created_at)  (cost=176746 rows=79045) (actual time=0.361..231 rows=49993 loops=1)
+                -> Nested loop inner join  (cost=149072 rows=276747) (actual time=0.335..167 rows=503936 loops=1)
+                    -> Covering index lookup on u using idx_type_id_nickname (user_type='NATURE_OUTDOOR')  (cost=14848 rows=106050) (actual time=0.235..10.8 rows=50000 loops=1)
+                    -> Covering index lookup on l using idx_id_created_at_ (user_id=u.id)  (cost=1 rows=2.61) (actual time=0.00159..0.00274 rows=10.1 loops=50000)
+```
+
+**결과:**
+
+- 3단계에서는 `Aggregate using temporary table`(임시 테이블 집계)였다. 하지만 지금은 **`Group aggregate` + `Stream results`** 로 바뀌었다. 임시 테이블을 훑던 `Table scan on <temporary>` 줄도 통째로 사라졌다.
+- 스트리밍 집계가 성공한 것이다. 행이 id, nickname 순서로 도착하므로, MySQL은 한 회원의 미션 기록이 지나가는 즉시 — 그 그룹이 끝나면 — COUNT, MAX를 확정할 수 있다. **임시 테이블에 5만 그룹의 행을 쌓았다가 다시 읽는 왕복이 사라졌다.**
+- 상태 변수로도 확인: 쿼리 실행 시 `Created_tmp_tables` 증가량이 1 → 0.
+- 집계 구간: **150ms → 64ms** 단축 (Group aggregate: 231 - 167 = 64ms)
+- 총 실행 시간: **2401ms → 245ms, 약 10배 단축**
+
+### 남은 filesort는 거의 공짜다
+
+`ORDER BY mission_count DESC`는 `COUNT(l.id) AS mission_count` — **집계가 끝나야 비로소 존재하는 값**을 정렬한다. 테이블 어디에도 저장돼 있지 않으니, 어떤 인덱스로도 미리 정렬해 둘 수 없다. 따라서 집계가 나온 다음에 정렬할 수밖에 없다.
+
+하지만 다행히 정렬 부담이 적다. `ORDER BY ... LIMIT 20`이라 상위 20개만 유지하는 **Top-N 정렬(우선순위 큐)** 을 사용한다. EXPLAIN ANALYZE에서도 Sort 구간은 245 - 242 = **3ms**에 불과하다.
+
+GROUP BY 결과를 다시 정렬해야 한다면 filesort를 피하기 어렵지만, **그 비용이 작으면 문제가 안 된다.**
+
+---
+
 ## 단계별 요약
 
 | 단계 | 조치 | 총 수행시간 | 개선 지점 |
@@ -160,4 +235,5 @@ EXPLAIN 시 `Using index` 확인 (users, user_mission_log 양쪽) → 커버링 
 | 0 | (초기 상태) | 2401ms | — |
 | 1 | `idx_users_type (user_type)` | 2033ms | users 풀스캔 310ms → 85.3ms |
 | 2 | `idx_type_name (user_type, nickname)` | 1879ms | users 커버링: 85.3ms → 11ms |
-| 3 | `idx_id_created_at_ (user_id, created_at)` | **303ms** | 드리븐 커버링: NLJ 1726ms → 149ms (랜덤 액세스 50만 회 제거) |
+| 3 | `idx_id_created_at_ (user_id, created_at)` | 303ms | 드리븐 커버링: NLJ 1726ms → 149ms (랜덤 액세스 50만 회 제거) |
+| 4 | `idx_type_id_nickname (user_type, id, nickname)` | **245ms** | 스트리밍 집계: 임시 테이블 제거, 집계 150ms → 64ms |

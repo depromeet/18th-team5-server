@@ -29,6 +29,7 @@ import com.team.peektime_api.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,15 +62,15 @@ public class UserMissionCompletionService {
         DailyMission dailyMission = getDailyMission(missionId, today);
         Mission mission = dailyMission.getMission();
 
-        validateSameMission(missionId, user);
+        validateSameMission(missionId, user, today);
 
         s3Service.validateObjectExists(request.objectKey());
 
         SolarTerm solarTerm = getCurrentSolarTerm(today);
 
-        UserMissionCompletion completion = userMissionCompletionRepository.save(
+        UserMissionCompletion completion = saveCompletion(
                 UserMissionCompletion.create(user, mission, solarTerm, MissionType.DAILY,
-                        request.objectKey(), request.memo())
+                        request.objectKey(), request.memo(), today)
         );
 
         dailyMissionRepository.incrementParticipantCount(dailyMission.getId());
@@ -87,8 +88,21 @@ public class UserMissionCompletionService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.SOLAR_TERM_NOT_FOUND));
     }
 
-    private void validateSameMission(Long missionId, User user) {
-        if (userMissionCompletionRepository.existsByUser_IdAndMission_Id(user.getId(), missionId)) {
+    // 같은 날 같은 미션 중복 완료 방지 — 멱등성 키(userId:missionId:completedDate)와 같은 기준.
+    // 이 체크는 빠른 실패용이고, 동시 요청 레이스는 uk_completion_user_mission_date 제약이 막는다
+    private void validateSameMission(Long missionId, User user, LocalDate date) {
+        if (userMissionCompletionRepository.existsByUser_IdAndMission_IdAndCompletedDate(
+                user.getId(), missionId, date)) {
+            throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
+        }
+    }
+
+    // exists 체크를 동시에 통과한 요청은 INSERT 시점에 유니크 제약에 걸린다 — 중복 완료로 변환.
+    // 예외를 삼키지 않고 던지므로 트랜잭션 전체(참여자 수 증가, outbox 포함)가 함께 롤백된다
+    private UserMissionCompletion saveCompletion(UserMissionCompletion completion) {
+        try {
+            return userMissionCompletionRepository.save(completion);
+        } catch (DataIntegrityViolationException e) {
             throw new BusinessException(ErrorCode.MISSION_ALREADY_COMPLETED);
         }
     }
@@ -128,8 +142,8 @@ public class UserMissionCompletionService {
         User user = findUser(userId);
         LocalDate today = LocalDate.now();
 
-        // 같은 미션 중복 완료 방지
-        validateSameMission(missionId, user);
+        // 같은 날 같은 미션 중복 완료 방지
+        validateSameMission(missionId, user, today);
 
         // 하루 3회 제한 체크
         long todayCount = userMissionCompletionRepository.countTodayByUserIdAndMissionType(
@@ -147,9 +161,9 @@ public class UserMissionCompletionService {
 
         SolarTerm solarTerm = getCurrentSolarTerm(today);
 
-        UserMissionCompletion completion = userMissionCompletionRepository.save(
+        UserMissionCompletion completion = saveCompletion(
                 UserMissionCompletion.create(user, mission, solarTerm, MissionType.RECOMMENDED,
-                        request.objectKey(), request.memo())
+                        request.objectKey(), request.memo(), today)
         );
 
         OutboxEvent outbox = saveOutboxEvent(user, missionId, solarTerm, completion);
@@ -163,8 +177,8 @@ public class UserMissionCompletionService {
         User user = findUser(userId);
         LocalDate today = LocalDate.now();
 
-        // 같은 미션 중복 완료 방지
-        validateSameMission(missionId, user);
+        // 같은 날 같은 미션 중복 완료 방지
+        validateSameMission(missionId, user, today);
 
         // 하루 1회 제한 체크
         long todayCount = userMissionCompletionRepository.countTodayByUserIdAndMissionType(
@@ -182,9 +196,9 @@ public class UserMissionCompletionService {
 
         SolarTerm solarTerm = getCurrentSolarTerm(today);
 
-        UserMissionCompletion completion = userMissionCompletionRepository.save(
+        UserMissionCompletion completion = saveCompletion(
                 UserMissionCompletion.create(user, mission, solarTerm, MissionType.SELECTED,
-                        request.objectKey(), request.memo())
+                        request.objectKey(), request.memo(), today)
         );
 
         OutboxEvent outbox = saveOutboxEvent(user, missionId, solarTerm, completion);
@@ -195,7 +209,7 @@ public class UserMissionCompletionService {
 
     private OutboxEvent saveOutboxEvent(User user, Long missionId,
                                          SolarTerm solarTerm, UserMissionCompletion completion) {
-        LocalDate completedDate = completion.getCreatedAt().toLocalDate();
+        LocalDate completedDate = completion.getCompletedDate();
         String idempotencyKey = generateIdempotencyKey(user.getId(), missionId, completedDate);
 
         MissionLogPayload payload = MissionLogPayload.of(

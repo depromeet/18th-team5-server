@@ -1,6 +1,6 @@
 package com.team.peektime_api.domain.feed.service;
 
-import com.team.peektime_api.domain.feed.cache.GlobalFeedCacheRepository;
+import com.team.peektime_api.domain.feed.cache.GlobalFeedLocalCache;
 import com.team.peektime_api.domain.feed.dto.FeedCacheItem;
 import com.team.peektime_api.domain.feed.dto.FeedItemResponse;
 import com.team.peektime_api.domain.feed.dto.GlobalFeedResponse;
@@ -17,13 +17,13 @@ import java.util.List;
 /**
  * 전역 공유 피드 조회 서비스.
  *
- * 캐시는 TTL 없이 상주하고(피드 20건이라 메모리 부담 없음), 쓰기는 {@code GlobalFeedWriteThroughListener}의
- * write-through, DB와의 동기화는 30초 주기 스케줄러의 {@link #syncCacheFromDb()}가 담당한다.
- * 주기 만료가 없으므로 읽기 경로에서 재적재 경쟁(cache-stampede)이 발생하지 않아 분산락(single-flight)이
- * 필요 없다 — 락 대기로 인한 조회 지연(p99 spike)을 제거하기 위한 전환이다.
+ * 피드는 인스턴스 로컬 캐시(Caffeine, 단일 키)에 상주한다(최대 20건이라 메모리 부담 없음).
+ * 신선도는 10초 주기 스케줄러의 {@link #syncCacheFromDb()}가 DB 스냅샷을 밀어 넣어(시계 트리거)
+ * 보장한다 — 트래픽과 무관하게 ≤10초 신선, 완료 직후 본인 글도 다음 틱에 노출. 쓰기 경로의
+ * write-through는 두지 않으므로(캐시에 쓰는 주체 = 스케줄러 하나) dual-write race가 없다.
  *
- * 캐시 MISS는 콜드 스타트/Redis 데이터 유실 시에만 발생하며, 이때는 DB 폴백 후 즉시 재적재해 워밍한다.
- * presigned URL은 캐시에 담지 않고 조회 시점에 생성한다(매 요청 만료되므로).
+ * 캐시 MISS는 콜드 스타트(최초 기동/첫 틱 이전)에만 발생하며, 이때 DB 폴백 적재를 Caffeine이
+ * single-flight로 묶는다. presigned URL은 캐시에 담지 않고 조회 시점에 생성한다(매 요청 만료되므로).
  */
 @Slf4j
 @Service
@@ -33,25 +33,24 @@ public class GlobalFeedService {
     private static final int FEED_SIZE = 20;
 
     private final UserMissionCompletionRepository completionRepository;
-    private final GlobalFeedCacheRepository feedCacheRepository;
+    private final GlobalFeedLocalCache feedCache;
     private final S3Service s3Service;
 
     @Transactional(readOnly = true)
     public GlobalFeedResponse getRecentFeed() {
-        List<FeedCacheItem> items = feedCacheRepository.findRecent();
-        if (items.isEmpty()) {
-            // 콜드 캐시(최초 기동/Redis 유실)에서만 도달 → DB 폴백 + 즉시 워밍.
-            // 첫 재적재가 수 ms 내 끝나 이후 요청은 캐시 HIT이므로 락 없이도 쇄도가 지속되지 않는다.
-            items = loadFromDb();
-            feedCacheRepository.rebuild(items);
-        }
+        // 캐시 HIT이면 즉시 반환, 콜드면 DB 폴백 적재(동시 콜드 접근은 single-flight로 1회만 조회).
+        List<FeedCacheItem> items = feedCache.getOrLoad(this::loadFromDb);
         return toResponse(items);
     }
 
-    /** DB 기준으로 캐시를 전체 동기화한다. (30초 주기 스케줄러에서 호출 — write-through 실패분 복구) */
+    /** DB 스냅샷으로 캐시를 전체 교체한다. (10초 주기 스케줄러에서 호출) */
     @Transactional(readOnly = true)
     public void syncCacheFromDb() {
-        feedCacheRepository.rebuild(loadFromDb());
+        List<FeedCacheItem> items = loadFromDb();
+        if (items.isEmpty()) {
+            return; // 일시적 빈 결과로 기존 피드를 비우지 않음
+        }
+        feedCache.put(items);
     }
 
     private List<FeedCacheItem> loadFromDb() {

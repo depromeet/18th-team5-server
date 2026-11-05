@@ -25,6 +25,9 @@ dependencies {
 
     // Firebase Admin SDK
     implementation 'com.google.firebase:firebase-admin:9.4.3'
+
+    // Caffeine — 인스턴스 로컬 캐시 (버전은 Spring Boot BOM 관리)
+    implementation 'com.github.ben-manes.caffeine:caffeine'
 }
 bootRun {
     systemProperty 'spring.profiles.active', 'local'

@@ -11,8 +11,8 @@ import java.util.function.Supplier;
 /**
  * 전역 공유 피드의 인스턴스 로컬 캐시 (Caffeine, 단일 키).
  *
- * <p>피드는 최대 20건의 전역 단일 목록이라 캐시 키가 하나뿐이다. 신선도는 10초 주기 스케줄러가
- * {@link #put}으로 DB 스냅샷을 밀어 넣어(시계 트리거) 보장한다 — 트래픽과 무관하게 ≤10초 신선하고,
+ * <p>피드는 최대 20건의 전역 단일 목록이라 캐시 키가 하나뿐이다. 신선도는 5초 주기 스케줄러가
+ * {@link #put}으로 DB 스냅샷을 밀어 넣어(시계 트리거) 보장한다 — 트래픽과 무관하게 ≤5초 신선하고,
  * 완료 직후 본인 글도 다음 틱에 반드시 노출된다. 쓰기 경로의 write-through는 두지 않는다:
  * 캐시에 쓰는 주체가 스케줄러 하나뿐이라 dual-write race가 구조적으로 존재하지 않는다.
  *
@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  * 새 스냅샷 전체만 본다(부분 노출 없음).
  *
  * <p>다중 인스턴스에서는 각 인스턴스가 자기 메모리 캐시를 독립적으로 채운다(스케줄러에 분산락 미적용).
- * 완료 커밋은 모든 인스턴스가 공유하는 DB에 반영되므로, 어느 인스턴스로 조회해도 다음 틱(≤10초)에 수렴한다.
+ * 완료 커밋은 모든 인스턴스가 공유하는 DB에 반영되므로, 어느 인스턴스로 조회해도 다음 틱(≤5초)에 수렴한다.
  */
 @Component
 public class GlobalFeedLocalCache {
@@ -39,8 +39,21 @@ public class GlobalFeedLocalCache {
         return cache.get(KEY, k -> loader.get());
     }
 
-    /** DB 스냅샷으로 캐시를 통째 교체한다(원자적 참조 대입). 10초 주기 스케줄러가 호출. */
+    /** DB 스냅샷으로 캐시를 통째 교체한다(원자적 참조 대입). 주기 스케줄러가 호출. */
     public void put(List<FeedCacheItem> items) {
         cache.put(KEY, List.copyOf(items));
+    }
+
+    /**
+     * 현재 캐시된 목록의 최신 항목 완료 시각(epochMilli). 목록은 최신순 정렬이라 head가 곧 최신값이다.
+     * 콜드(미적재)이거나 비었으면 null — 이 경우 호출부는 무조건 재적재하도록 한다.
+     * 조건부 재캐싱이 "캐시보다 새 완료가 있나"를 판단할 때 쓴다(별도 상태를 들지 않고 캐시에서 파생).
+     */
+    public Long peekLatestRecordedAtEpochMilli() {
+        List<FeedCacheItem> items = cache.getIfPresent(KEY);
+        if (items == null || items.isEmpty()) {
+            return null;
+        }
+        return items.getFirst().recordedAtEpochMilli();
     }
 }

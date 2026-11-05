@@ -71,5 +71,10 @@ public interface UserMissionCompletionRepository extends JpaRepository<UserMissi
             "ORDER BY c.createdAt DESC")
     List<UserMissionCompletion> findRecentGlobalWithImage(Pageable pageable);
 
+    // 전역 피드 조건부 재캐싱용: 피드에 노출되는 완료(사진 있음)의 최신 createdAt.
+    // 캐시 최신값과 비교해 새 완료가 없으면 상위 20건 재조회·교체를 스킵한다. 완료가 없으면 null.
+    @Query("SELECT MAX(c.createdAt) FROM UserMissionCompletion c WHERE c.objectKey IS NOT NULL")
+    LocalDateTime findLatestCreatedAtWithImage();
+
     void deleteByUser_Id(Long userId);
 }

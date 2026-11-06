@@ -48,6 +48,8 @@ public enum SuccessCode {
 
     // 전역 공유 피드
     FEED_FOUND("FEED_200", "전역 피드 조회 성공"),
+    FEED_LIKED("FEED_200_LIKE", "피드 좋아요 성공"),
+    FEED_UNLIKED("FEED_200_UNLIKE", "피드 좋아요 취소 성공"),
 
     // S3
     S3_PRESIGNED_URL("S3_200", "Presigned URL 발급 성공"),

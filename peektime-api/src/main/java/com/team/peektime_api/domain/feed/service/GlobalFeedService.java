@@ -4,6 +4,7 @@ import com.team.peektime_api.domain.feed.cache.GlobalFeedLocalCache;
 import com.team.peektime_api.domain.feed.dto.FeedCacheItem;
 import com.team.peektime_api.domain.feed.dto.FeedItemResponse;
 import com.team.peektime_api.domain.feed.dto.GlobalFeedResponse;
+import com.team.peektime_api.domain.feed.repository.FeedLikeRepository;
 import com.team.peektime_api.domain.mission.repository.UserMissionCompletionRepository;
 import com.team.peektime_api.global.infra.S3.S3Service;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 전역 공유 피드 조회 서비스.
@@ -35,14 +37,25 @@ public class GlobalFeedService {
     private static final int FEED_SIZE = 20;
 
     private final UserMissionCompletionRepository completionRepository;
+    private final FeedLikeRepository feedLikeRepository;
     private final GlobalFeedLocalCache feedCache;
     private final S3Service s3Service;
 
     @Transactional(readOnly = true)
-    public GlobalFeedResponse getRecentFeed() {
+    public GlobalFeedResponse getRecentFeed(Long userId) {
         // 캐시 HIT이면 즉시 반환, 콜드면 DB 폴백 적재(동시 콜드 접근은 single-flight로 1회만 조회).
         List<FeedCacheItem> items = feedCache.getOrLoad(this::loadFromDb);
-        return toResponse(items);
+        // likeCount는 스냅샷에 있고, "내가 눌렀는지"는 사용자별이라 이 20건에 대해서만 조회해 오버레이.
+        Set<Long> likedByMe = loadLikedCompletionIds(userId, items);
+        return toResponse(items, likedByMe);
+    }
+
+    private Set<Long> loadLikedCompletionIds(Long userId, List<FeedCacheItem> items) {
+        if (items.isEmpty()) {
+            return Set.of();
+        }
+        List<Long> completionIds = items.stream().map(FeedCacheItem::completionId).toList();
+        return Set.copyOf(feedLikeRepository.findLikedCompletionIds(userId, completionIds));
     }
 
     /**
@@ -69,6 +82,8 @@ public class GlobalFeedService {
         List<FeedCacheItem> items = loadFromDb(); // 새 완료 있음(또는 콜드) → 전체 재조회
         if (items.isEmpty()) {
             return; // 일시적 빈 결과로 기존 피드를 비우지 않음
+
+
         }
         feedCache.put(items);
     }
@@ -81,9 +96,12 @@ public class GlobalFeedService {
                 .toList();
     }
 
-    private GlobalFeedResponse toResponse(List<FeedCacheItem> items) {
+    private GlobalFeedResponse toResponse(List<FeedCacheItem> items, Set<Long> likedByMe) {
         List<FeedItemResponse> responses = items.stream()
-                .map(item -> FeedItemResponse.of(item, s3Service.generatePresignedViewUrl(item.objectKey())))
+                .map(item -> FeedItemResponse.of(
+                        item,
+                        s3Service.generatePresignedViewUrl(item.objectKey()),
+                        likedByMe.contains(item.completionId())))
                 .toList();
         return GlobalFeedResponse.of(responses);
     }

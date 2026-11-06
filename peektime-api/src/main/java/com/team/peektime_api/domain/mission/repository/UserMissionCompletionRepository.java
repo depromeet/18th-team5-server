@@ -3,6 +3,7 @@ package com.team.peektime_api.domain.mission.repository;
 import com.team.peektime_api.domain.mission.entity.UserMissionCompletion;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -70,6 +71,18 @@ public interface UserMissionCompletionRepository extends JpaRepository<UserMissi
             "WHERE c.objectKey IS NOT NULL " +
             "ORDER BY c.createdAt DESC")
     List<UserMissionCompletion> findRecentGlobalWithImage(Pageable pageable);
+
+    // 전역 피드 좋아요 카운터 — 원자 ±1 UPDATE. 엔티티 로드 없이 핫 완료행만 직접 갱신해
+    // read-modify-write 유실을 막는다. 멤버십(feed_like) 변경이 실제 일어났을 때만 호출된다.
+    @Modifying
+    @Query("UPDATE UserMissionCompletion c SET c.likeCount = c.likeCount + 1 WHERE c.id = :id")
+    int incrementLikeCount(@Param("id") Long id);
+
+    // like_count > 0 가드 — 카운터가 음수로 내려가지 않게 한다(드리프트·중복 취소 방어)
+    @Modifying
+    @Query("UPDATE UserMissionCompletion c SET c.likeCount = c.likeCount - 1 " +
+            "WHERE c.id = :id AND c.likeCount > 0")
+    int decrementLikeCount(@Param("id") Long id);
 
     // 전역 피드 조건부 재캐싱용: 피드에 노출되는 완료(사진 있음)의 최신 createdAt.
     // 캐시 최신값과 비교해 새 완료가 없으면 상위 20건 재조회·교체를 스킵한다. 완료가 없으면 null.

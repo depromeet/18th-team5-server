@@ -40,6 +40,9 @@ public class SecurityConfig {
                         .requestMatchers("/").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/internal/**").permitAll()
+                        // 부하 테스트 전용 경로 — 컨트롤러가 loadtest 프로필에서만 등록되므로 운영에선 404(무해).
+                        // userId를 파라미터로 받는 인증 없는 좋아요 경로(LoadTestFeedLikeController)용
+                        .requestMatchers("/loadtest/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/webjars/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()

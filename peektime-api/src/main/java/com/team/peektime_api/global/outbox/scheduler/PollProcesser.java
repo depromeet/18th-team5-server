@@ -58,7 +58,7 @@ public class PollProcesser {
 
             if (result instanceof SendResult.Success s) {
                 toDelete.add(s.eventId());
-            } else if (result instanceof SendResult.Failure f) {
+            } else if (result instanceof SendResult.RetryableFailure f) {
                 unknownCount++;
                 log.warn("Outbox 전송 실패 (재시도 대기): id={}, reason={}", f.eventId(), f.reason());
             }
@@ -90,7 +90,7 @@ public class PollProcesser {
             return adminClient.sendMissionLog(payload, event.getId());
 
         } catch (Exception e) {
-            return new SendResult.Failure(event.getId(), e.getMessage());
+            return new SendResult.RetryableFailure(event.getId(), e.getMessage());
         }
     }
 

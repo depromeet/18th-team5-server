@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team.peektime_api.domain.mission.event.MissionLogPayload;
 import com.team.peektime_api.global.infra.admin.AdminClient;
 import com.team.peektime_api.global.outbox.SendResult;
-import com.team.peektime_api.global.outbox.SendResult.Failure;
+import com.team.peektime_api.global.outbox.SendResult.RetryableFailure;
 import com.team.peektime_api.global.outbox.SendResult.Success;
 import com.team.peektime_api.global.outbox.entity.OutboxEvent;
 import lombok.RequiredArgsConstructor;
@@ -106,7 +106,7 @@ public class OutboxPollerV2 {
 
             if (result instanceof Success s) {
                 toDelete.add(s.eventId());
-            } else if (result instanceof Failure f) {
+            } else if (result instanceof RetryableFailure f) {
                 toRetry.add(f.eventId());
                 log.warn("[V2] Outbox 전송 실패 (재시도 대기): id={}, reason={}", f.eventId(), f.reason());
             }
@@ -123,7 +123,7 @@ public class OutboxPollerV2 {
             return adminClient.sendMissionLog(payload, event.getId());
 
         } catch (Exception e) {
-            return new Failure(event.getId(), e.getMessage());
+            return new RetryableFailure(event.getId(), e.getMessage());
         }
     }
 

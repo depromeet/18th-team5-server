@@ -74,7 +74,12 @@ public class OutboxConsumer {
 
         return switch (result) {
             case SendResult.Success s -> deleteEvent(s.eventId());
-            case SendResult.Failure f -> {
+            case SendResult.RetryableFailure f -> {
+                log.warn("[V3] 전송 실패 (재시도 대기): id={}, reason={}", f.eventId(), f.reason());
+                yield false;
+            }
+            // V3에는 FAILED 개념이 없어 영구 실패도 재시도 대기로 둔다 (비활성 레거시, 컴파일 유지용)
+            case SendResult.PermanentFailure f -> {
                 log.warn("[V3] 전송 실패 (재시도 대기): id={}, reason={}", f.eventId(), f.reason());
                 yield false;
             }
@@ -90,7 +95,7 @@ public class OutboxConsumer {
 
         } catch (JsonProcessingException e) {
             log.error("[V3] payload 파싱 실패: id={}, error={}", event.getId(), e.getMessage());
-            return new SendResult.Failure(event.getId(), "payload 파싱 실패");
+            return new SendResult.RetryableFailure(event.getId(), "payload 파싱 실패");
         }
     }
 

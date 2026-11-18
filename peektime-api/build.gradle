@@ -8,6 +8,10 @@ dependencies {
     implementation 'software.amazon.awssdk:s3:2.42.38'
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
+    // ShedLock — 다중 인스턴스에서 @Scheduled 작업의 플릿 전체 1회 실행 보장
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:6.3.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.3.0'
+
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'

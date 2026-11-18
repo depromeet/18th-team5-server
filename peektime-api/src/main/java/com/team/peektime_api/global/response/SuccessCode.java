@@ -51,7 +51,10 @@ public enum SuccessCode {
 
     // S3
     S3_PRESIGNED_URL("S3_200", "Presigned URL 발급 성공"),
-    S3_IMAGE_DELETED("S3_200", "이미지 삭제 성공");
+    S3_IMAGE_DELETED("S3_200", "이미지 삭제 성공"),
+
+    // 통계
+    DAILY_COMPLETION_STATS_FOUND("STATS_200_DAILY", "일별 미션 수행 통계 조회 성공");
 
     private final String code;
     private final String message;
